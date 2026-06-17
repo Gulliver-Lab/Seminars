@@ -1,20 +1,26 @@
-<?xml version="1.0" encoding="utf-8"?>
-<rss xmlns:dc="http://purl.org/dc/elements/1.1/" version="2.0">
-  <channel>
-    <title>seminars</title>
-    <link/>
-    <description>seminars</description>
-    <item>
-      <title>François Villemot (Gulliver)</title>
-      <link/>
-      <dc:date>2026-06-18T09:00:00Z</dc:date>
-      <description>Practical LLM Use in Everyday Research</description>
-    </item>
-    <item>
-      <title>Thomas Matreux (LBE)</title>
-      <link/>
-      <dc:date>2026-06-25T09:00:00Z</dc:date>
-      <description>-</description>
-    </item>
+<rss xmlns:dc="http://purl.org/dc/elements/1.1/" xmlns:content="http://purl.org/rss/1.0/modules/content/" version="2.0">
+<channel xml:lang="fr">
+<title>ESPCI Paris</title>
+<link>http://www.espci.psl.eu/</link>
+<language>fr</language>
+<generator>SPIP - www.spip.net</generator>
+<image>
+<title>ESPCI Paris</title>
+<url>https://www.dev.espci.fr/sites/www.dev.espci.fr/local/cache-vignettes/L144xH114/logo_espci-c26b0.png?1781615243</url>
+<link>http://www.espci.psl.eu/</link>
+<height>114</height>
+<width>144</width>
+</image>
+<item>
+<title>SEMINAIRE SIMM - Satish Kumar (University of Minnesota)</title>
+<link>https://www.dev.espci.fr/fr/agenda/2025/seminaire-simm-satish-kumar-university-of-minnesota?id_evenement=8737</link>
+<guid isPermaLink="true">https://www.dev.espci.fr/fr/agenda/2025/seminaire-simm-satish-kumar-university-of-minnesota?id_evenement=8737</guid>
+<dc:date>2025-04-08T09:00:00Z</dc:date>
+<dc:source>2025-04-08 11:00:00</dc:source>
+<dc:format>text/html</dc:format>
+<dc:language>fr</dc:language>
+<description> Mardi 8 avril 2025 de 11h00 à 12h00 - Charpak <p>Satish Kumar<br class='autobr' /> Department of Chemical Engineering and Materials Science, University of Minnesota</p> <p>Droplet dynamics near topographical features</p> <p>While solid substrates are often idealized as being perfectly smooth, all real<br class='autobr' /> surfaces possess some level of topographical and chemical heterogeneity. This heterogeneity<br class='autobr' /> can greatly influence droplet dynamics, and is of tremendous relevance for<br class='autobr' /> applications ranging from oil recovery to water harvesting to advanced manufacturing.<br class='autobr' /> In this talk, we will show how mathematical models based on lubrication theory<br class='autobr' /> that account for surface topography provide insight into how<br class='autobr' /> topographical features induce pinning of the three-phase contact line where<br class='autobr' /> the liquid, air, and solid all meet. Sufficiently strong external forces cause<br class='autobr' /> contact-line depinning, and in some cases the depinning force can be<br class='autobr' /> understood through relatively simple scaling relationships. Three examples will be presented<br class='autobr' /> involving (i) shear-induced depinning, (ii) gravity-induced depinning, and<br class='autobr' /> (iii) evaporation-induced depinning. Comparisons to existing experimental observations<br class='autobr' /> will be discussed.</p> </description>
+<content:encoded> <div class='rss_texte'> Mardi 8 avril 2025 de 11h00 à 12h00 - Charpak <p>Satish Kumar<br class='autobr' /> Department of Chemical Engineering and Materials Science, University of Minnesota</p> <p>Droplet dynamics near topographical features</p> <p>While solid substrates are often idealized as being perfectly smooth, all real<br class='autobr' /> surfaces possess some level of topographical and chemical heterogeneity. This heterogeneity<br class='autobr' /> can greatly influence droplet dynamics, and is of tremendous relevance for<br class='autobr' /> applications ranging from oil recovery to water harvesting to advanced manufacturing.<br class='autobr' /> In this talk, we will show how mathematical models based on lubrication theory<br class='autobr' /> that account for surface topography provide insight into how<br class='autobr' /> topographical features induce pinning of the three-phase contact line where<br class='autobr' /> the liquid, air, and solid all meet. Sufficiently strong external forces cause<br class='autobr' /> contact-line depinning, and in some cases the depinning force can be<br class='autobr' /> understood through relatively simple scaling relationships. Three examples will be presented<br class='autobr' /> involving (i) shear-induced depinning, (ii) gravity-induced depinning, and<br class='autobr' /> (iii) evaporation-induced depinning. Comparisons to existing experimental observations<br class='autobr' /> will be discussed.</p> </div> <div class='rss_texte'><p><strong>Satish Kumar (University of Minnesota)</strong></p> <p><i>Droplet dynamics near topographical features</i></p> <p>While solid substrates are often idealized as being perfectly smooth, all real<br class='autobr' /> surfaces possess some level of topographical and chemical heterogeneity. This heterogeneity<br class='autobr' /> can greatly influence droplet dynamics, and is of tremendous relevance for<br class='autobr' /> applications ranging from oil recovery to water harvesting to advanced manufacturing.<br class='autobr' /> In this talk, we will show how mathematical models based on lubrication theory<br class='autobr' /> that account for surface topography provide insight into how<br class='autobr' /> topographical features induce pinning of the three-phase contact line where<br class='autobr' /> the liquid, air, and solid all meet. Sufficiently strong external forces cause<br class='autobr' /> contact-line depinning, and in some cases the depinning force can be<br class='autobr' /> understood through relatively simple scaling relationships. Three examples will be presented<br class='autobr' /> involving (i) shear-induced depinning, (ii) gravity-induced depinning, and<br class='autobr' /> (iii) evaporation-induced depinning. Comparisons to existing experimental observations<br class='autobr' /> will be discussed.</p></div> </content:encoded>
+</item>
   </channel>
 </rss>
