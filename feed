@@ -1,0 +1,26 @@
+<rss xmlns:dc="http://purl.org/dc/elements/1.1/" xmlns:content="http://purl.org/rss/1.0/modules/content/" version="2.0">
+<channel xml:lang="fr">
+<title>ESPCI Paris</title>
+<link>http://www.espci.psl.eu/</link>
+<language>fr</language>
+<generator>SPIP - www.spip.net</generator>
+<image>
+<title>ESPCI Paris</title>
+<url>https://www.espci.psl.eu/sites/www.espci.psl.eu/local/cache-vignettes/L144xH114/logo_espci-3df9f.png?1775052072</url>
+<link>http://www.espci.psl.eu/</link>
+<height>114</height>
+<width>144</width>
+</image>
+<item>
+<title>Séminaire Gulliver - Andrew Griffiths (LBC, ESPCI)</title>
+<link>https://www.espci.psl.eu/fr/agenda/2026/seminaire-gulliver-andrew-griffiths-lbc-espci?id_evenement=9460</link>
+<guid isPermaLink="true">https://www.espci.psl.eu/fr/agenda/2026/seminaire-gulliver-andrew-griffiths-lbc-espci?id_evenement=9460</guid>
+<dc:date>2026-03-16T10:30:00Z</dc:date>
+<dc:source>2026-03-16 11:30:00</dc:source>
+<dc:format>text/html</dc:format>
+<dc:language>fr</dc:language>
+<description> Lundi 16 mars de 11h30 à 12h30 - C162 </description>
+<content:encoded> Lundi 16 mars de 11h30 à 12h30 - C162  </content:encoded>
+</item>
+</channel>
+</rss>
