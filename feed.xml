@@ -20,7 +20,7 @@
 <dc:format>text/html</dc:format>
 <dc:language>fr</dc:language>
 <description> Lundi 16 mars de 11h30 à 12h30 - C162 </description>
-<content:encoded> Lundi 16 mars de 11h30 à 12h30 - C162  </content:encoded>
+<content:encoded> <div class='rss_texte'> Lundi 16 mars de 11h30 à 12h30 - C162 </div> </content:encoded>
 </item>
 </channel>
 </rss>
