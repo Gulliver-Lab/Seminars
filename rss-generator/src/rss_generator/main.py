@@ -1,5 +1,6 @@
 from argparse import ArgumentParser
 from csv import DictReader
+from datetime import datetime, timezone
 from io import BytesIO
 from pathlib import Path
 from xml.dom import minidom
@@ -11,6 +12,11 @@ DC_NAMESPACE = "http://purl.org/dc/elements/1.1/"
 def read_rows(csv_path: Path) -> list[dict[str, str]]:
     with csv_path.open(encoding="utf-8", newline="") as handle:
         return list(DictReader(handle))
+
+
+def format_rss_date(value: str) -> str:
+    parsed = datetime.strptime(value, "%d/%m/%y").replace(tzinfo=timezone.utc)
+    return parsed.replace(hour=9).strftime("%Y-%m-%dT%H:%M:%SZ")
 
 
 def build_feed(rows: list[dict[str, str]], title: str) -> Element:
@@ -26,7 +32,7 @@ def build_feed(rows: list[dict[str, str]], title: str) -> Element:
         item = SubElement(channel, "item")
         SubElement(item, "title").text = row["title"]
         SubElement(item, "link").text = ""
-        SubElement(item, f"{{{DC_NAMESPACE}}}date").text = row["date"]
+        SubElement(item, f"{{{DC_NAMESPACE}}}date").text = format_rss_date(row["date"])
         SubElement(item, "description").text = row["content"]
 
     return rss

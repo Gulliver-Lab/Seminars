@@ -23,7 +23,10 @@ def test_main_writes_feed_xml(tmp_path, monkeypatch):
 
     assert item is not None
     assert item.findtext("title") == "François Villemot (Gulliver)"
-    assert item.findtext("{http://purl.org/dc/elements/1.1/}date") == "18/06/26"
+    assert (
+        item.findtext("{http://purl.org/dc/elements/1.1/}date")
+        == "2026-06-18T09:00:00Z"
+    )
     assert item.find("link") is not None
     assert item.findtext("description") == "Practical LLM Use in Everyday Research"
     assert b"\r\n" in feed_xml
