@@ -1,6 +1,52 @@
-def main():
-    print("Hello from rss-generator!")
+from argparse import ArgumentParser
+from csv import DictReader
+from pathlib import Path
+from xml.etree.ElementTree import Element, ElementTree, SubElement, register_namespace
+
+DC_NAMESPACE = "http://purl.org/dc/elements/1.1/"
+
+
+def read_rows(csv_path: Path) -> list[dict[str, str]]:
+    with csv_path.open(encoding="utf-8", newline="") as handle:
+        return list(DictReader(handle))
+
+
+def build_feed(rows: list[dict[str, str]], title: str) -> Element:
+    register_namespace("dc", DC_NAMESPACE)
+    rss = Element("rss", attrib={"version": "2.0"})
+    channel = SubElement(rss, "channel")
+
+    SubElement(channel, "title").text = title
+    SubElement(channel, "link").text = ""
+    SubElement(channel, "description").text = title
+
+    for row in rows:
+        item = SubElement(channel, "item")
+        SubElement(item, "title").text = row["title"]
+        SubElement(item, "link").text = ""
+        SubElement(item, f"{{{DC_NAMESPACE}}}date").text = row["date"]
+        SubElement(item, "description").text = row["content"]
+
+    return rss
+
+
+def write_feed(feed: Element, output_path: Path) -> None:
+    ElementTree(feed).write(output_path, encoding="utf-8", xml_declaration=True)
+
+
+def main(csv_path: str | Path) -> None:
+    csv_path = Path(csv_path)
+    rows = read_rows(csv_path)
+    feed = build_feed(rows, csv_path.stem)
+    write_feed(feed, Path.cwd() / "feed.xml")
+
+
+def cli() -> None:
+    parser = ArgumentParser()
+    parser.add_argument("csv_path", type=Path)
+    args = parser.parse_args()
+    main(args.csv_path)
 
 
 if __name__ == "__main__":
-    main()
+    cli()

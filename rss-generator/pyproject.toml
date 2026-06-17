@@ -14,10 +14,11 @@ dev = [
     "ruff",
     "mypy",
     "taskipy",
+    "pytest>=9.0.2",
 ]
 
 [project.scripts]
-rss-generator = "rss_generator.main:main"
+rss-generator = "rss_generator.main:cli"
 
 [build-system]
 requires = ["uv_build"]
@@ -38,4 +39,5 @@ lint = "ruff check . --fix"
 check-formatting = "ruff format --check ."
 check-linting = "ruff check --select I ."
 check-typing = "mypy ."
+test = "python -m pytest tests/"
 all = "task format && task lint && task check-typing"
