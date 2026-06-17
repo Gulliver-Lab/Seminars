@@ -1,6 +1,8 @@
 from argparse import ArgumentParser
 from csv import DictReader
+from io import BytesIO
 from pathlib import Path
+from xml.dom import minidom
 from xml.etree.ElementTree import Element, ElementTree, SubElement, register_namespace
 
 DC_NAMESPACE = "http://purl.org/dc/elements/1.1/"
@@ -31,7 +33,14 @@ def build_feed(rows: list[dict[str, str]], title: str) -> Element:
 
 
 def write_feed(feed: Element, output_path: Path) -> None:
-    ElementTree(feed).write(output_path, encoding="utf-8", xml_declaration=True)
+    buffer = BytesIO()
+    ElementTree(feed).write(buffer, encoding="utf-8", xml_declaration=True)
+    pretty = minidom.parseString(buffer.getvalue()).toprettyxml(
+        indent="  ",
+        newl="\r\n",
+        encoding="utf-8",
+    )
+    output_path.write_bytes(pretty)
 
 
 def main(csv_path: str | Path) -> None:
