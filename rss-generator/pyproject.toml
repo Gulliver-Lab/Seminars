@@ -1,0 +1,41 @@
+[project]
+name = "rss-generator"
+version = "0.1.0"
+description = "Add your description here"
+readme = "README.md"
+requires-python = ">=3.14"
+dependencies = [
+    "pandas>=3.0.3",
+]
+
+
+[dependency-groups]
+dev = [
+    "ruff",
+    "mypy",
+    "taskipy",
+]
+
+[project.scripts]
+rss-generator = "rss_generator.main:main"
+
+[build-system]
+requires = ["uv_build"]
+build-backend = "uv_build"
+
+[tool.pytest]
+pythonpath = ["src"]
+
+[tool.mypy]
+exclude = ["build"]
+
+[tool.ruff.lint]
+select = ["E", "F", "I"]
+
+[tool.taskipy.tasks]
+format = "ruff format ."
+lint = "ruff check . --fix"
+check-formatting = "ruff format --check ."
+check-linting = "ruff check --select I ."
+check-typing = "mypy ."
+all = "task format && task lint && task check-typing"
