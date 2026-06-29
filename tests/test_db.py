@@ -4,6 +4,7 @@ import sqlite3
 import pytest
 
 from seminars.db import (
+    _create_schema,
     deserialize_contact_persons,
     insert_speaker,
     serialize_contact_persons,
@@ -25,19 +26,8 @@ def test_serializes_and_deserializes_contact_persons():
 
 def test_inserts_speaker():
     connection = sqlite3.connect(":memory:")
-    connection.execute(
-        """
-        CREATE TABLE speakers (
-            name TEXT,
-            affiliation TEXT,
-            email TEXT,
-            topic TEXT,
-            contact_persons TEXT,
-            notes TEXT,
-            exclude BOOLEAN
-        )
-        """
-    )
+    _create_schema(connection)
+
     speaker = Speaker(
         name="Alice Example",
         affiliation="Example University",
