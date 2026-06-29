@@ -1,6 +1,8 @@
 import argparse
 from typing import Sequence
 
+import seminars
+
 
 def build_parser() -> argparse.ArgumentParser:
     parser = argparse.ArgumentParser(description="Run Seminar tool")
@@ -10,4 +12,6 @@ def build_parser() -> argparse.ArgumentParser:
 
 def main(argv: Sequence[str] | None = None) -> None:
     args = build_parser().parse_args(argv)
-    print("Path to file:", args.db_path)
+
+    _ = seminars.open_or_create_db(args.db_path)
+    print("Connection opened")
