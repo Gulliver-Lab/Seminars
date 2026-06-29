@@ -7,7 +7,7 @@ EXPECTED_SPEAKERS_SCHEMA = [
     ("affiliation", "TEXT"),
     ("email", "TEXT"),
     ("topic", "TEXT"),
-    ("contact_person", "TEXT"),
+    ("contact_persons", "TEXT"),
     ("notes", "TEXT"),
     ("exclude", "BOOLEAN"),
 ]
@@ -51,7 +51,7 @@ def _create_schema(connection: sqlite3.Connection) -> None:
             affiliation TEXT,
             email TEXT,
             topic TEXT,
-            contact_person TEXT,
+            contact_persons TEXT,
             notes TEXT,
             exclude BOOLEAN
         )
