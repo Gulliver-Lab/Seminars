@@ -2,6 +2,8 @@ import json
 import sqlite3
 from pathlib import Path
 
+import pandas as pd
+
 from seminars.models import Speaker
 
 EXPECTED_SPEAKERS_SCHEMA = [
@@ -60,6 +62,18 @@ def insert_speaker(connection: sqlite3.Connection, speaker: Speaker) -> None:
         ),
     )
     connection.commit()
+
+
+def read_speakers(connection: sqlite3.Connection) -> pd.DataFrame:
+    columns = [name for name, _type in EXPECTED_SPEAKERS_SCHEMA]
+    dataframe = pd.read_sql_query(
+        f"SELECT {', '.join(columns)} FROM speakers",
+        connection,
+    )
+    dataframe["contact_persons"] = dataframe["contact_persons"].map(
+        deserialize_contact_persons
+    )
+    return dataframe
 
 
 def open_or_create_db(filepath: str | Path) -> sqlite3.Connection:
