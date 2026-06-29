@@ -2,6 +2,8 @@ import json
 import sqlite3
 from pathlib import Path
 
+from seminars.models import Speaker
+
 EXPECTED_SPEAKERS_SCHEMA = [
     ("name", "TEXT"),
     ("affiliation", "TEXT"),
@@ -31,6 +33,33 @@ def deserialize_contact_persons(value: str | None) -> list[str] | None:
     ):
         raise ValueError("contact_person must be a JSON list of strings")
     return parsed
+
+
+def insert_speaker(connection: sqlite3.Connection, speaker: Speaker) -> None:
+    connection.execute(
+        """
+        INSERT INTO speakers (
+            name,
+            affiliation,
+            email,
+            topic,
+            contact_persons,
+            notes,
+            exclude
+        )
+        VALUES (?, ?, ?, ?, ?, ?, ?)
+        """,
+        (
+            speaker.name,
+            speaker.affiliation,
+            speaker.email,
+            speaker.topic,
+            serialize_contact_persons(speaker.contact_persons),
+            speaker.notes,
+            speaker.exclude,
+        ),
+    )
+    connection.commit()
 
 
 def open_or_create_db(filepath: str | Path) -> sqlite3.Connection:
