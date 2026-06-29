@@ -16,6 +16,7 @@ dev = [
     "ruff",
     "mypy",
     "taskipy",
+    "pytest",
     "pandas-stubs>=2.3.3.251201",
 ]
 
@@ -38,4 +39,5 @@ lint = "ruff check . --fix"
 check-formatting = "ruff format --check ."
 check-linting = "ruff check --select I ."
 check-typing = "mypy ."
+test = "python -m pytest tests/"
 all = "task format && task lint && task check-typing"
