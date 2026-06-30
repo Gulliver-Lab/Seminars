@@ -1,5 +1,10 @@
 import dataclasses
 import datetime
+from enum import StrEnum
+
+
+class TalkStatus(StrEnum):
+    COMPLETED = "completed"
 
 
 @dataclasses.dataclass
@@ -19,5 +24,5 @@ class Talk:
     speaker: str
     title: str
     abstract: str
-    status: str
+    status: TalkStatus
     comments: str
