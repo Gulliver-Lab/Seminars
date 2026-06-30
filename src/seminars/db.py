@@ -4,7 +4,7 @@ from pathlib import Path
 
 import pandas as pd
 
-from seminars.models import Speaker
+from seminars.models import Speaker, Talk
 
 EXPECTED_SPEAKERS_SCHEMA = [
     ("name", "TEXT"),
@@ -14,6 +14,15 @@ EXPECTED_SPEAKERS_SCHEMA = [
     ("contact_persons", "TEXT"),
     ("notes", "TEXT"),
     ("exclude", "BOOLEAN"),
+]
+
+EXPECTED_TALKS_SCHEMA = [
+    ("date", "TEXT"),
+    ("speaker", "TEXT"),
+    ("title", "TEXT"),
+    ("abstract", "TEXT"),
+    ("status", "TEXT"),
+    ("comments", "TEXT"),
 ]
 
 
@@ -83,11 +92,53 @@ def read_speakers(connection: sqlite3.Connection) -> pd.DataFrame:
     return dataframe
 
 
+def insert_talk(connection: sqlite3.Connection, talk: Talk) -> None:
+    connection.execute(
+        """
+        INSERT INTO talks (
+            date,
+            speaker,
+            title,
+            abstract,
+            status,
+            comments
+        )
+        VALUES (?, ?, ?, ?, ?, ?)
+        ON CONFLICT(date) DO UPDATE SET
+            speaker = excluded.speaker,
+            title = excluded.title,
+            abstract = excluded.abstract,
+            status = excluded.status,
+            comments = excluded.comments
+        """,
+        (
+            talk.date.isoformat(),
+            talk.speaker,
+            talk.title,
+            talk.abstract,
+            talk.status,
+            talk.comments,
+        ),
+    )
+    connection.commit()
+
+
+def read_talks(connection: sqlite3.Connection) -> pd.DataFrame:
+    columns = [name for name, _type in EXPECTED_TALKS_SCHEMA]
+    dataframe = pd.read_sql_query(
+        f"SELECT {', '.join(columns)} FROM talks",
+        connection,
+    )
+    dataframe["date"] = pd.to_datetime(dataframe["date"])
+    return dataframe
+
+
 def open_or_create_db(filepath: str | Path) -> sqlite3.Connection:
     path = Path(filepath)
     exists = path.exists()
 
     connection = sqlite3.connect(path)
+    connection.execute("PRAGMA foreign_keys = ON")
     if not exists:
         _create_schema(connection)
 
@@ -105,6 +156,19 @@ def _create_schema(connection: sqlite3.Connection) -> None:
             contact_persons TEXT,
             notes TEXT,
             exclude BOOLEAN
+        )
+        """
+    )
+    connection.execute(
+        """
+        CREATE TABLE talks (
+            date TEXT PRIMARY KEY,
+            speaker TEXT,
+            title TEXT,
+            abstract TEXT,
+            status TEXT,
+            comments TEXT,
+            FOREIGN KEY (speaker) REFERENCES speakers(name)
         )
         """
     )
