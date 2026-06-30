@@ -181,6 +181,14 @@
         background: #fafbfc;
       }
 
+      tbody tr {
+        cursor: pointer;
+      }
+
+      tbody tr:hover td {
+        background: #eef5ff;
+      }
+
       th:first-child,
       td:first-child {
         border-left: 0;
@@ -372,7 +380,16 @@
             </thead>
             <tbody>
               {% for speaker in speakers %}
-                <tr data-speaker-name="{{ speaker.name | lower }}">
+                <tr
+                  data-speaker-name="{{ speaker.name | lower }}"
+                  data-edit-name="{{ speaker.name }}"
+                  data-edit-affiliation="{{ speaker.affiliation }}"
+                  data-edit-email="{{ speaker.email }}"
+                  data-edit-topic="{{ speaker.topic }}"
+                  data-edit-contact-persons="{{ speaker.contact_persons }}"
+                  data-edit-notes="{{ speaker.notes }}"
+                  data-edit-exclude="{{ speaker.exclude }}"
+                >
                   {% for key, _ in columns %}
                     <td>{{ speaker[key] }}</td>
                   {% endfor %}
@@ -429,6 +446,51 @@
           </form>
         </div>
       </div>
+
+      <div class="modal" id="edit-speaker-modal" aria-hidden="true">
+        <div class="modal-panel" role="dialog" aria-modal="true" aria-labelledby="edit-speaker-title">
+          <div class="modal-header">
+            <h2 id="edit-speaker-title">Edit Speaker</h2>
+            <button class="secondary-button" type="button" id="close-edit-speaker">Close</button>
+          </div>
+          <form class="speaker-form" id="edit-speaker-form" method="post">
+            <div class="form-grid">
+              <div class="field">
+                <label for="edit-speaker-name">Name</label>
+                <input id="edit-speaker-name" name="name" required>
+              </div>
+              <div class="field">
+                <label for="edit-speaker-affiliation">Affiliation</label>
+                <input id="edit-speaker-affiliation" name="affiliation">
+              </div>
+              <div class="field">
+                <label for="edit-speaker-email">Email</label>
+                <input id="edit-speaker-email" name="email" type="email">
+              </div>
+              <div class="field">
+                <label for="edit-speaker-topic">Topic</label>
+                <input id="edit-speaker-topic" name="topic">
+              </div>
+              <div class="field full">
+                <label for="edit-speaker-contact-persons">Contact persons</label>
+                <input id="edit-speaker-contact-persons" name="contact_persons">
+              </div>
+              <div class="field full">
+                <label for="edit-speaker-notes">Notes</label>
+                <textarea id="edit-speaker-notes" name="notes"></textarea>
+              </div>
+              <label class="checkbox-field">
+                <input id="edit-speaker-exclude" name="exclude" type="checkbox">
+                Exclude
+              </label>
+            </div>
+            <div class="form-actions">
+              <button class="secondary-button" type="button" id="cancel-edit-speaker">Cancel</button>
+              <button type="submit">Save Speaker</button>
+            </div>
+          </form>
+        </div>
+      </div>
     </main>
     <script>
       const searchInput = document.getElementById("speaker-search");
@@ -438,6 +500,10 @@
       const newSpeakerModal = document.getElementById("new-speaker-modal");
       const closeNewSpeaker = document.getElementById("close-new-speaker");
       const cancelNewSpeaker = document.getElementById("cancel-new-speaker");
+      const editSpeakerModal = document.getElementById("edit-speaker-modal");
+      const editSpeakerForm = document.getElementById("edit-speaker-form");
+      const closeEditSpeaker = document.getElementById("close-edit-speaker");
+      const cancelEditSpeaker = document.getElementById("cancel-edit-speaker");
 
       searchInput.addEventListener("input", () => {
         const query = searchInput.value.trim().toLowerCase();
@@ -466,17 +532,50 @@
         newSpeakerButton.focus();
       };
 
+      const openEditSpeakerModal = (row) => {
+        const speaker = row.dataset;
+        editSpeakerForm.action = `/speakers/${encodeURIComponent(speaker.editName)}`;
+        document.getElementById("edit-speaker-name").value = speaker.editName;
+        document.getElementById("edit-speaker-affiliation").value = speaker.editAffiliation;
+        document.getElementById("edit-speaker-email").value = speaker.editEmail;
+        document.getElementById("edit-speaker-topic").value = speaker.editTopic;
+        document.getElementById("edit-speaker-contact-persons").value = speaker.editContactPersons;
+        document.getElementById("edit-speaker-notes").value = speaker.editNotes;
+        document.getElementById("edit-speaker-exclude").checked = speaker.editExclude === "1";
+        editSpeakerModal.classList.add("open");
+        editSpeakerModal.setAttribute("aria-hidden", "false");
+        document.getElementById("edit-speaker-name").focus();
+      };
+
+      const closeEditSpeakerModal = () => {
+        editSpeakerModal.classList.remove("open");
+        editSpeakerModal.setAttribute("aria-hidden", "true");
+      };
+
       newSpeakerButton.addEventListener("click", openNewSpeakerModal);
       closeNewSpeaker.addEventListener("click", closeNewSpeakerModal);
       cancelNewSpeaker.addEventListener("click", closeNewSpeakerModal);
+      rows.forEach((row) => {
+        row.addEventListener("click", () => openEditSpeakerModal(row));
+      });
+      closeEditSpeaker.addEventListener("click", closeEditSpeakerModal);
+      cancelEditSpeaker.addEventListener("click", closeEditSpeakerModal);
       newSpeakerModal.addEventListener("click", (event) => {
         if (event.target === newSpeakerModal) {
           closeNewSpeakerModal();
         }
       });
+      editSpeakerModal.addEventListener("click", (event) => {
+        if (event.target === editSpeakerModal) {
+          closeEditSpeakerModal();
+        }
+      });
       document.addEventListener("keydown", (event) => {
         if (event.key === "Escape" && newSpeakerModal.classList.contains("open")) {
           closeNewSpeakerModal();
+        }
+        if (event.key === "Escape" && editSpeakerModal.classList.contains("open")) {
+          closeEditSpeakerModal();
         }
       });
     </script>

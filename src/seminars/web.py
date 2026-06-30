@@ -8,7 +8,13 @@ from fastapi import FastAPI, Form, Request
 from fastapi.responses import HTMLResponse, RedirectResponse
 from fastapi.templating import Jinja2Templates
 
-from seminars.db import insert_speaker, open_or_create_db, read_speakers, read_talks
+from seminars.db import (
+    insert_speaker,
+    open_or_create_db,
+    read_speakers,
+    read_talks,
+    update_speaker,
+)
 from seminars.models import Speaker
 
 TEMPLATES = Jinja2Templates(directory=Path(__file__).parent / "templates")
@@ -67,18 +73,33 @@ def build_app(db_path: str | Path) -> FastAPI:
         notes: str = Form(""),
         exclude: str | None = Form(None),
     ) -> RedirectResponse:
-        speaker = Speaker(
-            name=name.title(),
-            affiliation=affiliation,
-            email=email,
-            topic=topic,
-            contact_persons=_parse_contact_persons(contact_persons),
-            notes=notes,
-            exclude=exclude == "on",
+        speaker = _speaker_from_form(
+            name, affiliation, email, topic, contact_persons, notes, exclude
         )
         connection = open_or_create_db(database_path)
         try:
             insert_speaker(connection, speaker)
+        finally:
+            connection.close()
+        return RedirectResponse("/", status_code=303)
+
+    @app.post("/speakers/{original_name}")
+    def edit_speaker(
+        original_name: str,
+        name: str = Form(),
+        affiliation: str = Form(""),
+        email: str = Form(""),
+        topic: str = Form(""),
+        contact_persons: str = Form(""),
+        notes: str = Form(""),
+        exclude: str | None = Form(None),
+    ) -> RedirectResponse:
+        speaker = _speaker_from_form(
+            name, affiliation, email, topic, contact_persons, notes, exclude
+        )
+        connection = open_or_create_db(database_path)
+        try:
+            update_speaker(connection, original_name, speaker)
         finally:
             connection.close()
         return RedirectResponse("/", status_code=303)
@@ -127,6 +148,26 @@ def _format_speaker(row: dict[str, Any]) -> dict[str, Any]:
     if isinstance(contact_persons, list):
         row["contact_persons"] = ", ".join(contact_persons)
     return row
+
+
+def _speaker_from_form(
+    name: str,
+    affiliation: str,
+    email: str,
+    topic: str,
+    contact_persons: str,
+    notes: str,
+    exclude: str | None,
+) -> Speaker:
+    return Speaker(
+        name=name.title(),
+        affiliation=affiliation,
+        email=email,
+        topic=topic,
+        contact_persons=_parse_contact_persons(contact_persons),
+        notes=notes,
+        exclude=exclude == "on",
+    )
 
 
 def _parse_contact_persons(value: str) -> list[str]:

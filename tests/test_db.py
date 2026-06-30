@@ -13,6 +13,7 @@ from seminars.db import (
     read_speakers,
     read_talks,
     serialize_contact_persons,
+    update_speaker,
 )
 from seminars.models import Speaker, Talk
 
@@ -108,6 +109,102 @@ def test_insert_speaker_updates_existing_speaker_with_same_name():
             1,
         )
     ]
+
+
+def test_update_speaker_updates_existing_row():
+    connection = sqlite3.connect(":memory:")
+    connection.execute("PRAGMA foreign_keys = ON")
+    _create_schema(connection)
+    insert_speaker(
+        connection,
+        Speaker(
+            name="Alice Example",
+            affiliation="Example University",
+            email="alice@example.edu",
+            topic="Quantum seminars",
+            contact_persons=["Bob Example"],
+            notes="Available in spring",
+            exclude=False,
+        ),
+    )
+
+    update_speaker(
+        connection,
+        "Alice Example",
+        Speaker(
+            name="Alice Updated",
+            affiliation="Updated Institute",
+            email="alice.updated@example.edu",
+            topic="Updated topic",
+            contact_persons=["Carol Example"],
+            notes="Updated notes",
+            exclude=True,
+        ),
+    )
+
+    rows = connection.execute(
+        """
+        SELECT name, affiliation, email, topic, contact_persons, notes, exclude
+        FROM speakers
+        """
+    ).fetchall()
+    assert rows == [
+        (
+            "Alice Updated",
+            "Updated Institute",
+            "alice.updated@example.edu",
+            "Updated topic",
+            '["Carol Example"]',
+            "Updated notes",
+            1,
+        )
+    ]
+
+
+def test_update_speaker_name_cascades_to_talks():
+    connection = sqlite3.connect(":memory:")
+    connection.execute("PRAGMA foreign_keys = ON")
+    _create_schema(connection)
+    insert_speaker(
+        connection,
+        Speaker(
+            name="Alice Example",
+            affiliation="Example University",
+            email="alice@example.edu",
+            topic="Quantum seminars",
+            contact_persons=["Bob Example"],
+            notes="Available in spring",
+            exclude=False,
+        ),
+    )
+    insert_talk(
+        connection,
+        Talk(
+            date=datetime.datetime(2026, 1, 15, 14, 30),
+            speaker="Alice Example",
+            title="Quantum seminars",
+            abstract="An abstract",
+            status="confirmed",
+            comments="Bring projector",
+        ),
+    )
+
+    update_speaker(
+        connection,
+        "Alice Example",
+        Speaker(
+            name="Alice Updated",
+            affiliation="Example University",
+            email="alice@example.edu",
+            topic="Quantum seminars",
+            contact_persons=["Bob Example"],
+            notes="Available in spring",
+            exclude=False,
+        ),
+    )
+
+    talk_speakers = connection.execute("SELECT speaker FROM talks").fetchall()
+    assert talk_speakers == [("Alice Updated",)]
 
 
 def test_reads_speakers_as_dataframe():

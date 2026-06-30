@@ -80,6 +80,36 @@ def insert_speaker(connection: sqlite3.Connection, speaker: Speaker) -> None:
     connection.commit()
 
 
+def update_speaker(
+    connection: sqlite3.Connection, original_name: str, speaker: Speaker
+) -> None:
+    connection.execute(
+        """
+        UPDATE speakers
+        SET
+            name = ?,
+            affiliation = ?,
+            email = ?,
+            topic = ?,
+            contact_persons = ?,
+            notes = ?,
+            exclude = ?
+        WHERE name = ?
+        """,
+        (
+            speaker.name,
+            speaker.affiliation,
+            speaker.email,
+            speaker.topic,
+            serialize_contact_persons(speaker.contact_persons),
+            speaker.notes,
+            speaker.exclude,
+            original_name,
+        ),
+    )
+    connection.commit()
+
+
 def read_speakers(connection: sqlite3.Connection) -> pd.DataFrame:
     columns = [name for name, _type in EXPECTED_SPEAKERS_SCHEMA]
     dataframe = pd.read_sql_query(
@@ -162,7 +192,7 @@ def _create_schema(connection: sqlite3.Connection) -> None:
             abstract TEXT,
             status TEXT,
             comments TEXT,
-            FOREIGN KEY (speaker) REFERENCES speakers(name)
+            FOREIGN KEY (speaker) REFERENCES speakers(name) ON UPDATE CASCADE
         )
         """
     )

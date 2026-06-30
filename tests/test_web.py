@@ -38,7 +38,7 @@ def test_homepage_displays_speakers_table(tmp_path):
     assert "<table" in response.text
     assert "Alice Example" in response.text
     assert "Example University" in response.text
-    assert "alice@example.edu" not in response.text
+    assert "<td>alice@example.edu</td>" not in response.text
     assert "Bob Example, Carol Example" in response.text
     assert "Sort Exclude" not in response.text
 
@@ -285,3 +285,93 @@ def test_post_speaker_creates_speaker(tmp_path):
             "exclude": 1,
         }
     ]
+
+
+def test_homepage_displays_edit_speaker_data(tmp_path):
+    db_path = tmp_path / "seminars.db"
+    connection = open_or_create_db(db_path)
+    insert_speaker(
+        connection,
+        Speaker(
+            name="Alice Example",
+            affiliation="Example University",
+            email="alice@example.edu",
+            topic="Quantum seminars",
+            contact_persons=["Bob Example", "Carol Example"],
+            notes="Available in spring",
+            exclude=True,
+        ),
+    )
+    connection.close()
+    client = TestClient(build_app(db_path))
+
+    response = client.get("/")
+
+    assert response.status_code == 200
+    assert 'id="edit-speaker-modal"' in response.text
+    assert 'data-edit-name="Alice Example"' in response.text
+    assert 'data-edit-email="alice@example.edu"' in response.text
+    assert 'data-edit-contact-persons="Bob Example, Carol Example"' in response.text
+    assert 'data-edit-exclude="1"' in response.text
+
+
+def test_post_speaker_edit_updates_speaker_and_cascades_talks(tmp_path):
+    db_path = tmp_path / "seminars.db"
+    connection = open_or_create_db(db_path)
+    insert_speaker(
+        connection,
+        Speaker(
+            name="Alice Example",
+            affiliation="Example University",
+            email="alice@example.edu",
+            topic="Quantum seminars",
+            contact_persons=["Bob Example"],
+            notes="Available in spring",
+            exclude=False,
+        ),
+    )
+    insert_talk(
+        connection,
+        Talk(
+            date=datetime.datetime(2026, 1, 15, 14, 30),
+            speaker="Alice Example",
+            title="Quantum seminars",
+            abstract="An abstract",
+            status="confirmed",
+            comments="Bring projector",
+        ),
+    )
+    connection.close()
+    client = TestClient(build_app(db_path))
+
+    response = client.post(
+        "/speakers/Alice%20Example",
+        data={
+            "name": "Alice Updated",
+            "affiliation": "Updated Institute",
+            "email": "alice.updated@example.edu",
+            "topic": "Updated topic",
+            "contact_persons": "Carol Example",
+            "notes": "Updated notes",
+        },
+        follow_redirects=False,
+    )
+
+    assert response.status_code == 303
+    assert response.headers["location"] == "/"
+    connection = open_or_create_db(db_path)
+    speakers = read_speakers(connection).to_dict("records")
+    talks = read_talks(connection).to_dict("records")
+    connection.close()
+    assert speakers == [
+        {
+            "name": "Alice Updated",
+            "affiliation": "Updated Institute",
+            "email": "alice.updated@example.edu",
+            "topic": "Updated topic",
+            "contact_persons": ["Carol Example"],
+            "notes": "Updated notes",
+            "exclude": 0,
+        }
+    ]
+    assert talks[0]["speaker"] == "Alice Updated"
