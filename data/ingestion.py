@@ -45,6 +45,7 @@ if __name__ == "__main__":
 
         # Skip some edge cases
         if name in [
+            "2007",
             "2008",
             "2009",
             "2010",
