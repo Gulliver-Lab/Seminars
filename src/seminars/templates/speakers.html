@@ -105,6 +105,23 @@
         border-color: #aeb9c8;
       }
 
+      .danger-button {
+        background: #9f2f2f;
+        border-color: #9f2f2f;
+      }
+
+      .danger-button:hover {
+        background: #812424;
+        border-color: #812424;
+      }
+
+      .danger-button:disabled {
+        background: #d6dbe3;
+        border-color: #d6dbe3;
+        color: #6a7584;
+        cursor: not-allowed;
+      }
+
       .sheet {
         background: #ffffff;
         border: 1px solid #d9dee7;
@@ -306,6 +323,18 @@
         border-top: 1px solid #e2e7ef;
         margin-top: 16px;
         padding-top: 14px;
+      }
+
+      .delete-speaker {
+        border-top: 1px solid #e2e7ef;
+        margin-top: 16px;
+        padding-top: 14px;
+      }
+
+      .delete-hint {
+        color: #586576;
+        font-size: 13px;
+        margin: 8px 0 0;
       }
 
       .speaker-talks h3 {
@@ -529,6 +558,12 @@
             <h3>Talks</h3>
             <ul class="talk-list" id="edit-speaker-talks"></ul>
           </div>
+          <form class="delete-speaker" id="delete-speaker-form" method="post">
+            <button class="danger-button" id="delete-speaker-button" type="submit">
+              Remove Speaker
+            </button>
+            <p class="delete-hint" id="delete-speaker-hint"></p>
+          </form>
         </div>
       </div>
     </main>
@@ -542,6 +577,9 @@
       const cancelNewSpeaker = document.getElementById("cancel-new-speaker");
       const editSpeakerModal = document.getElementById("edit-speaker-modal");
       const editSpeakerForm = document.getElementById("edit-speaker-form");
+      const deleteSpeakerForm = document.getElementById("delete-speaker-form");
+      const deleteSpeakerButton = document.getElementById("delete-speaker-button");
+      const deleteSpeakerHint = document.getElementById("delete-speaker-hint");
       const closeEditSpeaker = document.getElementById("close-edit-speaker");
       const cancelEditSpeaker = document.getElementById("cancel-edit-speaker");
 
@@ -574,7 +612,9 @@
 
       const openEditSpeakerModal = (row) => {
         const speaker = row.dataset;
+        const talks = JSON.parse(speaker.editTalks);
         editSpeakerForm.action = `/speakers/${encodeURIComponent(speaker.editName)}`;
+        deleteSpeakerForm.action = `/speakers/${encodeURIComponent(speaker.editName)}/delete`;
         document.getElementById("edit-speaker-name").value = speaker.editName;
         document.getElementById("edit-speaker-affiliation").value = speaker.editAffiliation;
         document.getElementById("edit-speaker-email").value = speaker.editEmail;
@@ -582,7 +622,11 @@
         document.getElementById("edit-speaker-contact-persons").value = speaker.editContactPersons;
         document.getElementById("edit-speaker-notes").value = speaker.editNotes;
         document.getElementById("edit-speaker-exclude").checked = speaker.editExclude === "1";
-        renderSpeakerTalks(JSON.parse(speaker.editTalks));
+        renderSpeakerTalks(talks);
+        deleteSpeakerButton.disabled = talks.length > 0;
+        deleteSpeakerHint.textContent = talks.length > 0
+          ? "This speaker has talks and cannot be removed."
+          : "This speaker has no talks and can be removed.";
         editSpeakerModal.classList.add("open");
         editSpeakerModal.setAttribute("aria-hidden", "false");
         document.getElementById("edit-speaker-name").focus();

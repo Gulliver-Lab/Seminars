@@ -5,10 +5,16 @@ from typing import Any, Sequence, cast
 import pandas as pd
 import uvicorn
 from fastapi import FastAPI, Form, Request
-from fastapi.responses import HTMLResponse, RedirectResponse
+from fastapi.responses import (
+    HTMLResponse,
+    PlainTextResponse,
+    RedirectResponse,
+    Response,
+)
 from fastapi.templating import Jinja2Templates
 
 from seminars.db import (
+    delete_speaker,
     insert_speaker,
     open_or_create_db,
     read_speakers,
@@ -102,6 +108,17 @@ def build_app(db_path: str | Path) -> FastAPI:
         connection = open_or_create_db(database_path)
         try:
             update_speaker(connection, original_name, speaker)
+        finally:
+            connection.close()
+        return RedirectResponse("/", status_code=303)
+
+    @app.post("/speakers/{name}/delete")
+    def remove_speaker(name: str) -> Response:
+        connection = open_or_create_db(database_path)
+        try:
+            delete_speaker(connection, name)
+        except ValueError as error:
+            return PlainTextResponse(str(error), status_code=409)
         finally:
             connection.close()
         return RedirectResponse("/", status_code=303)

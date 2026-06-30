@@ -110,6 +110,18 @@ def update_speaker(
     connection.commit()
 
 
+def delete_speaker(connection: sqlite3.Connection, name: str) -> None:
+    talk_count = connection.execute(
+        "SELECT COUNT(*) FROM talks WHERE speaker = ?",
+        (name,),
+    ).fetchone()[0]
+    if talk_count:
+        raise ValueError("speaker has talks")
+
+    connection.execute("DELETE FROM speakers WHERE name = ?", (name,))
+    connection.commit()
+
+
 def read_speakers(connection: sqlite3.Connection) -> pd.DataFrame:
     columns = [name for name, _type in EXPECTED_SPEAKERS_SCHEMA]
     dataframe = pd.read_sql_query(

@@ -336,6 +336,8 @@ def test_homepage_displays_edit_speaker_data(tmp_path):
     assert 'data-edit-contact-persons="Bob Example, Carol Example"' in response.text
     assert 'data-edit-exclude="1"' in response.text
     assert 'id="edit-speaker-talks"' in response.text
+    assert 'id="delete-speaker-form"' in response.text
+    assert 'id="delete-speaker-button"' in response.text
     assert response.text.index("Latest talk") < response.text.index("Earlier talk")
 
 
@@ -399,3 +401,73 @@ def test_post_speaker_edit_updates_speaker_and_cascades_talks(tmp_path):
         }
     ]
     assert talks[0]["speaker"] == "Alice Updated"
+
+
+def test_post_speaker_delete_removes_speaker_without_talks(tmp_path):
+    db_path = tmp_path / "seminars.db"
+    connection = open_or_create_db(db_path)
+    insert_speaker(
+        connection,
+        Speaker(
+            name="Alice Example",
+            affiliation="Example University",
+            email="alice@example.edu",
+            topic="Quantum seminars",
+            contact_persons=[],
+            notes="",
+            exclude=False,
+        ),
+    )
+    connection.close()
+    client = TestClient(build_app(db_path))
+
+    response = client.post(
+        "/speakers/Alice%20Example/delete", follow_redirects=False
+    )
+
+    assert response.status_code == 303
+    assert response.headers["location"] == "/"
+    connection = open_or_create_db(db_path)
+    speakers = read_speakers(connection).to_dict("records")
+    connection.close()
+    assert speakers == []
+
+
+def test_post_speaker_delete_rejects_speaker_with_talks(tmp_path):
+    db_path = tmp_path / "seminars.db"
+    connection = open_or_create_db(db_path)
+    insert_speaker(
+        connection,
+        Speaker(
+            name="Alice Example",
+            affiliation="Example University",
+            email="alice@example.edu",
+            topic="Quantum seminars",
+            contact_persons=[],
+            notes="",
+            exclude=False,
+        ),
+    )
+    insert_talk(
+        connection,
+        Talk(
+            date=datetime.datetime(2026, 1, 15, 14, 30),
+            speaker="Alice Example",
+            title="Quantum seminars",
+            abstract="",
+            status="done",
+            comments="",
+        ),
+    )
+    connection.close()
+    client = TestClient(build_app(db_path))
+
+    response = client.post(
+        "/speakers/Alice%20Example/delete", follow_redirects=False
+    )
+
+    assert response.status_code == 409
+    connection = open_or_create_db(db_path)
+    speakers = read_speakers(connection).to_dict("records")
+    connection.close()
+    assert speakers[0]["name"] == "Alice Example"

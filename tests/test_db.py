@@ -6,6 +6,7 @@ import pytest
 
 from seminars.db import (
     _create_schema,
+    delete_speaker,
     deserialize_contact_persons,
     insert_speaker,
     insert_talk,
@@ -205,6 +206,64 @@ def test_update_speaker_name_cascades_to_talks():
 
     talk_speakers = connection.execute("SELECT speaker FROM talks").fetchall()
     assert talk_speakers == [("Alice Updated",)]
+
+
+def test_delete_speaker_removes_speaker_without_talks():
+    connection = sqlite3.connect(":memory:")
+    connection.execute("PRAGMA foreign_keys = ON")
+    _create_schema(connection)
+    insert_speaker(
+        connection,
+        Speaker(
+            name="Alice Example",
+            affiliation="Example University",
+            email="alice@example.edu",
+            topic="Quantum seminars",
+            contact_persons=["Bob Example"],
+            notes="Available in spring",
+            exclude=False,
+        ),
+    )
+
+    delete_speaker(connection, "Alice Example")
+
+    assert connection.execute("SELECT name FROM speakers").fetchall() == []
+
+
+def test_delete_speaker_rejects_speaker_with_talks():
+    connection = sqlite3.connect(":memory:")
+    connection.execute("PRAGMA foreign_keys = ON")
+    _create_schema(connection)
+    insert_speaker(
+        connection,
+        Speaker(
+            name="Alice Example",
+            affiliation="Example University",
+            email="alice@example.edu",
+            topic="Quantum seminars",
+            contact_persons=["Bob Example"],
+            notes="Available in spring",
+            exclude=False,
+        ),
+    )
+    insert_talk(
+        connection,
+        Talk(
+            date=datetime.datetime(2026, 1, 15, 14, 30),
+            speaker="Alice Example",
+            title="Quantum seminars",
+            abstract="An abstract",
+            status="confirmed",
+            comments="Bring projector",
+        ),
+    )
+
+    with pytest.raises(ValueError, match="speaker has talks"):
+        delete_speaker(connection, "Alice Example")
+
+    assert connection.execute("SELECT name FROM speakers").fetchall() == [
+        ("Alice Example",)
+    ]
 
 
 def test_reads_speakers_as_dataframe():
