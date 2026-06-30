@@ -1,4 +1,5 @@
 import dataclasses
+import datetime
 
 
 @dataclasses.dataclass
@@ -10,3 +11,13 @@ class Speaker:
     contact_persons: list[str]
     notes: str
     exclude: bool
+
+
+@dataclasses.dataclass
+class Talk:
+    date: datetime.datetime
+    speaker: str
+    title: str
+    abstract: str
+    status: str
+    comments: str
