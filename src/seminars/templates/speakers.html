@@ -46,6 +46,30 @@
         white-space: nowrap;
       }
 
+      .toolbar {
+        align-items: center;
+        display: flex;
+        gap: 12px;
+        margin-bottom: 12px;
+      }
+
+      .search-input {
+        background: #ffffff;
+        border: 1px solid #cbd3df;
+        color: #1c2430;
+        font: inherit;
+        height: 36px;
+        max-width: 360px;
+        padding: 7px 10px;
+        width: 100%;
+      }
+
+      .search-input:focus {
+        border-color: #6d7f95;
+        outline: 2px solid #dbe3ee;
+        outline-offset: 0;
+      }
+
       .sheet {
         background: #ffffff;
         border: 1px solid #d9dee7;
@@ -152,6 +176,11 @@
           align-items: start;
           flex-direction: column;
         }
+
+        .toolbar {
+          align-items: stretch;
+          flex-direction: column;
+        }
       }
     </style>
   </head>
@@ -159,7 +188,18 @@
     <main>
       <div class="page-header">
         <h1>Speakers</h1>
-        <div class="count">{{ speakers | length }} rows</div>
+        <div class="count"><span id="visible-count">{{ speakers | length }}</span> rows</div>
+      </div>
+
+      <div class="toolbar">
+        <input
+          class="search-input"
+          id="speaker-search"
+          type="search"
+          placeholder="Search names"
+          aria-label="Search speaker names"
+          autocomplete="off"
+        >
       </div>
 
       <div class="sheet">
@@ -192,7 +232,7 @@
             </thead>
             <tbody>
               {% for speaker in speakers %}
-                <tr>
+                <tr data-speaker-name="{{ speaker.name | lower }}">
                   {% for key, _ in columns %}
                     <td>{{ speaker[key] }}</td>
                   {% endfor %}
@@ -205,5 +245,25 @@
         {% endif %}
       </div>
     </main>
+    <script>
+      const searchInput = document.getElementById("speaker-search");
+      const visibleCount = document.getElementById("visible-count");
+      const rows = Array.from(document.querySelectorAll("tbody tr[data-speaker-name]"));
+
+      searchInput.addEventListener("input", () => {
+        const query = searchInput.value.trim().toLowerCase();
+        let count = 0;
+
+        rows.forEach((row) => {
+          const isVisible = row.dataset.speakerName.includes(query);
+          row.hidden = !isVisible;
+          if (isVisible) {
+            count += 1;
+          }
+        });
+
+        visibleCount.textContent = count;
+      });
+    </script>
   </body>
 </html>

@@ -203,3 +203,31 @@ def test_homepage_displays_sort_links(tmp_path):
     assert "?sort=name&amp;direction=desc" in response.text
     assert "?sort=last_talk&amp;direction=asc" in response.text
     assert "?sort=last_talk&amp;direction=desc" in response.text
+
+
+def test_homepage_displays_name_search_controls(tmp_path):
+    db_path = tmp_path / "seminars.db"
+    connection = open_or_create_db(db_path)
+    insert_speaker(
+        connection,
+        Speaker(
+            name="Alice Example",
+            affiliation="Example University",
+            email="alice@example.edu",
+            topic="Quantum seminars",
+            contact_persons=[],
+            notes="",
+            exclude=False,
+        ),
+    )
+    connection.close()
+
+    client = TestClient(build_app(db_path))
+
+    response = client.get("/")
+
+    assert response.status_code == 200
+    assert 'id="speaker-search"' in response.text
+    assert 'placeholder="Search names"' in response.text
+    assert 'data-speaker-name="alice example"' in response.text
+    assert 'id="visible-count"' in response.text
