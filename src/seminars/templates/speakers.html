@@ -302,6 +302,41 @@
         margin-top: 4px;
       }
 
+      .speaker-talks {
+        border-top: 1px solid #e2e7ef;
+        margin-top: 16px;
+        padding-top: 14px;
+      }
+
+      .speaker-talks h3 {
+        font-size: 15px;
+        line-height: 1.2;
+        margin: 0 0 10px;
+      }
+
+      .talk-list {
+        display: grid;
+        gap: 8px;
+        list-style: none;
+        margin: 0;
+        padding: 0;
+      }
+
+      .talk-item {
+        display: grid;
+        gap: 4px;
+        grid-template-columns: 100px minmax(0, 1fr);
+      }
+
+      .talk-date {
+        color: #586576;
+        font-variant-numeric: tabular-nums;
+      }
+
+      .talk-title {
+        color: #1c2430;
+      }
+
       @media (max-width: 700px) {
         main {
           padding: 14px;
@@ -389,6 +424,7 @@
                   data-edit-contact-persons="{{ speaker.contact_persons }}"
                   data-edit-notes="{{ speaker.notes }}"
                   data-edit-exclude="{{ speaker.exclude }}"
+                  data-edit-talks='{{ speaker.talks | tojson }}'
                 >
                   {% for key, _ in columns %}
                     <td>{{ speaker[key] }}</td>
@@ -489,6 +525,10 @@
               <button type="submit">Save Speaker</button>
             </div>
           </form>
+          <div class="speaker-talks">
+            <h3>Talks</h3>
+            <ul class="talk-list" id="edit-speaker-talks"></ul>
+          </div>
         </div>
       </div>
     </main>
@@ -542,9 +582,36 @@
         document.getElementById("edit-speaker-contact-persons").value = speaker.editContactPersons;
         document.getElementById("edit-speaker-notes").value = speaker.editNotes;
         document.getElementById("edit-speaker-exclude").checked = speaker.editExclude === "1";
+        renderSpeakerTalks(JSON.parse(speaker.editTalks));
         editSpeakerModal.classList.add("open");
         editSpeakerModal.setAttribute("aria-hidden", "false");
         document.getElementById("edit-speaker-name").focus();
+      };
+
+      const renderSpeakerTalks = (talks) => {
+        const talkList = document.getElementById("edit-speaker-talks");
+        talkList.replaceChildren();
+
+        if (talks.length === 0) {
+          const item = document.createElement("li");
+          item.className = "talk-item";
+          item.textContent = "No talks found.";
+          talkList.append(item);
+          return;
+        }
+
+        talks.forEach((talk) => {
+          const item = document.createElement("li");
+          const date = document.createElement("span");
+          const title = document.createElement("span");
+          item.className = "talk-item";
+          date.className = "talk-date";
+          title.className = "talk-title";
+          date.textContent = talk.date;
+          title.textContent = talk.title;
+          item.append(date, title);
+          talkList.append(item);
+        });
       };
 
       const closeEditSpeakerModal = () => {

@@ -302,6 +302,28 @@ def test_homepage_displays_edit_speaker_data(tmp_path):
             exclude=True,
         ),
     )
+    insert_talk(
+        connection,
+        Talk(
+            date=datetime.datetime(2024, 1, 15, 14, 30),
+            speaker="Alice Example",
+            title="Earlier talk",
+            abstract="",
+            status="done",
+            comments="",
+        ),
+    )
+    insert_talk(
+        connection,
+        Talk(
+            date=datetime.datetime(2025, 3, 20, 14, 30),
+            speaker="Alice Example",
+            title="Latest talk",
+            abstract="",
+            status="done",
+            comments="",
+        ),
+    )
     connection.close()
     client = TestClient(build_app(db_path))
 
@@ -313,6 +335,8 @@ def test_homepage_displays_edit_speaker_data(tmp_path):
     assert 'data-edit-email="alice@example.edu"' in response.text
     assert 'data-edit-contact-persons="Bob Example, Carol Example"' in response.text
     assert 'data-edit-exclude="1"' in response.text
+    assert 'id="edit-speaker-talks"' in response.text
+    assert response.text.index("Latest talk") < response.text.index("Earlier talk")
 
 
 def test_post_speaker_edit_updates_speaker_and_cascades_talks(tmp_path):

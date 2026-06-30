@@ -87,7 +87,7 @@ if __name__ == "__main__":
             seminars.Talk(
                 date=normalize_date(row["date"]),
                 speaker=name,
-                title="",
+                title="Unknown title",
                 abstract="",
                 status=seminars.TalkStatus.COMPLETED,
                 comments="",

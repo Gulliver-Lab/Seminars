@@ -40,10 +40,12 @@ def build_app(db_path: str | Path) -> FastAPI:
     ) -> Any:
         connection = open_or_create_db(database_path)
         try:
+            talks = read_talks(connection)
             dataframe = speakers_with_last_talk(
                 read_speakers(connection),
-                read_talks(connection),
+                talks,
             )
+            dataframe = speakers_with_talks(dataframe, talks)
         finally:
             connection.close()
 
@@ -141,6 +143,25 @@ def sort_speakers(
         kind="mergesort",
         na_position="last",
     )
+
+
+def speakers_with_talks(speakers: pd.DataFrame, talks: pd.DataFrame) -> pd.DataFrame:
+    speakers = speakers.copy()
+    speakers["talks"] = [[] for _row in range(len(speakers))]
+    if talks.empty:
+        return speakers
+
+    talks = talks.copy()
+    talks["date"] = talks["date"].dt.strftime("%Y-%m-%d")
+    talks = talks.sort_values("date", ascending=False, kind="mergesort")
+    talks_by_speaker = {
+        speaker: rows[["date", "title"]].to_dict("records")
+        for speaker, rows in talks.groupby("speaker", sort=False)
+    }
+    speakers["talks"] = speakers["name"].map(talks_by_speaker).map(
+        lambda value: value if isinstance(value, list) else []
+    )
+    return speakers
 
 
 def _format_speaker(row: dict[str, Any]) -> dict[str, Any]:
