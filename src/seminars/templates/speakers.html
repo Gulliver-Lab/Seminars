@@ -75,12 +75,47 @@
       th {
         background: #eef2f7;
         color: #2f3a48;
-        font-size: 12px;
-        font-weight: 700;
         position: sticky;
-        text-transform: uppercase;
         top: 0;
         z-index: 1;
+      }
+
+      .column-header {
+        align-items: center;
+        display: flex;
+        gap: 8px;
+        justify-content: space-between;
+      }
+
+      .column-label {
+        font-size: 12px;
+        font-weight: 700;
+        text-transform: uppercase;
+      }
+
+      .sort-controls {
+        display: inline-flex;
+        gap: 3px;
+      }
+
+      .sort-control {
+        align-items: center;
+        border: 1px solid #c6cfdb;
+        color: #465365;
+        display: inline-flex;
+        font-size: 12px;
+        height: 22px;
+        justify-content: center;
+        line-height: 1;
+        text-decoration: none;
+        width: 22px;
+      }
+
+      .sort-control:hover,
+      .sort-control.active {
+        background: #dbe3ee;
+        border-color: #98a8bb;
+        color: #1c2430;
       }
 
       tr:nth-child(even) td {
@@ -132,8 +167,26 @@
           <table aria-label="Speakers">
             <thead>
               <tr>
-                {% for _, label in columns %}
-                  <th scope="col">{{ label }}</th>
+                {% for key, label in columns %}
+                  <th scope="col">
+                    <div class="column-header">
+                      <span class="column-label">{{ label }}</span>
+                      <span class="sort-controls" aria-label="Sort {{ label }}">
+                        <a
+                          class="sort-control{% if active_sort == key and active_direction == 'asc' %} active{% endif %}"
+                          href="?sort={{ key }}&amp;direction=asc"
+                          title="Sort {{ label }} ascending"
+                          aria-label="Sort {{ label }} ascending"
+                        >&#8593;</a>
+                        <a
+                          class="sort-control{% if active_sort == key and active_direction == 'desc' %} active{% endif %}"
+                          href="?sort={{ key }}&amp;direction=desc"
+                          title="Sort {{ label }} descending"
+                          aria-label="Sort {{ label }} descending"
+                        >&#8595;</a>
+                      </span>
+                    </div>
+                  </th>
                 {% endfor %}
               </tr>
             </thead>

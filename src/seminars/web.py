@@ -12,13 +12,25 @@ from seminars.db import open_or_create_db, read_speakers, read_talks
 
 TEMPLATES = Jinja2Templates(directory=Path(__file__).parent / "templates")
 
+COLUMNS = [
+    ("name", "Name"),
+    ("affiliation", "Affiliation"),
+    ("last_talk", "Last talk"),
+    ("topic", "Topic"),
+    ("contact_persons", "Contact persons"),
+    ("notes", "Notes"),
+]
+SORTABLE_COLUMNS = {key for key, _label in COLUMNS}
+
 
 def build_app(db_path: str | Path) -> FastAPI:
     app = FastAPI(title="Seminars")
     database_path = Path(db_path)
 
     @app.get("/", response_class=HTMLResponse)
-    def speakers_index(request: Request) -> Any:
+    def speakers_index(
+        request: Request, sort: str = "name", direction: str = "asc"
+    ) -> Any:
         connection = open_or_create_db(database_path)
         try:
             dataframe = speakers_with_last_talk(
@@ -28,21 +40,19 @@ def build_app(db_path: str | Path) -> FastAPI:
         finally:
             connection.close()
 
+        dataframe = sort_speakers(dataframe, sort, direction)
         speakers = cast(list[dict[str, Any]], dataframe.to_dict("records"))
+        active_sort = sort if sort in SORTABLE_COLUMNS else "name"
+        active_direction = "desc" if direction == "desc" else "asc"
 
         return TEMPLATES.TemplateResponse(
             request,
             "speakers.html",
             {
-                "columns": [
-                    ("name", "Name"),
-                    ("affiliation", "Affiliation"),
-                    ("last_talk", "Last talk"),
-                    ("topic", "Topic"),
-                    ("contact_persons", "Contact persons"),
-                    ("notes", "Notes"),
-                ],
+                "columns": COLUMNS,
                 "speakers": [_format_speaker(row) for row in speakers],
+                "active_sort": active_sort,
+                "active_direction": active_direction,
             },
         )
 
@@ -70,6 +80,19 @@ def speakers_with_last_talk(
     merged = merged.drop(columns=["speaker"])
     merged["last_talk"] = merged["last_talk"].fillna("")
     return merged
+
+
+def sort_speakers(
+    speakers: pd.DataFrame, sort: str = "name", direction: str = "asc"
+) -> pd.DataFrame:
+    sort_column = sort if sort in SORTABLE_COLUMNS else "name"
+    ascending = direction != "desc"
+    return speakers.sort_values(
+        by=sort_column,
+        ascending=ascending,
+        kind="mergesort",
+        na_position="last",
+    )
 
 
 def _format_speaker(row: dict[str, Any]) -> dict[str, Any]:
