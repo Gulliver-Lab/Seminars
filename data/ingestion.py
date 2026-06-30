@@ -1,3 +1,5 @@
+import datetime
+
 import pandas as pd
 
 import seminars
@@ -14,6 +16,19 @@ def normalize_name(name: str) -> str:
     return name.title()
 
 
+def normalize_date(date: str) -> datetime.datetime:
+    if date == "3/6":
+        date = "3/6/2024"
+
+    if len(date) == 4:
+        return datetime.datetime.strptime(date, "%Y")
+
+    if "/" in date:
+        return datetime.datetime.strptime(date, "%d/%m/%Y")
+
+    return datetime.datetime.strptime(date, "%Y-%m-%d")
+
+
 if __name__ == "__main__":
     df = pd.read_csv(
         "2006-2024.csv", names=["name", "date"] + [str(i) for i in range(10)]
@@ -24,6 +39,7 @@ if __name__ == "__main__":
     df["name"] = df["name"].apply(normalize_name)
 
     speakers = []
+    talks = []
     for _, row in df.iterrows():
         name = row["name"]
 
@@ -66,6 +82,20 @@ if __name__ == "__main__":
             )
         )
 
+        talks.append(
+            seminars.Talk(
+                date=normalize_date(row["date"]),
+                speaker=name,
+                title="",
+                abstract="",
+                status=seminars.TalkStatus.COMPLETED,
+                comments="",
+            )
+        )
+
     connection = seminars.open_or_create_db("test.db")
     for speaker in speakers:
         seminars.insert_speaker(connection, speaker)
+
+    for talk in talks:
+        seminars.insert_talk(connection, talk)
