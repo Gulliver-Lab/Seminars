@@ -40,7 +40,7 @@ def test_homepage_displays_speakers_table(tmp_path):
     assert "Example University" in response.text
     assert "alice@example.edu" not in response.text
     assert "Bob Example, Carol Example" in response.text
-    assert "Exclude" not in response.text
+    assert "Sort Exclude" not in response.text
 
 
 def test_speakers_with_last_talk_keeps_latest_talk_date_and_blank_missing(tmp_path):
@@ -231,3 +231,57 @@ def test_homepage_displays_name_search_controls(tmp_path):
     assert 'placeholder="Search names"' in response.text
     assert 'data-speaker-name="alice example"' in response.text
     assert 'id="visible-count"' in response.text
+
+
+def test_homepage_displays_new_speaker_form(tmp_path):
+    db_path = tmp_path / "seminars.db"
+    connection = open_or_create_db(db_path)
+    connection.close()
+
+    client = TestClient(build_app(db_path))
+
+    response = client.get("/")
+
+    assert response.status_code == 200
+    assert "New Speaker" in response.text
+    assert 'id="new-speaker-modal"' in response.text
+    assert 'action="/speakers"' in response.text
+    assert 'name="contact_persons"' in response.text
+
+
+def test_post_speaker_creates_speaker(tmp_path):
+    db_path = tmp_path / "seminars.db"
+    connection = open_or_create_db(db_path)
+    connection.close()
+    client = TestClient(build_app(db_path))
+
+    response = client.post(
+        "/speakers",
+        data={
+            "name": "New Speaker",
+            "affiliation": "New University",
+            "email": "new@example.edu",
+            "topic": "New topic",
+            "contact_persons": "Alice Example, Bob Example",
+            "notes": "New notes",
+            "exclude": "on",
+        },
+        follow_redirects=False,
+    )
+
+    assert response.status_code == 303
+    assert response.headers["location"] == "/"
+    connection = open_or_create_db(db_path)
+    dataframe = read_speakers(connection)
+    connection.close()
+    assert dataframe.to_dict("records") == [
+        {
+            "name": "New Speaker",
+            "affiliation": "New University",
+            "email": "new@example.edu",
+            "topic": "New topic",
+            "contact_persons": ["Alice Example", "Bob Example"],
+            "notes": "New notes",
+            "exclude": 1,
+        }
+    ]

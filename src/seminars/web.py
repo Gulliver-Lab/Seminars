@@ -4,11 +4,12 @@ from typing import Any, Sequence, cast
 
 import pandas as pd
 import uvicorn
-from fastapi import FastAPI, Request
-from fastapi.responses import HTMLResponse
+from fastapi import FastAPI, Form, Request
+from fastapi.responses import HTMLResponse, RedirectResponse
 from fastapi.templating import Jinja2Templates
 
-from seminars.db import open_or_create_db, read_speakers, read_talks
+from seminars.db import insert_speaker, open_or_create_db, read_speakers, read_talks
+from seminars.models import Speaker
 
 TEMPLATES = Jinja2Templates(directory=Path(__file__).parent / "templates")
 
@@ -56,6 +57,32 @@ def build_app(db_path: str | Path) -> FastAPI:
             },
         )
 
+    @app.post("/speakers")
+    def create_speaker(
+        name: str = Form(),
+        affiliation: str = Form(""),
+        email: str = Form(""),
+        topic: str = Form(""),
+        contact_persons: str = Form(""),
+        notes: str = Form(""),
+        exclude: str | None = Form(None),
+    ) -> RedirectResponse:
+        speaker = Speaker(
+            name=name.title(),
+            affiliation=affiliation,
+            email=email,
+            topic=topic,
+            contact_persons=_parse_contact_persons(contact_persons),
+            notes=notes,
+            exclude=exclude == "on",
+        )
+        connection = open_or_create_db(database_path)
+        try:
+            insert_speaker(connection, speaker)
+        finally:
+            connection.close()
+        return RedirectResponse("/", status_code=303)
+
     return app
 
 
@@ -100,6 +127,10 @@ def _format_speaker(row: dict[str, Any]) -> dict[str, Any]:
     if isinstance(contact_persons, list):
         row["contact_persons"] = ", ".join(contact_persons)
     return row
+
+
+def _parse_contact_persons(value: str) -> list[str]:
+    return [person.strip() for person in value.split(",") if person.strip()]
 
 
 def build_parser() -> argparse.ArgumentParser:

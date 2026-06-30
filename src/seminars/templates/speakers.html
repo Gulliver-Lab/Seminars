@@ -50,7 +50,14 @@
         align-items: center;
         display: flex;
         gap: 12px;
+        justify-content: space-between;
         margin-bottom: 12px;
+      }
+
+      .toolbar-actions {
+        align-items: center;
+        display: flex;
+        gap: 8px;
       }
 
       .search-input {
@@ -68,6 +75,34 @@
         border-color: #6d7f95;
         outline: 2px solid #dbe3ee;
         outline-offset: 0;
+      }
+
+      button,
+      .button {
+        background: #254565;
+        border: 1px solid #254565;
+        color: #ffffff;
+        cursor: pointer;
+        font: inherit;
+        height: 36px;
+        padding: 7px 12px;
+      }
+
+      button:hover,
+      .button:hover {
+        background: #18334f;
+        border-color: #18334f;
+      }
+
+      .secondary-button {
+        background: #ffffff;
+        border-color: #cbd3df;
+        color: #1c2430;
+      }
+
+      .secondary-button:hover {
+        background: #eef2f7;
+        border-color: #aeb9c8;
       }
 
       .sheet {
@@ -167,6 +202,98 @@
         padding: 28px;
       }
 
+      .modal {
+        background: rgba(28, 36, 48, 0.45);
+        display: none;
+        inset: 0;
+        padding: 24px;
+        position: fixed;
+        z-index: 10;
+      }
+
+      .modal.open {
+        align-items: center;
+        display: flex;
+        justify-content: center;
+      }
+
+      .modal-panel {
+        background: #ffffff;
+        border: 1px solid #cbd3df;
+        max-height: calc(100vh - 48px);
+        max-width: 720px;
+        overflow: auto;
+        padding: 20px;
+        width: 100%;
+      }
+
+      .modal-header {
+        align-items: center;
+        display: flex;
+        gap: 16px;
+        justify-content: space-between;
+        margin-bottom: 16px;
+      }
+
+      .modal-header h2 {
+        font-size: 20px;
+        line-height: 1.2;
+        margin: 0;
+      }
+
+      .speaker-form {
+        display: grid;
+        gap: 12px;
+      }
+
+      .form-grid {
+        display: grid;
+        gap: 12px;
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+      }
+
+      .field {
+        display: grid;
+        gap: 5px;
+      }
+
+      .field.full {
+        grid-column: 1 / -1;
+      }
+
+      .field label {
+        color: #2f3a48;
+        font-size: 13px;
+        font-weight: 650;
+      }
+
+      .field input,
+      .field textarea {
+        border: 1px solid #cbd3df;
+        color: #1c2430;
+        font: inherit;
+        padding: 8px 10px;
+        width: 100%;
+      }
+
+      .field textarea {
+        min-height: 82px;
+        resize: vertical;
+      }
+
+      .checkbox-field {
+        align-items: center;
+        display: flex;
+        gap: 8px;
+      }
+
+      .form-actions {
+        display: flex;
+        gap: 8px;
+        justify-content: end;
+        margin-top: 4px;
+      }
+
       @media (max-width: 700px) {
         main {
           padding: 14px;
@@ -180,6 +307,16 @@
         .toolbar {
           align-items: stretch;
           flex-direction: column;
+        }
+
+        .toolbar-actions,
+        .form-actions {
+          align-items: stretch;
+          flex-direction: column;
+        }
+
+        .form-grid {
+          grid-template-columns: 1fr;
         }
       }
     </style>
@@ -200,6 +337,9 @@
           aria-label="Search speaker names"
           autocomplete="off"
         >
+        <div class="toolbar-actions">
+          <button type="button" id="new-speaker-button">New Speaker</button>
+        </div>
       </div>
 
       <div class="sheet">
@@ -244,11 +384,60 @@
           <div class="empty">No speakers found.</div>
         {% endif %}
       </div>
+
+      <div class="modal" id="new-speaker-modal" aria-hidden="true">
+        <div class="modal-panel" role="dialog" aria-modal="true" aria-labelledby="new-speaker-title">
+          <div class="modal-header">
+            <h2 id="new-speaker-title">New Speaker</h2>
+            <button class="secondary-button" type="button" id="close-new-speaker">Close</button>
+          </div>
+          <form class="speaker-form" action="/speakers" method="post">
+            <div class="form-grid">
+              <div class="field">
+                <label for="speaker-name">Name</label>
+                <input id="speaker-name" name="name" required>
+              </div>
+              <div class="field">
+                <label for="speaker-affiliation">Affiliation</label>
+                <input id="speaker-affiliation" name="affiliation">
+              </div>
+              <div class="field">
+                <label for="speaker-email">Email</label>
+                <input id="speaker-email" name="email" type="email">
+              </div>
+              <div class="field">
+                <label for="speaker-topic">Topic</label>
+                <input id="speaker-topic" name="topic">
+              </div>
+              <div class="field full">
+                <label for="speaker-contact-persons">Contact persons</label>
+                <input id="speaker-contact-persons" name="contact_persons">
+              </div>
+              <div class="field full">
+                <label for="speaker-notes">Notes</label>
+                <textarea id="speaker-notes" name="notes"></textarea>
+              </div>
+              <label class="checkbox-field">
+                <input name="exclude" type="checkbox">
+                Exclude
+              </label>
+            </div>
+            <div class="form-actions">
+              <button class="secondary-button" type="button" id="cancel-new-speaker">Cancel</button>
+              <button type="submit">Save Speaker</button>
+            </div>
+          </form>
+        </div>
+      </div>
     </main>
     <script>
       const searchInput = document.getElementById("speaker-search");
       const visibleCount = document.getElementById("visible-count");
       const rows = Array.from(document.querySelectorAll("tbody tr[data-speaker-name]"));
+      const newSpeakerButton = document.getElementById("new-speaker-button");
+      const newSpeakerModal = document.getElementById("new-speaker-modal");
+      const closeNewSpeaker = document.getElementById("close-new-speaker");
+      const cancelNewSpeaker = document.getElementById("cancel-new-speaker");
 
       searchInput.addEventListener("input", () => {
         const query = searchInput.value.trim().toLowerCase();
@@ -263,6 +452,32 @@
         });
 
         visibleCount.textContent = count;
+      });
+
+      const openNewSpeakerModal = () => {
+        newSpeakerModal.classList.add("open");
+        newSpeakerModal.setAttribute("aria-hidden", "false");
+        document.getElementById("speaker-name").focus();
+      };
+
+      const closeNewSpeakerModal = () => {
+        newSpeakerModal.classList.remove("open");
+        newSpeakerModal.setAttribute("aria-hidden", "true");
+        newSpeakerButton.focus();
+      };
+
+      newSpeakerButton.addEventListener("click", openNewSpeakerModal);
+      closeNewSpeaker.addEventListener("click", closeNewSpeakerModal);
+      cancelNewSpeaker.addEventListener("click", closeNewSpeakerModal);
+      newSpeakerModal.addEventListener("click", (event) => {
+        if (event.target === newSpeakerModal) {
+          closeNewSpeakerModal();
+        }
+      });
+      document.addEventListener("keydown", (event) => {
+        if (event.key === "Escape" && newSpeakerModal.classList.contains("open")) {
+          closeNewSpeakerModal();
+        }
       });
     </script>
   </body>
