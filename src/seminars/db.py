@@ -104,12 +104,6 @@ def insert_talk(connection: sqlite3.Connection, talk: Talk) -> None:
             comments
         )
         VALUES (?, ?, ?, ?, ?, ?)
-        ON CONFLICT(date) DO UPDATE SET
-            speaker = excluded.speaker,
-            title = excluded.title,
-            abstract = excluded.abstract,
-            status = excluded.status,
-            comments = excluded.comments
         """,
         (
             talk.date.isoformat(),
@@ -162,7 +156,7 @@ def _create_schema(connection: sqlite3.Connection) -> None:
     connection.execute(
         """
         CREATE TABLE talks (
-            date TEXT PRIMARY KEY,
+            date TEXT,
             speaker TEXT,
             title TEXT,
             abstract TEXT,

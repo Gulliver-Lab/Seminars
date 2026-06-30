@@ -223,7 +223,7 @@ def test_insert_talk_rejects_unknown_speaker():
         )
 
 
-def test_insert_talk_updates_existing_talk_with_same_date():
+def test_insert_talk_allows_multiple_talks_with_same_date():
     connection = sqlite3.connect(":memory:")
     connection.execute("PRAGMA foreign_keys = ON")
     _create_schema(connection)
@@ -273,11 +273,19 @@ def test_insert_talk_updates_existing_talk_with_same_date():
         (
             "2026-01-15T14:30:00",
             "Alice Example",
+            "Quantum seminars",
+            "An abstract",
+            "confirmed",
+            "Bring projector",
+        ),
+        (
+            "2026-01-15T14:30:00",
+            "Alice Example",
             "Updated title",
             "Updated abstract",
             "tentative",
             "Updated comments",
-        )
+        ),
     ]
 
 
