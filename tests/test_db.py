@@ -7,6 +7,7 @@ from seminars.db import (
     _create_schema,
     deserialize_contact_persons,
     insert_speaker,
+    open_or_create_db,
     read_speakers,
     serialize_contact_persons,
 )
@@ -142,3 +143,14 @@ def test_reads_speakers_as_dataframe():
             "exclude": 0,
         }
     ]
+
+
+def test_open_or_create_db_creates_schema_for_missing_file(tmp_path):
+    filepath = tmp_path / "seminars.db"
+
+    connection = open_or_create_db(filepath)
+
+    tables = connection.execute(
+        "SELECT name FROM sqlite_master WHERE type = 'table'"
+    ).fetchall()
+    assert tables == [("speakers",)]

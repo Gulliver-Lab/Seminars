@@ -85,9 +85,10 @@ def read_speakers(connection: sqlite3.Connection) -> pd.DataFrame:
 
 def open_or_create_db(filepath: str | Path) -> sqlite3.Connection:
     path = Path(filepath)
+    exists = path.exists()
 
     connection = sqlite3.connect(path)
-    if not path.exists():
+    if not exists:
         _create_schema(connection)
 
     return connection
