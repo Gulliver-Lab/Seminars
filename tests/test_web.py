@@ -38,8 +38,9 @@ def test_homepage_displays_speakers_table(tmp_path):
     assert "<table" in response.text
     assert "Alice Example" in response.text
     assert "Example University" in response.text
-    assert "alice@example.edu" in response.text
+    assert "alice@example.edu" not in response.text
     assert "Bob Example, Carol Example" in response.text
+    assert "Exclude" not in response.text
 
 
 def test_speakers_with_last_talk_keeps_latest_talk_date_and_blank_missing(tmp_path):

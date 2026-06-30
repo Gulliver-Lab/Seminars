@@ -37,12 +37,10 @@ def build_app(db_path: str | Path) -> FastAPI:
                 "columns": [
                     ("name", "Name"),
                     ("affiliation", "Affiliation"),
-                    ("email", "Email"),
                     ("last_talk", "Last talk"),
                     ("topic", "Topic"),
                     ("contact_persons", "Contact persons"),
                     ("notes", "Notes"),
-                    ("exclude", "Exclude"),
                 ],
                 "speakers": [_format_speaker(row) for row in speakers],
             },
