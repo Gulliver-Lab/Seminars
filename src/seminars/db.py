@@ -50,6 +50,13 @@ def insert_speaker(connection: sqlite3.Connection, speaker: Speaker) -> None:
             exclude
         )
         VALUES (?, ?, ?, ?, ?, ?, ?)
+        ON CONFLICT(name) DO UPDATE SET
+            affiliation = excluded.affiliation,
+            email = excluded.email,
+            topic = excluded.topic,
+            contact_persons = excluded.contact_persons,
+            notes = excluded.notes,
+            exclude = excluded.exclude
         """,
         (
             speaker.name,
@@ -90,7 +97,7 @@ def _create_schema(connection: sqlite3.Connection) -> None:
     connection.execute(
         """
         CREATE TABLE speakers (
-            name TEXT,
+            name TEXT PRIMARY KEY,
             affiliation TEXT,
             email TEXT,
             topic TEXT,
