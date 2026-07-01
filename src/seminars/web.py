@@ -1,6 +1,6 @@
 import argparse
 from pathlib import Path
-from typing import Any, Sequence, cast
+from typing import Any, Sequence, cast, get_args
 
 import pandas as pd
 import uvicorn
@@ -21,7 +21,7 @@ from seminars.db import (
     read_talks,
     update_speaker,
 )
-from seminars.models import Speaker
+from seminars.models import ResearchTopic, Speaker
 
 TEMPLATES = Jinja2Templates(directory=Path(__file__).parent / "templates")
 
@@ -34,6 +34,7 @@ COLUMNS = [
     ("notes", "Notes"),
 ]
 SORTABLE_COLUMNS = {key for key, _label in COLUMNS}
+RESEARCH_TOPICS = list(get_args(ResearchTopic))
 
 
 def build_app(db_path: str | Path) -> FastAPI:
@@ -66,6 +67,7 @@ def build_app(db_path: str | Path) -> FastAPI:
             {
                 "columns": COLUMNS,
                 "speakers": [_format_speaker(row) for row in speakers],
+                "research_topics": RESEARCH_TOPICS,
                 "visible_count": sum(
                     bool(speaker["want_to_invite"]) for speaker in speakers
                 ),
@@ -206,11 +208,17 @@ def _speaker_from_form(
         name=name.title(),
         affiliation=affiliation,
         email=email,
-        topic=topic,
+        topic=_parse_research_topic(topic),
         contact_persons=_parse_contact_persons(contact_persons),
         notes=notes,
         want_to_invite=want_to_invite == "on",
     )
+
+
+def _parse_research_topic(value: str) -> ResearchTopic:
+    if value in RESEARCH_TOPICS:
+        return cast(ResearchTopic, value)
+    return "Other"
 
 
 def _parse_contact_persons(value: str) -> list[str]:

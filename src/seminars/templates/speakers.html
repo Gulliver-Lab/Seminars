@@ -293,6 +293,7 @@
       }
 
       .field input,
+      .field select,
       .field textarea {
         border: 1px solid #cbd3df;
         color: #1c2430;
@@ -495,7 +496,11 @@
               </div>
               <div class="field">
                 <label for="speaker-topic">Topic</label>
-                <input id="speaker-topic" name="topic">
+                <select id="speaker-topic" name="topic">
+                  {% for research_topic in research_topics %}
+                    <option value="{{ research_topic }}">{{ research_topic }}</option>
+                  {% endfor %}
+                </select>
               </div>
               <div class="field full">
                 <label for="speaker-contact-persons">Contact persons</label>
