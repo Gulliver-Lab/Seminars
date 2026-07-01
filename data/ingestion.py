@@ -76,7 +76,7 @@ if __name__ == "__main__":
                 name=name,
                 affiliation="",
                 email="",
-                topic="",
+                topic="Other",
                 contact_persons=[""],
                 notes="Imported from drive",
                 want_to_invite=False,
