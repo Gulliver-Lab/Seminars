@@ -177,21 +177,8 @@ def open_or_create_db(filepath: str | Path) -> sqlite3.Connection:
     connection.execute("PRAGMA foreign_keys = ON")
     if not exists:
         _create_schema(connection)
-    else:
-        _migrate_schema(connection)
 
     return connection
-
-
-def _migrate_schema(connection: sqlite3.Connection) -> None:
-    speaker_columns = [
-        row[1] for row in connection.execute("PRAGMA table_info(speakers)").fetchall()
-    ]
-    if "exclude" in speaker_columns and "want_to_invite" not in speaker_columns:
-        connection.execute(
-            "ALTER TABLE speakers RENAME COLUMN exclude TO want_to_invite"
-        )
-        connection.commit()
 
 
 def _create_schema(connection: sqlite3.Connection) -> None:
