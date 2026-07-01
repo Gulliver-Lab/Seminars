@@ -79,10 +79,10 @@ def build_app(db_path: str | Path) -> FastAPI:
         topic: str = Form(""),
         contact_persons: str = Form(""),
         notes: str = Form(""),
-        exclude: str | None = Form(None),
+        want_to_invite: str | None = Form(None),
     ) -> RedirectResponse:
         speaker = _speaker_from_form(
-            name, affiliation, email, topic, contact_persons, notes, exclude
+            name, affiliation, email, topic, contact_persons, notes, want_to_invite
         )
         connection = open_or_create_db(database_path)
         try:
@@ -100,10 +100,10 @@ def build_app(db_path: str | Path) -> FastAPI:
         topic: str = Form(""),
         contact_persons: str = Form(""),
         notes: str = Form(""),
-        exclude: str | None = Form(None),
+        want_to_invite: str | None = Form(None),
     ) -> RedirectResponse:
         speaker = _speaker_from_form(
-            name, affiliation, email, topic, contact_persons, notes, exclude
+            name, affiliation, email, topic, contact_persons, notes, want_to_invite
         )
         connection = open_or_create_db(database_path)
         try:
@@ -175,8 +175,10 @@ def speakers_with_talks(speakers: pd.DataFrame, talks: pd.DataFrame) -> pd.DataF
         speaker: rows[["date", "title"]].to_dict("records")
         for speaker, rows in talks.groupby("speaker", sort=False)
     }
-    speakers["talks"] = speakers["name"].map(talks_by_speaker).map(
-        lambda value: value if isinstance(value, list) else []
+    speakers["talks"] = (
+        speakers["name"]
+        .map(talks_by_speaker)
+        .map(lambda value: value if isinstance(value, list) else [])
     )
     return speakers
 
@@ -195,7 +197,7 @@ def _speaker_from_form(
     topic: str,
     contact_persons: str,
     notes: str,
-    exclude: str | None,
+    want_to_invite: str | None,
 ) -> Speaker:
     return Speaker(
         name=name.title(),
@@ -204,7 +206,7 @@ def _speaker_from_form(
         topic=topic,
         contact_persons=_parse_contact_persons(contact_persons),
         notes=notes,
-        exclude=exclude == "on",
+        want_to_invite=want_to_invite == "on",
     )
 
 

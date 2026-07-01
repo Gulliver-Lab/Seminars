@@ -15,7 +15,7 @@ class Speaker:
     topic: str
     contact_persons: list[str]
     notes: str
-    exclude: bool
+    want_to_invite: bool
 
 
 @dataclasses.dataclass

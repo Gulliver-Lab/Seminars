@@ -452,7 +452,7 @@
                   data-edit-topic="{{ speaker.topic }}"
                   data-edit-contact-persons="{{ speaker.contact_persons }}"
                   data-edit-notes="{{ speaker.notes }}"
-                  data-edit-exclude="{{ speaker.exclude }}"
+                  data-edit-want-to-invite="{{ speaker.want_to_invite }}"
                   data-edit-talks='{{ speaker.talks | tojson }}'
                 >
                   {% for key, _ in columns %}
@@ -500,8 +500,8 @@
                 <textarea id="speaker-notes" name="notes"></textarea>
               </div>
               <label class="checkbox-field">
-                <input name="exclude" type="checkbox">
-                Exclude
+                <input name="want_to_invite" type="checkbox">
+                Want to invite
               </label>
             </div>
             <div class="form-actions">
@@ -545,8 +545,8 @@
                 <textarea id="edit-speaker-notes" name="notes"></textarea>
               </div>
               <label class="checkbox-field">
-                <input id="edit-speaker-exclude" name="exclude" type="checkbox">
-                Exclude
+                <input id="edit-speaker-want-to-invite" name="want_to_invite" type="checkbox">
+                Want to invite
               </label>
             </div>
             <div class="form-actions">
@@ -621,7 +621,7 @@
         document.getElementById("edit-speaker-topic").value = speaker.editTopic;
         document.getElementById("edit-speaker-contact-persons").value = speaker.editContactPersons;
         document.getElementById("edit-speaker-notes").value = speaker.editNotes;
-        document.getElementById("edit-speaker-exclude").checked = speaker.editExclude === "1";
+        document.getElementById("edit-speaker-want-to-invite").checked = speaker.editWantToInvite === "1";
         renderSpeakerTalks(talks);
         deleteSpeakerButton.disabled = talks.length > 0;
         deleteSpeakerHint.textContent = talks.length > 0

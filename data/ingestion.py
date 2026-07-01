@@ -79,7 +79,7 @@ if __name__ == "__main__":
                 topic="",
                 contact_persons=[""],
                 notes="Imported from drive",
-                exclude=False,
+                want_to_invite=False,
             )
         )
 

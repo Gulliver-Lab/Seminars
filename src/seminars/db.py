@@ -13,7 +13,7 @@ EXPECTED_SPEAKERS_SCHEMA = [
     ("topic", "TEXT"),
     ("contact_persons", "TEXT"),
     ("notes", "TEXT"),
-    ("exclude", "BOOLEAN"),
+    ("want_to_invite", "BOOLEAN"),
 ]
 
 EXPECTED_TALKS_SCHEMA = [
@@ -56,7 +56,7 @@ def insert_speaker(connection: sqlite3.Connection, speaker: Speaker) -> None:
             topic,
             contact_persons,
             notes,
-            exclude
+            want_to_invite
         )
         VALUES (?, ?, ?, ?, ?, ?, ?)
         ON CONFLICT(name) DO UPDATE SET
@@ -65,7 +65,7 @@ def insert_speaker(connection: sqlite3.Connection, speaker: Speaker) -> None:
             topic = excluded.topic,
             contact_persons = excluded.contact_persons,
             notes = excluded.notes,
-            exclude = excluded.exclude
+            want_to_invite = excluded.want_to_invite
         """,
         (
             speaker.name,
@@ -74,7 +74,7 @@ def insert_speaker(connection: sqlite3.Connection, speaker: Speaker) -> None:
             speaker.topic,
             serialize_contact_persons(speaker.contact_persons),
             speaker.notes,
-            speaker.exclude,
+            speaker.want_to_invite,
         ),
     )
     connection.commit()
@@ -93,7 +93,7 @@ def update_speaker(
             topic = ?,
             contact_persons = ?,
             notes = ?,
-            exclude = ?
+            want_to_invite = ?
         WHERE name = ?
         """,
         (
@@ -103,7 +103,7 @@ def update_speaker(
             speaker.topic,
             serialize_contact_persons(speaker.contact_persons),
             speaker.notes,
-            speaker.exclude,
+            speaker.want_to_invite,
             original_name,
         ),
     )
@@ -177,8 +177,21 @@ def open_or_create_db(filepath: str | Path) -> sqlite3.Connection:
     connection.execute("PRAGMA foreign_keys = ON")
     if not exists:
         _create_schema(connection)
+    else:
+        _migrate_schema(connection)
 
     return connection
+
+
+def _migrate_schema(connection: sqlite3.Connection) -> None:
+    speaker_columns = [
+        row[1] for row in connection.execute("PRAGMA table_info(speakers)").fetchall()
+    ]
+    if "exclude" in speaker_columns and "want_to_invite" not in speaker_columns:
+        connection.execute(
+            "ALTER TABLE speakers RENAME COLUMN exclude TO want_to_invite"
+        )
+        connection.commit()
 
 
 def _create_schema(connection: sqlite3.Connection) -> None:
@@ -191,7 +204,7 @@ def _create_schema(connection: sqlite3.Connection) -> None:
             topic TEXT,
             contact_persons TEXT,
             notes TEXT,
-            exclude BOOLEAN
+            want_to_invite BOOLEAN
         )
         """
     )

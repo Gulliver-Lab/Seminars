@@ -25,7 +25,7 @@ def test_homepage_displays_speakers_table(tmp_path):
             topic="Quantum seminars",
             contact_persons=["Bob Example", "Carol Example"],
             notes="Available in spring",
-            exclude=False,
+            want_to_invite=False,
         ),
     )
     connection.close()
@@ -40,7 +40,7 @@ def test_homepage_displays_speakers_table(tmp_path):
     assert "Example University" in response.text
     assert "<td>alice@example.edu</td>" not in response.text
     assert "Bob Example, Carol Example" in response.text
-    assert "Sort Exclude" not in response.text
+    assert "Sort Want to invite" not in response.text
 
 
 def test_speakers_with_last_talk_keeps_latest_talk_date_and_blank_missing(tmp_path):
@@ -55,7 +55,7 @@ def test_speakers_with_last_talk_keeps_latest_talk_date_and_blank_missing(tmp_pa
             topic="Quantum seminars",
             contact_persons=["Bob Example"],
             notes="Available in spring",
-            exclude=False,
+            want_to_invite=False,
         ),
     )
     insert_speaker(
@@ -67,7 +67,7 @@ def test_speakers_with_last_talk_keeps_latest_talk_date_and_blank_missing(tmp_pa
             topic="",
             contact_persons=[],
             notes="",
-            exclude=False,
+            want_to_invite=False,
         ),
     )
     insert_talk(
@@ -115,7 +115,7 @@ def test_homepage_displays_last_talk_date(tmp_path):
             topic="Quantum seminars",
             contact_persons=["Bob Example"],
             notes="Available in spring",
-            exclude=False,
+            want_to_invite=False,
         ),
     )
     insert_talk(
@@ -152,7 +152,7 @@ def test_homepage_sorts_speakers_by_column(tmp_path):
             topic="Quantum seminars",
             contact_persons=[],
             notes="",
-            exclude=False,
+            want_to_invite=False,
         ),
     )
     insert_speaker(
@@ -164,7 +164,7 @@ def test_homepage_sorts_speakers_by_column(tmp_path):
             topic="Algebra seminar",
             contact_persons=[],
             notes="",
-            exclude=False,
+            want_to_invite=False,
         ),
     )
     connection.close()
@@ -189,7 +189,7 @@ def test_homepage_displays_sort_links(tmp_path):
             topic="Quantum seminars",
             contact_persons=[],
             notes="",
-            exclude=False,
+            want_to_invite=False,
         ),
     )
     connection.close()
@@ -217,7 +217,7 @@ def test_homepage_displays_name_search_controls(tmp_path):
             topic="Quantum seminars",
             contact_persons=[],
             notes="",
-            exclude=False,
+            want_to_invite=False,
         ),
     )
     connection.close()
@@ -264,7 +264,7 @@ def test_post_speaker_creates_speaker(tmp_path):
             "topic": "New topic",
             "contact_persons": "Alice Example, Bob Example",
             "notes": "New notes",
-            "exclude": "on",
+            "want_to_invite": "on",
         },
         follow_redirects=False,
     )
@@ -282,7 +282,7 @@ def test_post_speaker_creates_speaker(tmp_path):
             "topic": "New topic",
             "contact_persons": ["Alice Example", "Bob Example"],
             "notes": "New notes",
-            "exclude": 1,
+            "want_to_invite": 1,
         }
     ]
 
@@ -299,7 +299,7 @@ def test_homepage_displays_edit_speaker_data(tmp_path):
             topic="Quantum seminars",
             contact_persons=["Bob Example", "Carol Example"],
             notes="Available in spring",
-            exclude=True,
+            want_to_invite=True,
         ),
     )
     insert_talk(
@@ -334,7 +334,7 @@ def test_homepage_displays_edit_speaker_data(tmp_path):
     assert 'data-edit-name="Alice Example"' in response.text
     assert 'data-edit-email="alice@example.edu"' in response.text
     assert 'data-edit-contact-persons="Bob Example, Carol Example"' in response.text
-    assert 'data-edit-exclude="1"' in response.text
+    assert 'data-edit-want-to-invite="1"' in response.text
     assert 'id="edit-speaker-talks"' in response.text
     assert 'id="delete-speaker-form"' in response.text
     assert 'id="delete-speaker-button"' in response.text
@@ -353,7 +353,7 @@ def test_post_speaker_edit_updates_speaker_and_cascades_talks(tmp_path):
             topic="Quantum seminars",
             contact_persons=["Bob Example"],
             notes="Available in spring",
-            exclude=False,
+            want_to_invite=False,
         ),
     )
     insert_talk(
@@ -397,7 +397,7 @@ def test_post_speaker_edit_updates_speaker_and_cascades_talks(tmp_path):
             "topic": "Updated topic",
             "contact_persons": ["Carol Example"],
             "notes": "Updated notes",
-            "exclude": 0,
+            "want_to_invite": 0,
         }
     ]
     assert talks[0]["speaker"] == "Alice Updated"
@@ -415,15 +415,13 @@ def test_post_speaker_delete_removes_speaker_without_talks(tmp_path):
             topic="Quantum seminars",
             contact_persons=[],
             notes="",
-            exclude=False,
+            want_to_invite=False,
         ),
     )
     connection.close()
     client = TestClient(build_app(db_path))
 
-    response = client.post(
-        "/speakers/Alice%20Example/delete", follow_redirects=False
-    )
+    response = client.post("/speakers/Alice%20Example/delete", follow_redirects=False)
 
     assert response.status_code == 303
     assert response.headers["location"] == "/"
@@ -445,7 +443,7 @@ def test_post_speaker_delete_rejects_speaker_with_talks(tmp_path):
             topic="Quantum seminars",
             contact_persons=[],
             notes="",
-            exclude=False,
+            want_to_invite=False,
         ),
     )
     insert_talk(
@@ -462,9 +460,7 @@ def test_post_speaker_delete_rejects_speaker_with_talks(tmp_path):
     connection.close()
     client = TestClient(build_app(db_path))
 
-    response = client.post(
-        "/speakers/Alice%20Example/delete", follow_redirects=False
-    )
+    response = client.post("/speakers/Alice%20Example/delete", follow_redirects=False)
 
     assert response.status_code == 409
     connection = open_or_create_db(db_path)

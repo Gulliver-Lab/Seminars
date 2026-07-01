@@ -42,14 +42,14 @@ def test_inserts_speaker():
         topic="Quantum seminars",
         contact_persons=["Bob Example", "Carol Example"],
         notes="Available in spring",
-        exclude=False,
+        want_to_invite=False,
     )
 
     insert_speaker(connection, speaker)
 
     row = connection.execute(
         """
-        SELECT name, affiliation, email, topic, contact_persons, notes, exclude
+        SELECT name, affiliation, email, topic, contact_persons, notes, want_to_invite
         FROM speakers
         """
     ).fetchone()
@@ -76,7 +76,7 @@ def test_insert_speaker_updates_existing_speaker_with_same_name():
             topic="Quantum seminars",
             contact_persons=["Bob Example", "Carol Example"],
             notes="Available in spring",
-            exclude=False,
+            want_to_invite=False,
         ),
     )
 
@@ -89,13 +89,13 @@ def test_insert_speaker_updates_existing_speaker_with_same_name():
             topic="Updated topic",
             contact_persons=["Dana Example"],
             notes="Updated notes",
-            exclude=True,
+            want_to_invite=True,
         ),
     )
 
     rows = connection.execute(
         """
-        SELECT name, affiliation, email, topic, contact_persons, notes, exclude
+        SELECT name, affiliation, email, topic, contact_persons, notes, want_to_invite
         FROM speakers
         """
     ).fetchall()
@@ -125,7 +125,7 @@ def test_update_speaker_updates_existing_row():
             topic="Quantum seminars",
             contact_persons=["Bob Example"],
             notes="Available in spring",
-            exclude=False,
+            want_to_invite=False,
         ),
     )
 
@@ -139,13 +139,13 @@ def test_update_speaker_updates_existing_row():
             topic="Updated topic",
             contact_persons=["Carol Example"],
             notes="Updated notes",
-            exclude=True,
+            want_to_invite=True,
         ),
     )
 
     rows = connection.execute(
         """
-        SELECT name, affiliation, email, topic, contact_persons, notes, exclude
+        SELECT name, affiliation, email, topic, contact_persons, notes, want_to_invite
         FROM speakers
         """
     ).fetchall()
@@ -175,7 +175,7 @@ def test_update_speaker_name_cascades_to_talks():
             topic="Quantum seminars",
             contact_persons=["Bob Example"],
             notes="Available in spring",
-            exclude=False,
+            want_to_invite=False,
         ),
     )
     insert_talk(
@@ -200,7 +200,7 @@ def test_update_speaker_name_cascades_to_talks():
             topic="Quantum seminars",
             contact_persons=["Bob Example"],
             notes="Available in spring",
-            exclude=False,
+            want_to_invite=False,
         ),
     )
 
@@ -221,7 +221,7 @@ def test_delete_speaker_removes_speaker_without_talks():
             topic="Quantum seminars",
             contact_persons=["Bob Example"],
             notes="Available in spring",
-            exclude=False,
+            want_to_invite=False,
         ),
     )
 
@@ -243,7 +243,7 @@ def test_delete_speaker_rejects_speaker_with_talks():
             topic="Quantum seminars",
             contact_persons=["Bob Example"],
             notes="Available in spring",
-            exclude=False,
+            want_to_invite=False,
         ),
     )
     insert_talk(
@@ -276,7 +276,7 @@ def test_reads_speakers_as_dataframe():
         topic="Quantum seminars",
         contact_persons=["Bob Example", "Carol Example"],
         notes="Available in spring",
-        exclude=False,
+        want_to_invite=False,
     )
     insert_speaker(connection, speaker)
 
@@ -289,7 +289,7 @@ def test_reads_speakers_as_dataframe():
         "topic",
         "contact_persons",
         "notes",
-        "exclude",
+        "want_to_invite",
     ]
     assert dataframe.to_dict("records") == [
         {
@@ -299,7 +299,7 @@ def test_reads_speakers_as_dataframe():
             "topic": "Quantum seminars",
             "contact_persons": ["Bob Example", "Carol Example"],
             "notes": "Available in spring",
-            "exclude": 0,
+            "want_to_invite": 0,
         }
     ]
 
@@ -315,6 +315,81 @@ def test_open_or_create_db_creates_schema_for_missing_file(tmp_path):
     assert tables == [("speakers",), ("talks",)]
 
 
+def test_open_or_create_db_renames_existing_exclude_column(tmp_path):
+    filepath = tmp_path / "seminars.db"
+    connection = sqlite3.connect(filepath)
+    connection.execute(
+        """
+        CREATE TABLE speakers (
+            name TEXT PRIMARY KEY,
+            affiliation TEXT,
+            email TEXT,
+            topic TEXT,
+            contact_persons TEXT,
+            notes TEXT,
+            exclude BOOLEAN
+        )
+        """
+    )
+    connection.execute(
+        """
+        CREATE TABLE talks (
+            date TEXT,
+            speaker TEXT,
+            title TEXT,
+            abstract TEXT,
+            status TEXT,
+            comments TEXT,
+            FOREIGN KEY (speaker) REFERENCES speakers(name) ON UPDATE CASCADE
+        )
+        """
+    )
+    connection.execute(
+        """
+        INSERT INTO speakers (
+            name,
+            affiliation,
+            email,
+            topic,
+            contact_persons,
+            notes,
+            exclude
+        )
+        VALUES (?, ?, ?, ?, ?, ?, ?)
+        """,
+        (
+            "Alice Example",
+            "Example University",
+            "alice@example.edu",
+            "Quantum seminars",
+            '["Bob Example"]',
+            "Available in spring",
+            1,
+        ),
+    )
+    connection.commit()
+    connection.close()
+
+    connection = open_or_create_db(filepath)
+
+    columns = [
+        row[1] for row in connection.execute("PRAGMA table_info(speakers)").fetchall()
+    ]
+    assert "exclude" not in columns
+    assert "want_to_invite" in columns
+    assert read_speakers(connection).to_dict("records") == [
+        {
+            "name": "Alice Example",
+            "affiliation": "Example University",
+            "email": "alice@example.edu",
+            "topic": "Quantum seminars",
+            "contact_persons": ["Bob Example"],
+            "notes": "Available in spring",
+            "want_to_invite": 1,
+        }
+    ]
+
+
 def test_inserts_talk():
     connection = sqlite3.connect(":memory:")
     connection.execute("PRAGMA foreign_keys = ON")
@@ -328,7 +403,7 @@ def test_inserts_talk():
             topic="Quantum seminars",
             contact_persons=["Bob Example"],
             notes="Available in spring",
-            exclude=False,
+            want_to_invite=False,
         ),
     )
 
@@ -392,7 +467,7 @@ def test_insert_talk_allows_multiple_talks_with_same_date():
             topic="Quantum seminars",
             contact_persons=["Bob Example"],
             notes="Available in spring",
-            exclude=False,
+            want_to_invite=False,
         ),
     )
 
@@ -458,7 +533,7 @@ def test_reads_talks_as_dataframe():
             topic="Quantum seminars",
             contact_persons=["Bob Example"],
             notes="Available in spring",
-            exclude=False,
+            want_to_invite=False,
         ),
     )
     insert_talk(
