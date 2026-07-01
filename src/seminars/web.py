@@ -66,6 +66,9 @@ def build_app(db_path: str | Path) -> FastAPI:
             {
                 "columns": COLUMNS,
                 "speakers": [_format_speaker(row) for row in speakers],
+                "visible_count": sum(
+                    bool(speaker["want_to_invite"]) for speaker in speakers
+                ),
                 "active_sort": active_sort,
                 "active_direction": active_direction,
             },

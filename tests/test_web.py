@@ -233,6 +233,47 @@ def test_homepage_displays_name_search_controls(tmp_path):
     assert 'id="visible-count"' in response.text
 
 
+def test_homepage_displays_want_to_invite_filter(tmp_path):
+    db_path = tmp_path / "seminars.db"
+    connection = open_or_create_db(db_path)
+    insert_speaker(
+        connection,
+        Speaker(
+            name="Alice Example",
+            affiliation="Example University",
+            email="alice@example.edu",
+            topic="Quantum seminars",
+            contact_persons=[],
+            notes="",
+            want_to_invite=True,
+        ),
+    )
+    insert_speaker(
+        connection,
+        Speaker(
+            name="Bob Example",
+            affiliation="Example University",
+            email="bob@example.edu",
+            topic="Quantum seminars",
+            contact_persons=[],
+            notes="",
+            want_to_invite=False,
+        ),
+    )
+    connection.close()
+
+    client = TestClient(build_app(db_path))
+
+    response = client.get("/")
+
+    assert response.status_code == 200
+    assert 'id="want-to-invite-filter"' in response.text
+    assert "checked" in response.text
+    assert '<span id="visible-count">1</span>' in response.text
+    assert 'data-want-to-invite="1"' in response.text
+    assert 'data-want-to-invite="0"' in response.text
+
+
 def test_homepage_displays_new_speaker_form(tmp_path):
     db_path = tmp_path / "seminars.db"
     connection = open_or_create_db(db_path)

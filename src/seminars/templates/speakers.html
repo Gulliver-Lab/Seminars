@@ -397,7 +397,7 @@
     <main>
       <div class="page-header">
         <h1>Speakers</h1>
-        <div class="count"><span id="visible-count">{{ speakers | length }}</span> rows</div>
+        <div class="count"><span id="visible-count">{{ visible_count }}</span> rows</div>
       </div>
 
       <div class="toolbar">
@@ -410,6 +410,10 @@
           autocomplete="off"
         >
         <div class="toolbar-actions">
+          <label class="checkbox-field">
+            <input id="want-to-invite-filter" type="checkbox" checked>
+            Want to invite
+          </label>
           <button type="button" id="new-speaker-button">New Speaker</button>
         </div>
       </div>
@@ -446,6 +450,7 @@
               {% for speaker in speakers %}
                 <tr
                   data-speaker-name="{{ speaker.name | lower }}"
+                  data-want-to-invite="{{ speaker.want_to_invite }}"
                   data-edit-name="{{ speaker.name }}"
                   data-edit-affiliation="{{ speaker.affiliation }}"
                   data-edit-email="{{ speaker.email }}"
@@ -454,6 +459,7 @@
                   data-edit-notes="{{ speaker.notes }}"
                   data-edit-want-to-invite="{{ speaker.want_to_invite }}"
                   data-edit-talks='{{ speaker.talks | tojson }}'
+                  {% if not speaker.want_to_invite %}hidden{% endif %}
                 >
                   {% for key, _ in columns %}
                     <td>{{ speaker[key] }}</td>
@@ -569,6 +575,7 @@
     </main>
     <script>
       const searchInput = document.getElementById("speaker-search");
+      const wantToInviteFilter = document.getElementById("want-to-invite-filter");
       const visibleCount = document.getElementById("visible-count");
       const rows = Array.from(document.querySelectorAll("tbody tr[data-speaker-name]"));
       const newSpeakerButton = document.getElementById("new-speaker-button");
@@ -583,12 +590,15 @@
       const closeEditSpeaker = document.getElementById("close-edit-speaker");
       const cancelEditSpeaker = document.getElementById("cancel-edit-speaker");
 
-      searchInput.addEventListener("input", () => {
+      const applyFilters = () => {
         const query = searchInput.value.trim().toLowerCase();
+        const onlyWantToInvite = wantToInviteFilter.checked;
         let count = 0;
 
         rows.forEach((row) => {
-          const isVisible = row.dataset.speakerName.includes(query);
+          const matchesSearch = row.dataset.speakerName.includes(query);
+          const matchesInvite = !onlyWantToInvite || row.dataset.wantToInvite === "1";
+          const isVisible = matchesSearch && matchesInvite;
           row.hidden = !isVisible;
           if (isVisible) {
             count += 1;
@@ -596,7 +606,11 @@
         });
 
         visibleCount.textContent = count;
-      });
+      };
+
+      searchInput.addEventListener("input", applyFilters);
+      wantToInviteFilter.addEventListener("change", applyFilters);
+      applyFilters();
 
       const openNewSpeakerModal = () => {
         newSpeakerModal.classList.add("open");
