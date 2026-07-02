@@ -307,6 +307,68 @@
         resize: vertical;
       }
 
+      .contact-person-field {
+        display: grid;
+        gap: 8px;
+      }
+
+      .contact-person-picker {
+        background: #ffffff;
+        border: 1px solid #cbd3df;
+        display: grid;
+        gap: 8px;
+        padding: 8px 10px;
+      }
+
+      .contact-person-picker:focus-within {
+        border-color: #6d7f95;
+        outline: 2px solid #dbe3ee;
+        outline-offset: 0;
+      }
+
+      .contact-person-tokens {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 6px;
+        min-height: 26px;
+      }
+
+      .contact-person-token {
+        align-items: center;
+        background: #e8eef6;
+        border: 1px solid #c6cfdb;
+        border-radius: 999px;
+        color: #1c2430;
+        display: inline-flex;
+        gap: 8px;
+        height: auto;
+        padding: 4px 10px;
+      }
+
+      .contact-person-token-remove {
+        background: transparent;
+        border: 0;
+        color: inherit;
+        height: auto;
+        padding: 0;
+      }
+
+      .contact-person-token-remove:hover {
+        background: transparent;
+      }
+
+      .contact-person-input {
+        border: 0;
+        flex: 1;
+        font: inherit;
+        min-width: 180px;
+        padding: 0;
+      }
+
+      .contact-person-input:focus {
+        outline: none;
+      }
+
       .checkbox-field {
         align-items: center;
         display: flex;
@@ -503,12 +565,26 @@
                 </select>
               </div>
               <div class="field full">
-                <label for="speaker-contact-persons">Contact persons</label>
-                <select id="speaker-contact-persons" name="contact_persons" multiple size="6">
-                  {% for person in contact_person_options %}
-                    <option value="{{ person }}">{{ person }}</option>
-                  {% endfor %}
-                </select>
+                <label for="speaker-contact-persons-input">Contact persons</label>
+                <div class="contact-person-field">
+                  <div class="contact-person-picker">
+                    <div class="contact-person-tokens" id="speaker-contact-persons-tokens"></div>
+                    <input
+                      class="contact-person-input"
+                      id="speaker-contact-persons-input"
+                      type="text"
+                      list="contact-person-options"
+                      autocomplete="off"
+                      placeholder="Type a name and press Enter"
+                    >
+                    <input
+                      id="speaker-contact-persons-empty"
+                      name="contact_persons"
+                      type="hidden"
+                      value=""
+                    >
+                  </div>
+                </div>
               </div>
               <div class="field full">
                 <label for="speaker-notes">Notes</label>
@@ -552,8 +628,26 @@
                 <input id="edit-speaker-topic" name="topic">
               </div>
               <div class="field full">
-                <label for="edit-speaker-contact-persons">Contact persons</label>
-                <input id="edit-speaker-contact-persons" name="contact_persons">
+                <label for="edit-speaker-contact-persons-input">Contact persons</label>
+                <div class="contact-person-field">
+                  <div class="contact-person-picker">
+                    <div class="contact-person-tokens" id="edit-speaker-contact-persons-tokens"></div>
+                    <input
+                      class="contact-person-input"
+                      id="edit-speaker-contact-persons-input"
+                      type="text"
+                      list="contact-person-options"
+                      autocomplete="off"
+                      placeholder="Type a name and press Enter"
+                    >
+                    <input
+                      id="edit-speaker-contact-persons-empty"
+                      name="contact_persons"
+                      type="hidden"
+                      value=""
+                    >
+                  </div>
+                </div>
               </div>
               <div class="field full">
                 <label for="edit-speaker-notes">Notes</label>
@@ -581,6 +675,11 @@
           </form>
         </div>
       </div>
+      <datalist id="contact-person-options">
+        {% for person in contact_person_options %}
+          <option value="{{ person }}"></option>
+        {% endfor %}
+      </datalist>
     </main>
     <script>
       const searchInput = document.getElementById("speaker-search");
@@ -598,6 +697,118 @@
       const deleteSpeakerHint = document.getElementById("delete-speaker-hint");
       const closeEditSpeaker = document.getElementById("close-edit-speaker");
       const cancelEditSpeaker = document.getElementById("cancel-edit-speaker");
+      const contactPersonOptions = new Set(
+        Array.from(document.querySelectorAll("#contact-person-options option")).map(
+          (option) => option.value,
+        ),
+      );
+
+      const createContactPersonPicker = ({ inputId, tokensId, blankId }) => {
+        const input = document.getElementById(inputId);
+        const tokens = document.getElementById(tokensId);
+        const blank = document.getElementById(blankId);
+        if (!input || !tokens || !blank) {
+          return null;
+        }
+
+        let selected = [];
+
+        const render = () => {
+          tokens.replaceChildren();
+          blank.disabled = selected.length > 0;
+
+          selected.forEach((person) => {
+            const token = document.createElement("span");
+            token.className = "contact-person-token";
+
+            const label = document.createElement("span");
+            label.textContent = person;
+
+            const remove = document.createElement("button");
+            remove.className = "contact-person-token-remove";
+            remove.type = "button";
+            remove.setAttribute("aria-label", `Remove ${person}`);
+            remove.textContent = "×";
+            remove.addEventListener("click", () => {
+              selected = selected.filter((value) => value !== person);
+              render();
+              input.focus();
+            });
+
+            const hidden = document.createElement("input");
+            hidden.name = "contact_persons";
+            hidden.type = "hidden";
+            hidden.value = person;
+
+            token.append(label, remove);
+            tokens.append(token, hidden);
+          });
+        };
+
+        const setValues = (values) => {
+          selected = [];
+          values.forEach((value) => {
+            const person = value.trim();
+            if (
+              !person ||
+              selected.includes(person) ||
+              !contactPersonOptions.has(person)
+            ) {
+              return;
+            }
+            selected.push(person);
+          });
+          input.value = "";
+          render();
+        };
+
+        const addValue = (value) => {
+          const person = value.trim();
+          if (
+            !person ||
+            selected.includes(person) ||
+            !contactPersonOptions.has(person)
+          ) {
+            return false;
+          }
+
+          selected.push(person);
+          input.value = "";
+          render();
+          return true;
+        };
+
+        input.addEventListener("keydown", (event) => {
+          if (event.key !== "Enter") {
+            return;
+          }
+
+          event.preventDefault();
+          addValue(input.value);
+        });
+
+        render();
+
+        return {
+          clear() {
+            selected = [];
+            input.value = "";
+            render();
+          },
+          setValues,
+        };
+      };
+
+      const newSpeakerContactPersons = createContactPersonPicker({
+        inputId: "speaker-contact-persons-input",
+        tokensId: "speaker-contact-persons-tokens",
+        blankId: "speaker-contact-persons-empty",
+      });
+      const editSpeakerContactPersons = createContactPersonPicker({
+        inputId: "edit-speaker-contact-persons-input",
+        tokensId: "edit-speaker-contact-persons-tokens",
+        blankId: "edit-speaker-contact-persons-empty",
+      });
 
       const applyFilters = () => {
         const query = searchInput.value.trim().toLowerCase();
@@ -624,6 +835,7 @@
       const openNewSpeakerModal = () => {
         newSpeakerModal.classList.add("open");
         newSpeakerModal.setAttribute("aria-hidden", "false");
+        newSpeakerContactPersons?.clear();
         document.getElementById("speaker-name").focus();
       };
 
@@ -642,7 +854,9 @@
         document.getElementById("edit-speaker-affiliation").value = speaker.editAffiliation;
         document.getElementById("edit-speaker-email").value = speaker.editEmail;
         document.getElementById("edit-speaker-topic").value = speaker.editTopic;
-        document.getElementById("edit-speaker-contact-persons").value = speaker.editContactPersons;
+        editSpeakerContactPersons?.setValues(
+          speaker.editContactPersons ? speaker.editContactPersons.split(", ") : [],
+        );
         document.getElementById("edit-speaker-notes").value = speaker.editNotes;
         document.getElementById("edit-speaker-want-to-invite").checked = speaker.editWantToInvite === "1";
         renderSpeakerTalks(talks);

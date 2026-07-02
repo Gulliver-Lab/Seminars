@@ -1,5 +1,4 @@
 import datetime
-from typing import get_args
 
 from fastapi.testclient import TestClient
 
@@ -10,7 +9,7 @@ from seminars.db import (
     read_speakers,
     read_talks,
 )
-from seminars.models import PERSONS, Speaker, Talk
+from seminars.models import Speaker, Talk
 from seminars.web import build_app, speakers_with_last_talk
 
 
@@ -294,13 +293,14 @@ def test_homepage_displays_new_speaker_form(tmp_path):
     assert '<option value="BioPhys">BioPhys</option>' in response.text
     assert '<option value="Soft Matter">Soft Matter</option>' in response.text
     assert '<option value="Other">Other</option>' in response.text
-    assert (
-        '<select id="speaker-contact-persons" name="contact_persons" multiple'
-        in response.text
-    )
-    for person in get_args(PERSONS):
-        if person:
-            assert f'<option value="{person}">{person}</option>' in response.text
+    assert 'id="speaker-contact-persons-input"' in response.text
+    assert 'list="contact-person-options"' in response.text
+    assert '<datalist id="contact-person-options">' in response.text
+    assert 'id="speaker-contact-persons-tokens"' in response.text
+    assert 'id="speaker-contact-persons-empty"' in response.text
+    assert 'type="hidden"' in response.text
+    assert 'id="edit-speaker-contact-persons-input"' in response.text
+    assert 'id="edit-speaker-contact-persons-tokens"' in response.text
 
 
 def test_post_speaker_creates_speaker(tmp_path):
@@ -316,7 +316,7 @@ def test_post_speaker_creates_speaker(tmp_path):
             "affiliation": "New University",
             "email": "new@example.edu",
             "topic": "BioPhys",
-            "contact_persons": ["David", "Josh"],
+            "contact_persons": ["David", "Josh", "David"],
             "notes": "New notes",
             "want_to_invite": "on",
         },
@@ -488,7 +488,7 @@ def test_post_speaker_edit_updates_speaker_and_cascades_talks(tmp_path):
             "affiliation": "Updated Institute",
             "email": "alice.updated@example.edu",
             "topic": "Soft Matter",
-            "contact_persons": "Carol Example",
+            "contact_persons": ["David"],
             "notes": "Updated notes",
         },
         follow_redirects=False,
@@ -506,7 +506,7 @@ def test_post_speaker_edit_updates_speaker_and_cascades_talks(tmp_path):
             "affiliation": "Updated Institute",
             "email": "alice.updated@example.edu",
             "topic": "Soft Matter",
-            "contact_persons": ["Carol Example"],
+            "contact_persons": ["David"],
             "notes": "Updated notes",
             "want_to_invite": 0,
         }

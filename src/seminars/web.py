@@ -89,7 +89,7 @@ def build_app(db_path: str | Path) -> FastAPI:
         want_to_invite: str | None = Form(None),
     ) -> RedirectResponse:
         try:
-            speaker = _speaker_from_selection_form(
+            speaker = _speaker_from_form(
                 name, affiliation, email, topic, contact_persons, notes, want_to_invite
             )
         except ValueError as error:
@@ -108,7 +108,7 @@ def build_app(db_path: str | Path) -> FastAPI:
         affiliation: str = Form(""),
         email: str = Form(""),
         topic: str = Form(""),
-        contact_persons: str = Form(""),
+        contact_persons: list[str] = Form([]),
         notes: str = Form(""),
         want_to_invite: str | None = Form(None),
     ) -> RedirectResponse:
@@ -208,7 +208,7 @@ def _speaker_from_form(
     affiliation: str,
     email: str,
     topic: str,
-    contact_persons: str,
+    contact_persons: Sequence[str],
     notes: str,
     want_to_invite: str | None,
 ) -> Speaker:
@@ -223,37 +223,13 @@ def _speaker_from_form(
     )
 
 
-def _speaker_from_selection_form(
-    name: str,
-    affiliation: str,
-    email: str,
-    topic: str,
-    contact_persons: Sequence[str],
-    notes: str,
-    want_to_invite: str | None,
-) -> Speaker:
-    return Speaker(
-        name=name.title(),
-        affiliation=affiliation,
-        email=email,
-        topic=_parse_research_topic(topic),
-        contact_persons=_parse_contact_persons_selection(contact_persons),
-        notes=notes,
-        want_to_invite=want_to_invite == "on",
-    )
-
-
 def _parse_research_topic(value: str) -> ResearchTopic:
     if value in RESEARCH_TOPICS:
         return cast(ResearchTopic, value)
     return "Other"
 
 
-def _parse_contact_persons(value: str) -> list[PERSONS]:
-    return [person.strip() for person in value.split(",") if person.strip()]
-
-
-def _parse_contact_persons_selection(value: Sequence[str]) -> list[PERSONS]:
+def _parse_contact_persons(value: Sequence[str]) -> list[PERSONS]:
     selected = [person.strip() for person in value if person.strip()]
     if not selected:
         return [""]
@@ -263,7 +239,8 @@ def _parse_contact_persons_selection(value: Sequence[str]) -> list[PERSONS]:
     if invalid_persons:
         raise ValueError(f"invalid contact persons: {', '.join(invalid_persons)}")
 
-    return cast(list[PERSONS], selected)
+    deduplicated = list(dict.fromkeys(selected))
+    return cast(list[PERSONS], deduplicated)
 
 
 def build_parser() -> argparse.ArgumentParser:
