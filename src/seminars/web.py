@@ -35,6 +35,7 @@ COLUMNS = [
 ]
 SORTABLE_COLUMNS = {key for key, _label in COLUMNS}
 RESEARCH_TOPICS = list(get_args(ResearchTopic))
+CONTACT_PERSON_OPTIONS = [person for person in get_args(PERSONS) if person]
 
 
 def build_app(db_path: str | Path) -> FastAPI:
@@ -68,6 +69,7 @@ def build_app(db_path: str | Path) -> FastAPI:
                 "columns": COLUMNS,
                 "speakers": [_format_speaker(row) for row in speakers],
                 "research_topics": RESEARCH_TOPICS,
+                "contact_person_options": CONTACT_PERSON_OPTIONS,
                 "visible_count": sum(
                     bool(speaker["want_to_invite"]) for speaker in speakers
                 ),
@@ -82,13 +84,16 @@ def build_app(db_path: str | Path) -> FastAPI:
         affiliation: str = Form(""),
         email: str = Form(""),
         topic: str = Form(""),
-        contact_persons: str = Form(""),
+        contact_persons: list[str] = Form([]),
         notes: str = Form(""),
         want_to_invite: str | None = Form(None),
     ) -> RedirectResponse:
-        speaker = _speaker_from_form(
-            name, affiliation, email, topic, contact_persons, notes, want_to_invite
-        )
+        try:
+            speaker = _speaker_from_selection_form(
+                name, affiliation, email, topic, contact_persons, notes, want_to_invite
+            )
+        except ValueError as error:
+            return PlainTextResponse(str(error), status_code=400)
         connection = open_or_create_db(database_path)
         try:
             insert_speaker(connection, speaker)
@@ -107,9 +112,12 @@ def build_app(db_path: str | Path) -> FastAPI:
         notes: str = Form(""),
         want_to_invite: str | None = Form(None),
     ) -> RedirectResponse:
-        speaker = _speaker_from_form(
-            name, affiliation, email, topic, contact_persons, notes, want_to_invite
-        )
+        try:
+            speaker = _speaker_from_form(
+                name, affiliation, email, topic, contact_persons, notes, want_to_invite
+            )
+        except ValueError as error:
+            return PlainTextResponse(str(error), status_code=400)
         connection = open_or_create_db(database_path)
         try:
             update_speaker(connection, original_name, speaker)
@@ -215,6 +223,26 @@ def _speaker_from_form(
     )
 
 
+def _speaker_from_selection_form(
+    name: str,
+    affiliation: str,
+    email: str,
+    topic: str,
+    contact_persons: Sequence[str],
+    notes: str,
+    want_to_invite: str | None,
+) -> Speaker:
+    return Speaker(
+        name=name.title(),
+        affiliation=affiliation,
+        email=email,
+        topic=_parse_research_topic(topic),
+        contact_persons=_parse_contact_persons_selection(contact_persons),
+        notes=notes,
+        want_to_invite=want_to_invite == "on",
+    )
+
+
 def _parse_research_topic(value: str) -> ResearchTopic:
     if value in RESEARCH_TOPICS:
         return cast(ResearchTopic, value)
@@ -223,6 +251,19 @@ def _parse_research_topic(value: str) -> ResearchTopic:
 
 def _parse_contact_persons(value: str) -> list[PERSONS]:
     return [person.strip() for person in value.split(",") if person.strip()]
+
+
+def _parse_contact_persons_selection(value: Sequence[str]) -> list[PERSONS]:
+    selected = [person.strip() for person in value if person.strip()]
+    if not selected:
+        return [""]
+
+    allowed_persons = set(get_args(PERSONS))
+    invalid_persons = [person for person in selected if person not in allowed_persons]
+    if invalid_persons:
+        raise ValueError(f"invalid contact persons: {', '.join(invalid_persons)}")
+
+    return cast(list[PERSONS], selected)
 
 
 def build_parser() -> argparse.ArgumentParser:

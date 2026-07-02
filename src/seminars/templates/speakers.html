@@ -504,7 +504,11 @@
               </div>
               <div class="field full">
                 <label for="speaker-contact-persons">Contact persons</label>
-                <input id="speaker-contact-persons" name="contact_persons">
+                <select id="speaker-contact-persons" name="contact_persons" multiple size="6">
+                  {% for person in contact_person_options %}
+                    <option value="{{ person }}">{{ person }}</option>
+                  {% endfor %}
+                </select>
               </div>
               <div class="field full">
                 <label for="speaker-notes">Notes</label>

@@ -1,4 +1,5 @@
 import datetime
+from typing import get_args
 
 from fastapi.testclient import TestClient
 
@@ -9,7 +10,7 @@ from seminars.db import (
     read_speakers,
     read_talks,
 )
-from seminars.models import Speaker, Talk
+from seminars.models import PERSONS, Speaker, Talk
 from seminars.web import build_app, speakers_with_last_talk
 
 
@@ -293,7 +294,13 @@ def test_homepage_displays_new_speaker_form(tmp_path):
     assert '<option value="BioPhys">BioPhys</option>' in response.text
     assert '<option value="Soft Matter">Soft Matter</option>' in response.text
     assert '<option value="Other">Other</option>' in response.text
-    assert 'name="contact_persons"' in response.text
+    assert (
+        '<select id="speaker-contact-persons" name="contact_persons" multiple'
+        in response.text
+    )
+    for person in get_args(PERSONS):
+        if person:
+            assert f'<option value="{person}">{person}</option>' in response.text
 
 
 def test_post_speaker_creates_speaker(tmp_path):
@@ -309,7 +316,7 @@ def test_post_speaker_creates_speaker(tmp_path):
             "affiliation": "New University",
             "email": "new@example.edu",
             "topic": "BioPhys",
-            "contact_persons": "Alice Example, Bob Example",
+            "contact_persons": ["David", "Josh"],
             "notes": "New notes",
             "want_to_invite": "on",
         },
@@ -327,11 +334,68 @@ def test_post_speaker_creates_speaker(tmp_path):
             "affiliation": "New University",
             "email": "new@example.edu",
             "topic": "BioPhys",
-            "contact_persons": ["Alice Example", "Bob Example"],
+            "contact_persons": ["David", "Josh"],
             "notes": "New notes",
             "want_to_invite": 1,
         }
     ]
+
+
+def test_post_speaker_creates_speaker_with_blank_contact_persons(tmp_path):
+    db_path = tmp_path / "seminars.db"
+    connection = open_or_create_db(db_path)
+    connection.close()
+    client = TestClient(build_app(db_path))
+
+    response = client.post(
+        "/speakers",
+        data={
+            "name": "Blank Contact",
+            "affiliation": "New University",
+            "email": "blank@example.edu",
+            "topic": "BioPhys",
+            "notes": "New notes",
+        },
+        follow_redirects=False,
+    )
+
+    assert response.status_code == 303
+    connection = open_or_create_db(db_path)
+    dataframe = read_speakers(connection)
+    connection.close()
+    assert dataframe.to_dict("records") == [
+        {
+            "name": "Blank Contact",
+            "affiliation": "New University",
+            "email": "blank@example.edu",
+            "topic": "BioPhys",
+            "contact_persons": [""],
+            "notes": "New notes",
+            "want_to_invite": 0,
+        }
+    ]
+
+
+def test_post_speaker_rejects_invalid_contact_person(tmp_path):
+    db_path = tmp_path / "seminars.db"
+    connection = open_or_create_db(db_path)
+    connection.close()
+    client = TestClient(build_app(db_path))
+
+    response = client.post(
+        "/speakers",
+        data={
+            "name": "Invalid Contact",
+            "affiliation": "New University",
+            "email": "invalid@example.edu",
+            "topic": "BioPhys",
+            "contact_persons": ["Not Allowed"],
+            "notes": "New notes",
+        },
+        follow_redirects=False,
+    )
+
+    assert response.status_code == 400
 
 
 def test_homepage_displays_edit_speaker_data(tmp_path):
