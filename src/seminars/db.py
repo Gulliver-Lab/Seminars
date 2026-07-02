@@ -4,7 +4,7 @@ from pathlib import Path
 
 import pandas as pd
 
-from seminars.models import Speaker, Talk
+from seminars.models import PERSONS, Speaker, Talk
 
 EXPECTED_SPEAKERS_SCHEMA = [
     ("name", "TEXT"),
@@ -26,7 +26,7 @@ EXPECTED_TALKS_SCHEMA = [
 ]
 
 
-def serialize_contact_persons(contact_persons: list[str]) -> str:
+def serialize_contact_persons(contact_persons: list[PERSONS]) -> str:
     if not isinstance(contact_persons, list) or not all(
         isinstance(person, str) for person in contact_persons
     ):
@@ -34,7 +34,7 @@ def serialize_contact_persons(contact_persons: list[str]) -> str:
     return json.dumps(contact_persons)
 
 
-def deserialize_contact_persons(value: str | None) -> list[str] | None:
+def deserialize_contact_persons(value: str | None) -> list[PERSONS] | None:
     if value is None:
         return None
 

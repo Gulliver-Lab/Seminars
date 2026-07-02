@@ -21,7 +21,7 @@ from seminars.db import (
     read_talks,
     update_speaker,
 )
-from seminars.models import ResearchTopic, Speaker
+from seminars.models import PERSONS, ResearchTopic, Speaker
 
 TEMPLATES = Jinja2Templates(directory=Path(__file__).parent / "templates")
 
@@ -221,7 +221,7 @@ def _parse_research_topic(value: str) -> ResearchTopic:
     return "Other"
 
 
-def _parse_contact_persons(value: str) -> list[str]:
+def _parse_contact_persons(value: str) -> list[PERSONS]:
     return [person.strip() for person in value.split(",") if person.strip()]
 
 

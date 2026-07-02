@@ -10,6 +10,30 @@ class TalkStatus(StrEnum):
 
 ResearchTopic = Literal["Active Matter", "Theory", "BioPhys", "Soft Matter", "Other"]
 
+PERSONS = Literal[
+    "David",
+    "Élie",
+    "François",
+    "Guillaume",
+    "Hélène",
+    "Josh",
+    "Justine",
+    "Ken",
+    "Ludovic",
+    "Mathilde",
+    "Matthieu",
+    "Michael",
+    "Michel",
+    "Olivier D",
+    "Olivier R",
+    "Paddy",
+    "Teresa",
+    "Tony",
+    "Yannick",
+    "Zorana",
+    "",
+]
+
 
 @dataclasses.dataclass
 class Speaker:
@@ -17,7 +41,7 @@ class Speaker:
     affiliation: str
     email: str
     topic: ResearchTopic
-    contact_persons: list[str]
+    contact_persons: list[PERSONS]
     notes: str
     want_to_invite: bool
 
