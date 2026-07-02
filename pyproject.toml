@@ -5,11 +5,16 @@ description = "Internal tool for seminar management"
 readme = "README.md"
 requires-python = ">=3.14"
 dependencies = [
+    "fastapi>=0.116.0",
+    "jinja2>=3.1.0",
     "pandas>=3.0.2",
+    "python-multipart>=0.0.20",
+    "uvicorn>=0.35.0",
 ]
 
 [project.scripts]
 seminars = "seminars.cli:main"
+seminars-web = "seminars.web:main"
 
 [dependency-groups]
 dev = [
@@ -17,6 +22,7 @@ dev = [
     "mypy",
     "taskipy",
     "pytest",
+    "httpx>=0.28.0",
     "pandas-stubs>=2.3.3.251201",
 ]
 

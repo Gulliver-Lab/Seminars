@@ -45,6 +45,7 @@ if __name__ == "__main__":
 
         # Skip some edge cases
         if name in [
+            "2007",
             "2008",
             "2009",
             "2010",
@@ -75,10 +76,10 @@ if __name__ == "__main__":
                 name=name,
                 affiliation="",
                 email="",
-                topic="",
+                topic="Other",
                 contact_persons=[""],
                 notes="Imported from drive",
-                exclude=False,
+                want_to_invite=False,
             )
         )
 
@@ -86,7 +87,7 @@ if __name__ == "__main__":
             seminars.Talk(
                 date=normalize_date(row["date"]),
                 speaker=name,
-                title="",
+                title="Unknown title",
                 abstract="",
                 status=seminars.TalkStatus.COMPLETED,
                 comments="",

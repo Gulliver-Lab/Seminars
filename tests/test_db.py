@@ -6,6 +6,7 @@ import pytest
 
 from seminars.db import (
     _create_schema,
+    delete_speaker,
     deserialize_contact_persons,
     insert_speaker,
     insert_talk,
@@ -13,6 +14,7 @@ from seminars.db import (
     read_speakers,
     read_talks,
     serialize_contact_persons,
+    update_speaker,
 )
 from seminars.models import Speaker, Talk
 
@@ -37,17 +39,17 @@ def test_inserts_speaker():
         name="Alice Example",
         affiliation="Example University",
         email="alice@example.edu",
-        topic="Quantum seminars",
+        topic="Active Matter",
         contact_persons=["Bob Example", "Carol Example"],
         notes="Available in spring",
-        exclude=False,
+        want_to_invite=False,
     )
 
     insert_speaker(connection, speaker)
 
     row = connection.execute(
         """
-        SELECT name, affiliation, email, topic, contact_persons, notes, exclude
+        SELECT name, affiliation, email, topic, contact_persons, notes, want_to_invite
         FROM speakers
         """
     ).fetchone()
@@ -55,7 +57,7 @@ def test_inserts_speaker():
         "Alice Example",
         "Example University",
         "alice@example.edu",
-        "Quantum seminars",
+        "Active Matter",
         '["Bob Example", "Carol Example"]',
         "Available in spring",
         0,
@@ -71,10 +73,10 @@ def test_insert_speaker_updates_existing_speaker_with_same_name():
             name="Alice Example",
             affiliation="Example University",
             email="alice@example.edu",
-            topic="Quantum seminars",
+            topic="Active Matter",
             contact_persons=["Bob Example", "Carol Example"],
             notes="Available in spring",
-            exclude=False,
+            want_to_invite=False,
         ),
     )
 
@@ -84,16 +86,16 @@ def test_insert_speaker_updates_existing_speaker_with_same_name():
             name="Alice Example",
             affiliation="Updated Institute",
             email="alice.updated@example.edu",
-            topic="Updated topic",
+            topic="Soft Matter",
             contact_persons=["Dana Example"],
             notes="Updated notes",
-            exclude=True,
+            want_to_invite=True,
         ),
     )
 
     rows = connection.execute(
         """
-        SELECT name, affiliation, email, topic, contact_persons, notes, exclude
+        SELECT name, affiliation, email, topic, contact_persons, notes, want_to_invite
         FROM speakers
         """
     ).fetchall()
@@ -102,11 +104,165 @@ def test_insert_speaker_updates_existing_speaker_with_same_name():
             "Alice Example",
             "Updated Institute",
             "alice.updated@example.edu",
-            "Updated topic",
+            "Soft Matter",
             '["Dana Example"]',
             "Updated notes",
             1,
         )
+    ]
+
+
+def test_update_speaker_updates_existing_row():
+    connection = sqlite3.connect(":memory:")
+    connection.execute("PRAGMA foreign_keys = ON")
+    _create_schema(connection)
+    insert_speaker(
+        connection,
+        Speaker(
+            name="Alice Example",
+            affiliation="Example University",
+            email="alice@example.edu",
+            topic="Active Matter",
+            contact_persons=["Bob Example"],
+            notes="Available in spring",
+            want_to_invite=False,
+        ),
+    )
+
+    update_speaker(
+        connection,
+        "Alice Example",
+        Speaker(
+            name="Alice Updated",
+            affiliation="Updated Institute",
+            email="alice.updated@example.edu",
+            topic="Soft Matter",
+            contact_persons=["Carol Example"],
+            notes="Updated notes",
+            want_to_invite=True,
+        ),
+    )
+
+    rows = connection.execute(
+        """
+        SELECT name, affiliation, email, topic, contact_persons, notes, want_to_invite
+        FROM speakers
+        """
+    ).fetchall()
+    assert rows == [
+        (
+            "Alice Updated",
+            "Updated Institute",
+            "alice.updated@example.edu",
+            "Soft Matter",
+            '["Carol Example"]',
+            "Updated notes",
+            1,
+        )
+    ]
+
+
+def test_update_speaker_name_cascades_to_talks():
+    connection = sqlite3.connect(":memory:")
+    connection.execute("PRAGMA foreign_keys = ON")
+    _create_schema(connection)
+    insert_speaker(
+        connection,
+        Speaker(
+            name="Alice Example",
+            affiliation="Example University",
+            email="alice@example.edu",
+            topic="Active Matter",
+            contact_persons=["Bob Example"],
+            notes="Available in spring",
+            want_to_invite=False,
+        ),
+    )
+    insert_talk(
+        connection,
+        Talk(
+            date=datetime.datetime(2026, 1, 15, 14, 30),
+            speaker="Alice Example",
+            title="Active Matter",
+            abstract="An abstract",
+            status="confirmed",
+            comments="Bring projector",
+        ),
+    )
+
+    update_speaker(
+        connection,
+        "Alice Example",
+        Speaker(
+            name="Alice Updated",
+            affiliation="Example University",
+            email="alice@example.edu",
+            topic="Active Matter",
+            contact_persons=["Bob Example"],
+            notes="Available in spring",
+            want_to_invite=False,
+        ),
+    )
+
+    talk_speakers = connection.execute("SELECT speaker FROM talks").fetchall()
+    assert talk_speakers == [("Alice Updated",)]
+
+
+def test_delete_speaker_removes_speaker_without_talks():
+    connection = sqlite3.connect(":memory:")
+    connection.execute("PRAGMA foreign_keys = ON")
+    _create_schema(connection)
+    insert_speaker(
+        connection,
+        Speaker(
+            name="Alice Example",
+            affiliation="Example University",
+            email="alice@example.edu",
+            topic="Active Matter",
+            contact_persons=["Bob Example"],
+            notes="Available in spring",
+            want_to_invite=False,
+        ),
+    )
+
+    delete_speaker(connection, "Alice Example")
+
+    assert connection.execute("SELECT name FROM speakers").fetchall() == []
+
+
+def test_delete_speaker_rejects_speaker_with_talks():
+    connection = sqlite3.connect(":memory:")
+    connection.execute("PRAGMA foreign_keys = ON")
+    _create_schema(connection)
+    insert_speaker(
+        connection,
+        Speaker(
+            name="Alice Example",
+            affiliation="Example University",
+            email="alice@example.edu",
+            topic="Active Matter",
+            contact_persons=["Bob Example"],
+            notes="Available in spring",
+            want_to_invite=False,
+        ),
+    )
+    insert_talk(
+        connection,
+        Talk(
+            date=datetime.datetime(2026, 1, 15, 14, 30),
+            speaker="Alice Example",
+            title="Active Matter",
+            abstract="An abstract",
+            status="confirmed",
+            comments="Bring projector",
+        ),
+    )
+
+    with pytest.raises(ValueError, match="speaker has talks"):
+        delete_speaker(connection, "Alice Example")
+
+    assert connection.execute("SELECT name FROM speakers").fetchall() == [
+        ("Alice Example",)
     ]
 
 
@@ -117,10 +273,10 @@ def test_reads_speakers_as_dataframe():
         name="Alice Example",
         affiliation="Example University",
         email="alice@example.edu",
-        topic="Quantum seminars",
+        topic="Active Matter",
         contact_persons=["Bob Example", "Carol Example"],
         notes="Available in spring",
-        exclude=False,
+        want_to_invite=False,
     )
     insert_speaker(connection, speaker)
 
@@ -133,17 +289,17 @@ def test_reads_speakers_as_dataframe():
         "topic",
         "contact_persons",
         "notes",
-        "exclude",
+        "want_to_invite",
     ]
     assert dataframe.to_dict("records") == [
         {
             "name": "Alice Example",
             "affiliation": "Example University",
             "email": "alice@example.edu",
-            "topic": "Quantum seminars",
+            "topic": "Active Matter",
             "contact_persons": ["Bob Example", "Carol Example"],
             "notes": "Available in spring",
-            "exclude": 0,
+            "want_to_invite": 0,
         }
     ]
 
@@ -169,10 +325,10 @@ def test_inserts_talk():
             name="Alice Example",
             affiliation="Example University",
             email="alice@example.edu",
-            topic="Quantum seminars",
+            topic="Active Matter",
             contact_persons=["Bob Example"],
             notes="Available in spring",
-            exclude=False,
+            want_to_invite=False,
         ),
     )
 
@@ -181,7 +337,7 @@ def test_inserts_talk():
         Talk(
             date=datetime.datetime(2026, 1, 15, 14, 30),
             speaker="Alice Example",
-            title="Quantum seminars",
+            title="Active Matter",
             abstract="An abstract",
             status="confirmed",
             comments="Bring projector",
@@ -197,7 +353,7 @@ def test_inserts_talk():
     assert row == (
         "2026-01-15T14:30:00",
         "Alice Example",
-        "Quantum seminars",
+        "Active Matter",
         "An abstract",
         "confirmed",
         "Bring projector",
@@ -215,7 +371,7 @@ def test_insert_talk_rejects_unknown_speaker():
             Talk(
                 date=datetime.datetime(2026, 1, 15, 14, 30),
                 speaker="Missing Speaker",
-                title="Quantum seminars",
+                title="Active Matter",
                 abstract="An abstract",
                 status="confirmed",
                 comments="Bring projector",
@@ -223,7 +379,7 @@ def test_insert_talk_rejects_unknown_speaker():
         )
 
 
-def test_insert_talk_updates_existing_talk_with_same_date():
+def test_insert_talk_allows_multiple_talks_with_same_date():
     connection = sqlite3.connect(":memory:")
     connection.execute("PRAGMA foreign_keys = ON")
     _create_schema(connection)
@@ -233,10 +389,10 @@ def test_insert_talk_updates_existing_talk_with_same_date():
             name="Alice Example",
             affiliation="Example University",
             email="alice@example.edu",
-            topic="Quantum seminars",
+            topic="Active Matter",
             contact_persons=["Bob Example"],
             notes="Available in spring",
-            exclude=False,
+            want_to_invite=False,
         ),
     )
 
@@ -245,7 +401,7 @@ def test_insert_talk_updates_existing_talk_with_same_date():
         Talk(
             date=datetime.datetime(2026, 1, 15, 14, 30),
             speaker="Alice Example",
-            title="Quantum seminars",
+            title="Active Matter",
             abstract="An abstract",
             status="confirmed",
             comments="Bring projector",
@@ -273,11 +429,19 @@ def test_insert_talk_updates_existing_talk_with_same_date():
         (
             "2026-01-15T14:30:00",
             "Alice Example",
+            "Active Matter",
+            "An abstract",
+            "confirmed",
+            "Bring projector",
+        ),
+        (
+            "2026-01-15T14:30:00",
+            "Alice Example",
             "Updated title",
             "Updated abstract",
             "tentative",
             "Updated comments",
-        )
+        ),
     ]
 
 
@@ -291,10 +455,10 @@ def test_reads_talks_as_dataframe():
             name="Alice Example",
             affiliation="Example University",
             email="alice@example.edu",
-            topic="Quantum seminars",
+            topic="Active Matter",
             contact_persons=["Bob Example"],
             notes="Available in spring",
-            exclude=False,
+            want_to_invite=False,
         ),
     )
     insert_talk(
@@ -302,7 +466,7 @@ def test_reads_talks_as_dataframe():
         Talk(
             date=datetime.datetime(2026, 1, 15, 14, 30),
             speaker="Alice Example",
-            title="Quantum seminars",
+            title="Active Matter",
             abstract="An abstract",
             status="confirmed",
             comments="Bring projector",
@@ -323,7 +487,7 @@ def test_reads_talks_as_dataframe():
         {
             "date": datetime.datetime(2026, 1, 15, 14, 30),
             "speaker": "Alice Example",
-            "title": "Quantum seminars",
+            "title": "Active Matter",
             "abstract": "An abstract",
             "status": "confirmed",
             "comments": "Bring projector",

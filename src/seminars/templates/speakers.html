@@ -1,0 +1,931 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>Seminars</title>
+    <style>
+      :root {
+        color-scheme: light;
+        font-family: Inter, ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+        background: #f6f7f9;
+        color: #1c2430;
+      }
+
+      * {
+        box-sizing: border-box;
+      }
+
+      body {
+        margin: 0;
+      }
+
+      main {
+        min-height: 100vh;
+        padding: 24px;
+      }
+
+      .page-header {
+        align-items: end;
+        display: flex;
+        gap: 16px;
+        justify-content: space-between;
+        margin-bottom: 16px;
+      }
+
+      h1 {
+        font-size: 24px;
+        font-weight: 650;
+        line-height: 1.2;
+        margin: 0;
+      }
+
+      .count {
+        color: #586576;
+        font-size: 14px;
+        white-space: nowrap;
+      }
+
+      .toolbar {
+        align-items: center;
+        display: flex;
+        gap: 12px;
+        justify-content: space-between;
+        margin-bottom: 12px;
+      }
+
+      .toolbar-actions {
+        align-items: center;
+        display: flex;
+        gap: 8px;
+      }
+
+      .search-input {
+        background: #ffffff;
+        border: 1px solid #cbd3df;
+        color: #1c2430;
+        font: inherit;
+        height: 36px;
+        max-width: 360px;
+        padding: 7px 10px;
+        width: 100%;
+      }
+
+      .search-input:focus {
+        border-color: #6d7f95;
+        outline: 2px solid #dbe3ee;
+        outline-offset: 0;
+      }
+
+      button,
+      .button {
+        background: #254565;
+        border: 1px solid #254565;
+        color: #ffffff;
+        cursor: pointer;
+        font: inherit;
+        height: 36px;
+        padding: 7px 12px;
+      }
+
+      button:hover,
+      .button:hover {
+        background: #18334f;
+        border-color: #18334f;
+      }
+
+      .secondary-button {
+        background: #ffffff;
+        border-color: #cbd3df;
+        color: #1c2430;
+      }
+
+      .secondary-button:hover {
+        background: #eef2f7;
+        border-color: #aeb9c8;
+      }
+
+      .danger-button {
+        background: #9f2f2f;
+        border-color: #9f2f2f;
+      }
+
+      .danger-button:hover {
+        background: #812424;
+        border-color: #812424;
+      }
+
+      .danger-button:disabled {
+        background: #d6dbe3;
+        border-color: #d6dbe3;
+        color: #6a7584;
+        cursor: not-allowed;
+      }
+
+      .sheet {
+        background: #ffffff;
+        border: 1px solid #d9dee7;
+        overflow: auto;
+        width: 100%;
+      }
+
+      table {
+        border-collapse: separate;
+        border-spacing: 0;
+        font-size: 14px;
+        min-width: 1120px;
+        table-layout: fixed;
+        width: 100%;
+      }
+
+      th,
+      td {
+        border-bottom: 1px solid #e2e7ef;
+        border-right: 1px solid #e2e7ef;
+        line-height: 1.35;
+        padding: 9px 10px;
+        text-align: left;
+        vertical-align: top;
+      }
+
+      th {
+        background: #eef2f7;
+        color: #2f3a48;
+        position: sticky;
+        top: 0;
+        z-index: 1;
+      }
+
+      .column-header {
+        align-items: center;
+        display: flex;
+        gap: 8px;
+        justify-content: space-between;
+      }
+
+      .column-label {
+        font-size: 12px;
+        font-weight: 700;
+        text-transform: uppercase;
+      }
+
+      .sort-controls {
+        display: inline-flex;
+        gap: 3px;
+      }
+
+      .sort-control {
+        align-items: center;
+        border: 1px solid #c6cfdb;
+        color: #465365;
+        display: inline-flex;
+        font-size: 12px;
+        height: 22px;
+        justify-content: center;
+        line-height: 1;
+        text-decoration: none;
+        width: 22px;
+      }
+
+      .sort-control:hover,
+      .sort-control.active {
+        background: #dbe3ee;
+        border-color: #98a8bb;
+        color: #1c2430;
+      }
+
+      tr:nth-child(even) td {
+        background: #fafbfc;
+      }
+
+      tbody tr {
+        cursor: pointer;
+      }
+
+      tbody tr:hover td {
+        background: #eef5ff;
+      }
+
+      th:first-child,
+      td:first-child {
+        border-left: 0;
+        font-weight: 650;
+        width: 180px;
+      }
+
+      th:last-child,
+      td:last-child {
+        border-right: 0;
+      }
+
+      tbody tr:last-child td {
+        border-bottom: 0;
+      }
+
+      .empty {
+        color: #586576;
+        padding: 28px;
+      }
+
+      .modal {
+        background: rgba(28, 36, 48, 0.45);
+        display: none;
+        inset: 0;
+        padding: 24px;
+        position: fixed;
+        z-index: 10;
+      }
+
+      .modal.open {
+        align-items: center;
+        display: flex;
+        justify-content: center;
+      }
+
+      .modal-panel {
+        background: #ffffff;
+        border: 1px solid #cbd3df;
+        max-height: calc(100vh - 48px);
+        max-width: 720px;
+        overflow: auto;
+        padding: 20px;
+        width: 100%;
+      }
+
+      .modal-header {
+        align-items: center;
+        display: flex;
+        gap: 16px;
+        justify-content: space-between;
+        margin-bottom: 16px;
+      }
+
+      .modal-header h2 {
+        font-size: 20px;
+        line-height: 1.2;
+        margin: 0;
+      }
+
+      .speaker-form {
+        display: grid;
+        gap: 12px;
+      }
+
+      .form-grid {
+        display: grid;
+        gap: 12px;
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+      }
+
+      .field {
+        display: grid;
+        gap: 5px;
+      }
+
+      .field.full {
+        grid-column: 1 / -1;
+      }
+
+      .field label {
+        color: #2f3a48;
+        font-size: 13px;
+        font-weight: 650;
+      }
+
+      .field input,
+      .field select,
+      .field textarea {
+        border: 1px solid #cbd3df;
+        color: #1c2430;
+        font: inherit;
+        padding: 8px 10px;
+        width: 100%;
+      }
+
+      .field textarea {
+        min-height: 82px;
+        resize: vertical;
+      }
+
+      .contact-person-field {
+        display: grid;
+        gap: 8px;
+      }
+
+      .contact-person-picker {
+        background: #ffffff;
+        border: 1px solid #cbd3df;
+        display: grid;
+        gap: 8px;
+        padding: 8px 10px;
+      }
+
+      .contact-person-picker:focus-within {
+        border-color: #6d7f95;
+        outline: 2px solid #dbe3ee;
+        outline-offset: 0;
+      }
+
+      .contact-person-tokens {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 6px;
+        min-height: 26px;
+      }
+
+      .contact-person-token {
+        align-items: center;
+        background: #e8eef6;
+        border: 1px solid #c6cfdb;
+        border-radius: 999px;
+        color: #1c2430;
+        display: inline-flex;
+        gap: 8px;
+        height: auto;
+        padding: 4px 10px;
+      }
+
+      .contact-person-token-remove {
+        background: transparent;
+        border: 0;
+        color: inherit;
+        height: auto;
+        padding: 0;
+      }
+
+      .contact-person-token-remove:hover {
+        background: transparent;
+      }
+
+      .contact-person-input {
+        border: 0;
+        flex: 1;
+        font: inherit;
+        min-width: 180px;
+        padding: 0;
+      }
+
+      .contact-person-input:focus {
+        outline: none;
+      }
+
+      .checkbox-field {
+        align-items: center;
+        display: flex;
+        gap: 8px;
+      }
+
+      .form-actions {
+        display: flex;
+        gap: 8px;
+        justify-content: end;
+        margin-top: 4px;
+      }
+
+      .speaker-talks {
+        border-top: 1px solid #e2e7ef;
+        margin-top: 16px;
+        padding-top: 14px;
+      }
+
+      .delete-speaker {
+        border-top: 1px solid #e2e7ef;
+        margin-top: 16px;
+        padding-top: 14px;
+      }
+
+      .delete-hint {
+        color: #586576;
+        font-size: 13px;
+        margin: 8px 0 0;
+      }
+
+      .speaker-talks h3 {
+        font-size: 15px;
+        line-height: 1.2;
+        margin: 0 0 10px;
+      }
+
+      .talk-list {
+        display: grid;
+        gap: 8px;
+        list-style: none;
+        margin: 0;
+        padding: 0;
+      }
+
+      .talk-item {
+        display: grid;
+        gap: 4px;
+        grid-template-columns: 100px minmax(0, 1fr);
+      }
+
+      .talk-date {
+        color: #586576;
+        font-variant-numeric: tabular-nums;
+      }
+
+      .talk-title {
+        color: #1c2430;
+      }
+
+      @media (max-width: 700px) {
+        main {
+          padding: 14px;
+        }
+
+        .page-header {
+          align-items: start;
+          flex-direction: column;
+        }
+
+        .toolbar {
+          align-items: stretch;
+          flex-direction: column;
+        }
+
+        .toolbar-actions,
+        .form-actions {
+          align-items: stretch;
+          flex-direction: column;
+        }
+
+        .form-grid {
+          grid-template-columns: 1fr;
+        }
+      }
+    </style>
+  </head>
+  <body>
+    <main>
+      <div class="page-header">
+        <h1>Speakers</h1>
+        <div class="count"><span id="visible-count">{{ visible_count }}</span> rows</div>
+      </div>
+
+      <div class="toolbar">
+        <input
+          class="search-input"
+          id="speaker-search"
+          type="search"
+          placeholder="Search names"
+          aria-label="Search speaker names"
+          autocomplete="off"
+        >
+        <div class="toolbar-actions">
+          <label class="checkbox-field">
+            <input id="want-to-invite-filter" type="checkbox" checked>
+            Want to invite
+          </label>
+          <button type="button" id="new-speaker-button">New Speaker</button>
+        </div>
+      </div>
+
+      <div class="sheet">
+        {% if speakers %}
+          <table aria-label="Speakers">
+            <thead>
+              <tr>
+                {% for key, label in columns %}
+                  <th scope="col">
+                    <div class="column-header">
+                      <span class="column-label">{{ label }}</span>
+                      <span class="sort-controls" aria-label="Sort {{ label }}">
+                        <a
+                          class="sort-control{% if active_sort == key and active_direction == 'asc' %} active{% endif %}"
+                          href="?sort={{ key }}&amp;direction=asc"
+                          title="Sort {{ label }} ascending"
+                          aria-label="Sort {{ label }} ascending"
+                        >&#8593;</a>
+                        <a
+                          class="sort-control{% if active_sort == key and active_direction == 'desc' %} active{% endif %}"
+                          href="?sort={{ key }}&amp;direction=desc"
+                          title="Sort {{ label }} descending"
+                          aria-label="Sort {{ label }} descending"
+                        >&#8595;</a>
+                      </span>
+                    </div>
+                  </th>
+                {% endfor %}
+              </tr>
+            </thead>
+            <tbody>
+              {% for speaker in speakers %}
+                <tr
+                  data-speaker-name="{{ speaker.name | lower }}"
+                  data-want-to-invite="{{ speaker.want_to_invite }}"
+                  data-edit-name="{{ speaker.name }}"
+                  data-edit-affiliation="{{ speaker.affiliation }}"
+                  data-edit-email="{{ speaker.email }}"
+                  data-edit-topic="{{ speaker.topic }}"
+                  data-edit-contact-persons="{{ speaker.contact_persons }}"
+                  data-edit-notes="{{ speaker.notes }}"
+                  data-edit-want-to-invite="{{ speaker.want_to_invite }}"
+                  data-edit-talks='{{ speaker.talks | tojson }}'
+                  {% if not speaker.want_to_invite %}hidden{% endif %}
+                >
+                  {% for key, _ in columns %}
+                    <td>{{ speaker[key] }}</td>
+                  {% endfor %}
+                </tr>
+              {% endfor %}
+            </tbody>
+          </table>
+        {% else %}
+          <div class="empty">No speakers found.</div>
+        {% endif %}
+      </div>
+
+      <div class="modal" id="new-speaker-modal" aria-hidden="true">
+        <div class="modal-panel" role="dialog" aria-modal="true" aria-labelledby="new-speaker-title">
+          <div class="modal-header">
+            <h2 id="new-speaker-title">New Speaker</h2>
+            <button class="secondary-button" type="button" id="close-new-speaker">Close</button>
+          </div>
+          <form class="speaker-form" action="/speakers" method="post">
+            <div class="form-grid">
+              <div class="field">
+                <label for="speaker-name">Name</label>
+                <input id="speaker-name" name="name" required>
+              </div>
+              <div class="field">
+                <label for="speaker-affiliation">Affiliation</label>
+                <input id="speaker-affiliation" name="affiliation">
+              </div>
+              <div class="field">
+                <label for="speaker-email">Email</label>
+                <input id="speaker-email" name="email" type="email">
+              </div>
+              <div class="field">
+                <label for="speaker-topic">Topic</label>
+                <select id="speaker-topic" name="topic">
+                  {% for research_topic in research_topics %}
+                    <option value="{{ research_topic }}">{{ research_topic }}</option>
+                  {% endfor %}
+                </select>
+              </div>
+              <div class="field full">
+                <label for="speaker-contact-persons-input">Contact persons</label>
+                <div class="contact-person-field">
+                  <div class="contact-person-picker">
+                    <div class="contact-person-tokens" id="speaker-contact-persons-tokens"></div>
+                    <input
+                      class="contact-person-input"
+                      id="speaker-contact-persons-input"
+                      type="text"
+                      list="contact-person-options"
+                      autocomplete="off"
+                      placeholder="Type a name and press Enter"
+                    >
+                    <input
+                      id="speaker-contact-persons-empty"
+                      name="contact_persons"
+                      type="hidden"
+                      value=""
+                    >
+                  </div>
+                </div>
+              </div>
+              <div class="field full">
+                <label for="speaker-notes">Notes</label>
+                <textarea id="speaker-notes" name="notes"></textarea>
+              </div>
+              <label class="checkbox-field">
+                <input name="want_to_invite" type="checkbox">
+                Want to invite
+              </label>
+            </div>
+            <div class="form-actions">
+              <button class="secondary-button" type="button" id="cancel-new-speaker">Cancel</button>
+              <button type="submit">Save Speaker</button>
+            </div>
+          </form>
+        </div>
+      </div>
+
+      <div class="modal" id="edit-speaker-modal" aria-hidden="true">
+        <div class="modal-panel" role="dialog" aria-modal="true" aria-labelledby="edit-speaker-title">
+          <div class="modal-header">
+            <h2 id="edit-speaker-title">Edit Speaker</h2>
+            <button class="secondary-button" type="button" id="close-edit-speaker">Close</button>
+          </div>
+          <form class="speaker-form" id="edit-speaker-form" method="post">
+            <div class="form-grid">
+              <div class="field">
+                <label for="edit-speaker-name">Name</label>
+                <input id="edit-speaker-name" name="name" required>
+              </div>
+              <div class="field">
+                <label for="edit-speaker-affiliation">Affiliation</label>
+                <input id="edit-speaker-affiliation" name="affiliation">
+              </div>
+              <div class="field">
+                <label for="edit-speaker-email">Email</label>
+                <input id="edit-speaker-email" name="email" type="email">
+              </div>
+              <div class="field">
+                <label for="edit-speaker-topic">Topic</label>
+                <input id="edit-speaker-topic" name="topic">
+              </div>
+              <div class="field full">
+                <label for="edit-speaker-contact-persons-input">Contact persons</label>
+                <div class="contact-person-field">
+                  <div class="contact-person-picker">
+                    <div class="contact-person-tokens" id="edit-speaker-contact-persons-tokens"></div>
+                    <input
+                      class="contact-person-input"
+                      id="edit-speaker-contact-persons-input"
+                      type="text"
+                      list="contact-person-options"
+                      autocomplete="off"
+                      placeholder="Type a name and press Enter"
+                    >
+                    <input
+                      id="edit-speaker-contact-persons-empty"
+                      name="contact_persons"
+                      type="hidden"
+                      value=""
+                    >
+                  </div>
+                </div>
+              </div>
+              <div class="field full">
+                <label for="edit-speaker-notes">Notes</label>
+                <textarea id="edit-speaker-notes" name="notes"></textarea>
+              </div>
+              <label class="checkbox-field">
+                <input id="edit-speaker-want-to-invite" name="want_to_invite" type="checkbox">
+                Want to invite
+              </label>
+            </div>
+            <div class="form-actions">
+              <button class="secondary-button" type="button" id="cancel-edit-speaker">Cancel</button>
+              <button type="submit">Save Speaker</button>
+            </div>
+          </form>
+          <div class="speaker-talks">
+            <h3>Talks</h3>
+            <ul class="talk-list" id="edit-speaker-talks"></ul>
+          </div>
+          <form class="delete-speaker" id="delete-speaker-form" method="post">
+            <button class="danger-button" id="delete-speaker-button" type="submit">
+              Remove Speaker
+            </button>
+            <p class="delete-hint" id="delete-speaker-hint"></p>
+          </form>
+        </div>
+      </div>
+      <datalist id="contact-person-options">
+        {% for person in contact_person_options %}
+          <option value="{{ person }}"></option>
+        {% endfor %}
+      </datalist>
+    </main>
+    <script>
+      const searchInput = document.getElementById("speaker-search");
+      const wantToInviteFilter = document.getElementById("want-to-invite-filter");
+      const visibleCount = document.getElementById("visible-count");
+      const rows = Array.from(document.querySelectorAll("tbody tr[data-speaker-name]"));
+      const newSpeakerButton = document.getElementById("new-speaker-button");
+      const newSpeakerModal = document.getElementById("new-speaker-modal");
+      const closeNewSpeaker = document.getElementById("close-new-speaker");
+      const cancelNewSpeaker = document.getElementById("cancel-new-speaker");
+      const editSpeakerModal = document.getElementById("edit-speaker-modal");
+      const editSpeakerForm = document.getElementById("edit-speaker-form");
+      const deleteSpeakerForm = document.getElementById("delete-speaker-form");
+      const deleteSpeakerButton = document.getElementById("delete-speaker-button");
+      const deleteSpeakerHint = document.getElementById("delete-speaker-hint");
+      const closeEditSpeaker = document.getElementById("close-edit-speaker");
+      const cancelEditSpeaker = document.getElementById("cancel-edit-speaker");
+      const contactPersonOptions = new Set(
+        Array.from(document.querySelectorAll("#contact-person-options option")).map(
+          (option) => option.value,
+        ),
+      );
+
+      const createContactPersonPicker = ({ inputId, tokensId, blankId }) => {
+        const input = document.getElementById(inputId);
+        const tokens = document.getElementById(tokensId);
+        const blank = document.getElementById(blankId);
+        if (!input || !tokens || !blank) {
+          return null;
+        }
+
+        let selected = [];
+
+        const render = () => {
+          tokens.replaceChildren();
+          blank.disabled = selected.length > 0;
+
+          selected.forEach((person) => {
+            const token = document.createElement("span");
+            token.className = "contact-person-token";
+
+            const label = document.createElement("span");
+            label.textContent = person;
+
+            const remove = document.createElement("button");
+            remove.className = "contact-person-token-remove";
+            remove.type = "button";
+            remove.setAttribute("aria-label", `Remove ${person}`);
+            remove.textContent = "×";
+            remove.addEventListener("click", () => {
+              selected = selected.filter((value) => value !== person);
+              render();
+              input.focus();
+            });
+
+            const hidden = document.createElement("input");
+            hidden.name = "contact_persons";
+            hidden.type = "hidden";
+            hidden.value = person;
+
+            token.append(label, remove);
+            tokens.append(token, hidden);
+          });
+        };
+
+        const setValues = (values) => {
+          selected = [];
+          values.forEach((value) => {
+            const person = value.trim();
+            if (
+              !person ||
+              selected.includes(person) ||
+              !contactPersonOptions.has(person)
+            ) {
+              return;
+            }
+            selected.push(person);
+          });
+          input.value = "";
+          render();
+        };
+
+        const addValue = (value) => {
+          const person = value.trim();
+          if (
+            !person ||
+            selected.includes(person) ||
+            !contactPersonOptions.has(person)
+          ) {
+            return false;
+          }
+
+          selected.push(person);
+          input.value = "";
+          render();
+          return true;
+        };
+
+        input.addEventListener("keydown", (event) => {
+          if (event.key !== "Enter") {
+            return;
+          }
+
+          event.preventDefault();
+          addValue(input.value);
+        });
+
+        render();
+
+        return {
+          clear() {
+            selected = [];
+            input.value = "";
+            render();
+          },
+          setValues,
+        };
+      };
+
+      const newSpeakerContactPersons = createContactPersonPicker({
+        inputId: "speaker-contact-persons-input",
+        tokensId: "speaker-contact-persons-tokens",
+        blankId: "speaker-contact-persons-empty",
+      });
+      const editSpeakerContactPersons = createContactPersonPicker({
+        inputId: "edit-speaker-contact-persons-input",
+        tokensId: "edit-speaker-contact-persons-tokens",
+        blankId: "edit-speaker-contact-persons-empty",
+      });
+
+      const applyFilters = () => {
+        const query = searchInput.value.trim().toLowerCase();
+        const onlyWantToInvite = wantToInviteFilter.checked;
+        let count = 0;
+
+        rows.forEach((row) => {
+          const matchesSearch = row.dataset.speakerName.includes(query);
+          const matchesInvite = !onlyWantToInvite || row.dataset.wantToInvite === "1";
+          const isVisible = matchesSearch && matchesInvite;
+          row.hidden = !isVisible;
+          if (isVisible) {
+            count += 1;
+          }
+        });
+
+        visibleCount.textContent = count;
+      };
+
+      searchInput.addEventListener("input", applyFilters);
+      wantToInviteFilter.addEventListener("change", applyFilters);
+      applyFilters();
+
+      const openNewSpeakerModal = () => {
+        newSpeakerModal.classList.add("open");
+        newSpeakerModal.setAttribute("aria-hidden", "false");
+        newSpeakerContactPersons?.clear();
+        document.getElementById("speaker-name").focus();
+      };
+
+      const closeNewSpeakerModal = () => {
+        newSpeakerModal.classList.remove("open");
+        newSpeakerModal.setAttribute("aria-hidden", "true");
+        newSpeakerButton.focus();
+      };
+
+      const openEditSpeakerModal = (row) => {
+        const speaker = row.dataset;
+        const talks = JSON.parse(speaker.editTalks);
+        editSpeakerForm.action = `/speakers/${encodeURIComponent(speaker.editName)}`;
+        deleteSpeakerForm.action = `/speakers/${encodeURIComponent(speaker.editName)}/delete`;
+        document.getElementById("edit-speaker-name").value = speaker.editName;
+        document.getElementById("edit-speaker-affiliation").value = speaker.editAffiliation;
+        document.getElementById("edit-speaker-email").value = speaker.editEmail;
+        document.getElementById("edit-speaker-topic").value = speaker.editTopic;
+        editSpeakerContactPersons?.setValues(
+          speaker.editContactPersons ? speaker.editContactPersons.split(", ") : [],
+        );
+        document.getElementById("edit-speaker-notes").value = speaker.editNotes;
+        document.getElementById("edit-speaker-want-to-invite").checked = speaker.editWantToInvite === "1";
+        renderSpeakerTalks(talks);
+        deleteSpeakerButton.disabled = talks.length > 0;
+        deleteSpeakerHint.textContent = talks.length > 0
+          ? "This speaker has talks and cannot be removed."
+          : "This speaker has no talks and can be removed.";
+        editSpeakerModal.classList.add("open");
+        editSpeakerModal.setAttribute("aria-hidden", "false");
+        document.getElementById("edit-speaker-name").focus();
+      };
+
+      const renderSpeakerTalks = (talks) => {
+        const talkList = document.getElementById("edit-speaker-talks");
+        talkList.replaceChildren();
+
+        if (talks.length === 0) {
+          const item = document.createElement("li");
+          item.className = "talk-item";
+          item.textContent = "No talks found.";
+          talkList.append(item);
+          return;
+        }
+
+        talks.forEach((talk) => {
+          const item = document.createElement("li");
+          const date = document.createElement("span");
+          const title = document.createElement("span");
+          item.className = "talk-item";
+          date.className = "talk-date";
+          title.className = "talk-title";
+          date.textContent = talk.date;
+          title.textContent = talk.title;
+          item.append(date, title);
+          talkList.append(item);
+        });
+      };
+
+      const closeEditSpeakerModal = () => {
+        editSpeakerModal.classList.remove("open");
+        editSpeakerModal.setAttribute("aria-hidden", "true");
+      };
+
+      newSpeakerButton.addEventListener("click", openNewSpeakerModal);
+      closeNewSpeaker.addEventListener("click", closeNewSpeakerModal);
+      cancelNewSpeaker.addEventListener("click", closeNewSpeakerModal);
+      rows.forEach((row) => {
+        row.addEventListener("click", () => openEditSpeakerModal(row));
+      });
+      closeEditSpeaker.addEventListener("click", closeEditSpeakerModal);
+      cancelEditSpeaker.addEventListener("click", closeEditSpeakerModal);
+      newSpeakerModal.addEventListener("click", (event) => {
+        if (event.target === newSpeakerModal) {
+          closeNewSpeakerModal();
+        }
+      });
+      editSpeakerModal.addEventListener("click", (event) => {
+        if (event.target === editSpeakerModal) {
+          closeEditSpeakerModal();
+        }
+      });
+      document.addEventListener("keydown", (event) => {
+        if (event.key === "Escape" && newSpeakerModal.classList.contains("open")) {
+          closeNewSpeakerModal();
+        }
+        if (event.key === "Escape" && editSpeakerModal.classList.contains("open")) {
+          closeEditSpeakerModal();
+        }
+      });
+    </script>
+  </body>
+</html>
