@@ -11,6 +11,7 @@ class TalkStatus(StrEnum):
 ResearchTopic = Literal["Active Matter", "Theory", "BioPhys", "Soft Matter", "Other"]
 
 PERSONS = Literal[
+    "Amélie",
     "David",
     "Élie",
     "François",
