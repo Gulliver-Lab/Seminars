@@ -217,7 +217,7 @@ def build_calendar_weeks(talks: pd.DataFrame) -> list[CalendarWeek]:
     current_monday = monday_of_week(datetime.datetime.now())
     last_monday = max(
         max(talk_by_monday, default=current_monday),
-        current_monday + datetime.timedelta(weeks=8),
+        current_monday + datetime.timedelta(weeks=26),
     )
 
     weeks: list[CalendarWeek] = []
@@ -231,7 +231,7 @@ def build_calendar_weeks(talks: pd.DataFrame) -> list[CalendarWeek]:
         )
         monday += datetime.timedelta(weeks=1)
 
-    return weeks
+    return list(reversed(weeks))
 ```
 
 ```python
@@ -260,7 +260,7 @@ def calendar_index(request: Request) -> Any:
 Choose a date range that includes:
 - the first talk week,
 - the current week,
-- a small forward window so upcoming empty weeks are visible.
+- a six-month forward window so upcoming empty weeks are visible.
 
 Represent each week with:
 - Monday date,

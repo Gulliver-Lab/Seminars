@@ -12,6 +12,7 @@ TOPIC_COLORS = {
     "Soft Matter": "topic-soft-matter",
     "Other": "topic-other",
 }
+FUTURE_WEEKS = 26
 
 
 @dataclasses.dataclass
@@ -41,7 +42,7 @@ def build_calendar_weeks(
     first_monday = min(talk_by_monday, default=current_monday)
     last_monday = max(
         max(talk_by_monday, default=current_monday),
-        current_monday + datetime.timedelta(weeks=8),
+        current_monday + datetime.timedelta(weeks=FUTURE_WEEKS),
     )
 
     weeks: list[CalendarWeek] = []
@@ -55,7 +56,7 @@ def build_calendar_weeks(
         )
         monday += datetime.timedelta(weeks=1)
 
-    return weeks
+    return list(reversed(weeks))
 
 
 def _calendar_talk(row: Mapping[Any, Any]) -> dict[str, str]:
