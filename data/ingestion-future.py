@@ -53,3 +53,90 @@ if __name__ == "__main__":
     connection = seminars.open_or_create_db("test.db")
     for speaker in speakers:
         seminars.insert_speaker(connection, speaker)
+
+    df_existing_speakers = seminars.read_speakers(connection)
+
+    # 2026 talks
+    df = pd.read_csv("2026-talks.csv")
+    df = df.fillna("")
+    df["speaker"] = df["speaker"].apply(lambda x: x.strip().title())
+
+    # Add speakers not in DB
+    speakers = []
+    for _, row in df[df["speaker"] != ""].iterrows():
+        name = row["speaker"]
+        if name not in list(df_existing_speakers["name"]):
+            speakers.append(
+                seminars.Speaker(
+                    name=name,
+                    affiliation="",
+                    email="",
+                    topic="Other",
+                    contact_persons=parse_person(row["contacts"]),
+                    notes="",
+                    want_to_invite=True,
+                )
+            )
+    for speaker in speakers:
+        seminars.insert_speaker(connection, speaker)
+
+    # Parse the talks
+    talks = []
+    for _, row in df.iterrows():
+        date = datetime.datetime.strptime("2026/" + row["date"], "%Y/%d/%m")
+        status = (
+            seminars.TalkStatus.COMPLETED
+            if row["confirmed"] == "x"
+            else seminars.TalkStatus.PLANNED
+        )
+
+        talks.append(
+            seminars.Talk(
+                date=date,
+                speaker=row["speaker"],
+                title="",
+                abstract="",
+                status=status,
+                comments=row["comment"],
+            )
+        )
+
+    # Add a talk event for each week in july/august
+    summer_mondays = [
+        "2026-07-06",
+        "2026-07-13",
+        "2026-07-20",
+        "2026-07-27",
+        "2026-08-03",
+        "2026-08-10",
+        "2026-08-17",
+        "2026-08-24",
+        "2026-08-31",
+    ]
+    talks.extend(
+        [
+            seminars.Talk(
+                date=datetime.datetime.strptime(x, "%Y-%m-%d"),
+                speaker="",
+                title="",
+                abstract="",
+                status=seminars.TalkStatus.COMPLETED,
+                comments="Summer",
+            )
+            for x in summer_mondays
+        ]
+    )
+
+    speaker = seminars.Speaker(
+        name="",
+        affiliation="",
+        email="",
+        topic="Other",
+        contact_persons=[""],
+        notes="Placeholder for talks with no speakers",
+        want_to_invite=False,
+    )
+    seminars.insert_speaker(connection, speaker)
+
+    for talk in talks:
+        seminars.insert_talk(connection, talk)
