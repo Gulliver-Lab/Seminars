@@ -1,0 +1,226 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>Calendar - Seminars</title>
+    <style>
+      :root {
+        color-scheme: light;
+        font-family: Inter, ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+        background: #f6f7f9;
+        color: #1c2430;
+      }
+
+      * {
+        box-sizing: border-box;
+      }
+
+      body {
+        margin: 0;
+      }
+
+      main {
+        min-height: 100vh;
+        padding: 24px;
+      }
+
+      .page-header {
+        align-items: end;
+        display: flex;
+        gap: 16px;
+        justify-content: space-between;
+        margin-bottom: 16px;
+      }
+
+      h1,
+      h2 {
+        line-height: 1.2;
+        margin: 0;
+      }
+
+      h1 {
+        font-size: 24px;
+        font-weight: 650;
+      }
+
+      h2 {
+        font-size: 15px;
+      }
+
+      .button {
+        background: #ffffff;
+        border: 1px solid #cbd3df;
+        color: #1c2430;
+        display: inline-flex;
+        font: inherit;
+        height: 36px;
+        padding: 7px 12px;
+        text-decoration: none;
+      }
+
+      .button:hover {
+        background: #eef2f7;
+        border-color: #aeb9c8;
+      }
+
+      .calendar-page {
+        align-items: start;
+        display: grid;
+        gap: 18px;
+        grid-template-columns: minmax(0, 1fr) 220px;
+      }
+
+      .calendar-grid {
+        display: grid;
+        gap: 10px;
+        grid-template-columns: repeat(auto-fill, minmax(180px, 1fr));
+      }
+
+      .week-box {
+        aspect-ratio: 1.35;
+        background: #ffffff;
+        border: 1px solid #d9dee7;
+        display: grid;
+        gap: 10px;
+        grid-template-rows: auto minmax(0, 1fr);
+        padding: 12px;
+      }
+
+      .week-date {
+        color: #586576;
+        font-size: 13px;
+        font-variant-numeric: tabular-nums;
+      }
+
+      .week-talk {
+        align-content: end;
+        display: grid;
+        gap: 8px;
+      }
+
+      .talk-speaker {
+        font-size: 16px;
+        font-weight: 650;
+        line-height: 1.25;
+      }
+
+      .talk-topic,
+      .legend-item {
+        align-items: center;
+        display: flex;
+        gap: 8px;
+      }
+
+      .talk-topic {
+        color: #465365;
+        font-size: 13px;
+      }
+
+      .topic-dot {
+        border-radius: 999px;
+        display: inline-block;
+        height: 10px;
+        width: 10px;
+      }
+
+      .topic-active-matter {
+        background: #2f7d6d;
+      }
+
+      .topic-theory {
+        background: #9a5c1f;
+      }
+
+      .topic-biophys {
+        background: #5f6fb7;
+      }
+
+      .topic-soft-matter {
+        background: #b8475b;
+      }
+
+      .topic-other {
+        background: #65717f;
+      }
+
+      .calendar-legend {
+        background: #ffffff;
+        border: 1px solid #d9dee7;
+        display: grid;
+        gap: 12px;
+        padding: 14px;
+        position: sticky;
+        top: 24px;
+      }
+
+      .legend-items {
+        display: grid;
+        gap: 9px;
+      }
+
+      .legend-item {
+        color: #2f3a48;
+        font-size: 14px;
+      }
+
+      @media (max-width: 760px) {
+        main {
+          padding: 14px;
+        }
+
+        .page-header {
+          align-items: start;
+          flex-direction: column;
+        }
+
+        .calendar-page {
+          grid-template-columns: 1fr;
+        }
+
+        .calendar-legend {
+          position: static;
+        }
+      }
+    </style>
+  </head>
+  <body>
+    <main>
+      <div class="page-header">
+        <h1>Calendar</h1>
+        <a class="button" href="/">Speakers</a>
+      </div>
+
+      <div class="calendar-page">
+        <section class="calendar-grid" aria-label="Seminar weeks">
+          {% for week in calendar_weeks %}
+            <article class="week-box">
+              <div class="week-date">{{ week.monday }}</div>
+              {% if week.talk %}
+                <div class="week-talk">
+                  <div class="talk-speaker">{{ week.talk.speaker }}</div>
+                  <div class="talk-topic">
+                    <span class="topic-dot {{ week.talk.topic_class }}"></span>
+                    <span>{{ week.talk.topic }}</span>
+                  </div>
+                </div>
+              {% endif %}
+            </article>
+          {% endfor %}
+        </section>
+
+        <aside class="calendar-legend">
+          <h2>Legend</h2>
+          <div class="legend-items">
+            {% for topic, color_class in topic_colors.items() %}
+              <div class="legend-item">
+                <span class="topic-dot {{ color_class }}"></span>
+                <span>{{ topic }}</span>
+              </div>
+            {% endfor %}
+          </div>
+        </aside>
+      </div>
+    </main>
+  </body>
+</html>

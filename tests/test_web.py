@@ -274,6 +274,135 @@ def test_homepage_displays_want_to_invite_filter(tmp_path):
     assert 'data-want-to-invite="0"' in response.text
 
 
+def test_homepage_links_to_calendar(tmp_path):
+    db_path = tmp_path / "seminars.db"
+    connection = open_or_create_db(db_path)
+    connection.close()
+
+    client = TestClient(build_app(db_path))
+
+    response = client.get("/")
+
+    assert response.status_code == 200
+    assert 'href="/calendar"' in response.text
+
+
+def test_calendar_page_renders_week_boxes(tmp_path):
+    db_path = tmp_path / "seminars.db"
+    connection = open_or_create_db(db_path)
+    insert_speaker(
+        connection,
+        Speaker(
+            name="Alice Example",
+            affiliation="Example University",
+            email="alice@example.edu",
+            topic="Active Matter",
+            contact_persons=[],
+            notes="",
+            want_to_invite=False,
+        ),
+    )
+    insert_talk(
+        connection,
+        Talk(
+            date=datetime.datetime(2026, 6, 29, 14, 30),
+            speaker="Alice Example",
+            title="Weekly talk",
+            abstract="",
+            status="completed",
+            comments="",
+        ),
+    )
+    connection.close()
+
+    client = TestClient(build_app(db_path))
+
+    response = client.get("/calendar")
+
+    assert response.status_code == 200
+    assert "Calendar" in response.text
+    assert "2026-06-29" in response.text
+    assert "Alice Example" in response.text
+    assert "Active Matter" in response.text
+
+
+def test_calendar_page_includes_legend(tmp_path):
+    db_path = tmp_path / "seminars.db"
+    connection = open_or_create_db(db_path)
+    connection.close()
+
+    client = TestClient(build_app(db_path))
+
+    response = client.get("/calendar")
+
+    assert response.status_code == 200
+    assert "Legend" in response.text
+    assert "Active Matter" in response.text
+    assert "Theory" in response.text
+    assert "BioPhys" in response.text
+    assert "Soft Matter" in response.text
+    assert "Other" in response.text
+
+
+def test_calendar_page_rejects_multiple_talks_same_week(tmp_path):
+    db_path = tmp_path / "seminars.db"
+    connection = open_or_create_db(db_path)
+    insert_speaker(
+        connection,
+        Speaker(
+            name="Alice Example",
+            affiliation="Example University",
+            email="alice@example.edu",
+            topic="Active Matter",
+            contact_persons=[],
+            notes="",
+            want_to_invite=False,
+        ),
+    )
+    insert_speaker(
+        connection,
+        Speaker(
+            name="Bob Example",
+            affiliation="Example University",
+            email="bob@example.edu",
+            topic="Theory",
+            contact_persons=[],
+            notes="",
+            want_to_invite=False,
+        ),
+    )
+    insert_talk(
+        connection,
+        Talk(
+            date=datetime.datetime(2026, 6, 29, 14, 30),
+            speaker="Alice Example",
+            title="First talk",
+            abstract="",
+            status="completed",
+            comments="",
+        ),
+    )
+    insert_talk(
+        connection,
+        Talk(
+            date=datetime.datetime(2026, 7, 1, 14, 30),
+            speaker="Bob Example",
+            title="Second talk",
+            abstract="",
+            status="completed",
+            comments="",
+        ),
+    )
+    connection.close()
+
+    client = TestClient(build_app(db_path))
+
+    response = client.get("/calendar")
+
+    assert response.status_code == 400
+    assert "multiple talks in the same week" in response.text
+
+
 def test_homepage_displays_new_speaker_form(tmp_path):
     db_path = tmp_path / "seminars.db"
     connection = open_or_create_db(db_path)
