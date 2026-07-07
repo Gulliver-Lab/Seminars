@@ -92,6 +92,21 @@
         box-shadow: inset 0 0 0 2px #1c2430;
       }
 
+      .week-box.completed-week {
+        background: #e7f4ed;
+        border-color: #9bcbb4;
+      }
+
+      .week-box.planned-week {
+        background: #fff0db;
+        border-color: #e0b56c;
+      }
+
+      .week-box.future-empty-week {
+        background: #f9e3e2;
+        border-color: #dcaaa6;
+      }
+
       .week-box.unavailable-week {
         background: #eef0f3;
         border-color: #c6ccd5;
@@ -211,7 +226,7 @@
       <div class="calendar-page">
         <section class="calendar-grid" aria-label="Seminar weeks">
           {% for week in calendar_weeks %}
-            <article class="week-box{% if week.is_current %} current-week{% endif %}{% if week.talk and week.talk.is_unavailable %} unavailable-week{% endif %}">
+            <article class="week-box{% if week.color_class %} {{ week.color_class }}{% endif %}{% if week.is_current %} current-week{% endif %}">
               <div class="week-date">{{ week.monday }}</div>
               {% if week.talk %}
                 <div class="week-talk">

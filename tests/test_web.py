@@ -394,6 +394,67 @@ def test_calendar_page_displays_comments_for_blank_speaker_talk(tmp_path):
     assert "unavailable-week" in response.text
 
 
+def test_calendar_page_includes_week_color_classes(tmp_path):
+    db_path = tmp_path / "seminars.db"
+    connection = open_or_create_db(db_path)
+    insert_speaker(
+        connection,
+        Speaker(
+            name="Alice Example",
+            affiliation="Example University",
+            email="alice@example.edu",
+            topic="Active Matter",
+            contact_persons=[],
+            notes="",
+            want_to_invite=False,
+        ),
+    )
+    insert_speaker(
+        connection,
+        Speaker(
+            name="Bob Example",
+            affiliation="Example University",
+            email="bob@example.edu",
+            topic="Theory",
+            contact_persons=[],
+            notes="",
+            want_to_invite=False,
+        ),
+    )
+    insert_talk(
+        connection,
+        Talk(
+            date=datetime.datetime(2026, 6, 29, 14, 30),
+            speaker="Alice Example",
+            title="Completed talk",
+            abstract="",
+            status="completed",
+            comments="",
+        ),
+    )
+    insert_talk(
+        connection,
+        Talk(
+            date=datetime.datetime(2026, 7, 13, 14, 30),
+            speaker="Bob Example",
+            title="Planned talk",
+            abstract="",
+            status="planned",
+            comments="",
+        ),
+    )
+    connection.close()
+
+    client = TestClient(build_app(db_path))
+
+    response = client.get("/calendar")
+
+    assert response.status_code == 200
+    assert "completed-week" in response.text
+    assert "planned-week" in response.text
+    assert "future-empty-week" in response.text
+
+
 def test_calendar_page_displays_one_talk_when_multiple_talks_share_week(tmp_path):
     db_path = tmp_path / "seminars.db"
     connection = open_or_create_db(db_path)

@@ -12,11 +12,13 @@ def test_build_calendar_weeks_lists_newest_monday_first():
                 "date": datetime.datetime(2026, 6, 29, 14, 30),
                 "speaker": "Past Speaker",
                 "topic": "Theory",
+                "status": "completed",
             },
             {
                 "date": datetime.datetime(2026, 8, 3, 14, 30),
                 "speaker": "Future Speaker",
                 "topic": "Active Matter",
+                "status": "planned",
             },
         ]
     )
@@ -54,6 +56,7 @@ def test_build_calendar_weeks_marks_blank_speaker_talk_as_unavailable():
                 "date": datetime.datetime(2026, 7, 6, 14, 30),
                 "speaker": "",
                 "topic": "Other",
+                "status": "planned",
                 "comments": "Reserved for internal meeting",
             }
         ]
@@ -65,3 +68,39 @@ def test_build_calendar_weeks_marks_blank_speaker_talk_as_unavailable():
     assert week.talk is not None
     assert week.talk.is_unavailable
     assert week.talk.comments == "Reserved for internal meeting"
+    assert week.color_class == "unavailable-week"
+
+
+def test_build_calendar_weeks_colors_completed_and_planned_talks():
+    talks = pd.DataFrame(
+        [
+            {
+                "date": datetime.datetime(2026, 7, 6, 14, 30),
+                "speaker": "Completed Speaker",
+                "topic": "Other",
+                "status": "completed",
+                "comments": "",
+            },
+            {
+                "date": datetime.datetime(2026, 7, 13, 14, 30),
+                "speaker": "Planned Speaker",
+                "topic": "Other",
+                "status": "planned",
+                "comments": "",
+            },
+        ]
+    )
+
+    weeks = build_calendar_weeks(talks, current_date=datetime.date(2026, 7, 7))
+    weeks_by_monday = {week.monday: week for week in weeks}
+
+    assert weeks_by_monday["2026-07-06"].color_class == "completed-week"
+    assert weeks_by_monday["2026-07-13"].color_class == "planned-week"
+
+
+def test_build_calendar_weeks_colors_empty_future_weeks():
+    weeks = build_calendar_weeks(pd.DataFrame(), current_date=datetime.date(2026, 7, 7))
+    weeks_by_monday = {week.monday: week for week in weeks}
+
+    assert weeks_by_monday["2026-07-13"].color_class == "future-empty-week"
+    assert weeks_by_monday["2026-07-06"].color_class == ""

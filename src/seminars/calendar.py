@@ -20,6 +20,7 @@ class CalendarTalk:
     speaker: str
     topic: str
     topic_class: str
+    status: str
     comments: str
     is_unavailable: bool
 
@@ -29,6 +30,7 @@ class CalendarWeek:
     monday: str
     talk: CalendarTalk | None
     is_current: bool
+    color_class: str
 
 
 def monday_of_week(value: datetime.datetime) -> datetime.date:
@@ -58,11 +60,13 @@ def build_calendar_weeks(
     weeks: list[CalendarWeek] = []
     monday = first_monday
     while monday <= last_monday:
+        talk = talk_by_monday.get(monday)
         weeks.append(
             CalendarWeek(
                 monday=monday.isoformat(),
-                talk=talk_by_monday.get(monday),
+                talk=talk,
                 is_current=monday == current_monday,
+                color_class=_week_color_class(monday, talk, current_monday),
             )
         )
         monday += datetime.timedelta(weeks=1)
@@ -80,6 +84,21 @@ def _calendar_talk(row: Mapping[Any, Any]) -> CalendarTalk:
         speaker=speaker,
         topic=str(topic),
         topic_class=TOPIC_COLORS[str(topic)],
+        status=str(row.get("status", "")),
         comments=str(row.get("comments", "")),
         is_unavailable=speaker == "",
     )
+
+
+def _week_color_class(
+    monday: datetime.date, talk: CalendarTalk | None, current_monday: datetime.date
+) -> str:
+    if talk is not None and talk.is_unavailable:
+        return "unavailable-week"
+    if talk is not None and talk.status == "completed":
+        return "completed-week"
+    if talk is not None and talk.status == "planned":
+        return "planned-week"
+    if talk is None and monday > current_monday:
+        return "future-empty-week"
+    return ""
