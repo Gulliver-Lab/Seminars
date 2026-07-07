@@ -344,6 +344,19 @@ def test_calendar_page_includes_legend(tmp_path):
     assert "Other" in response.text
 
 
+def test_calendar_page_marks_current_week(tmp_path):
+    db_path = tmp_path / "seminars.db"
+    connection = open_or_create_db(db_path)
+    connection.close()
+
+    client = TestClient(build_app(db_path))
+
+    response = client.get("/calendar")
+
+    assert response.status_code == 200
+    assert "current-week" in response.text
+
+
 def test_calendar_page_displays_one_talk_when_multiple_talks_share_week(tmp_path):
     db_path = tmp_path / "seminars.db"
     connection = open_or_create_db(db_path)

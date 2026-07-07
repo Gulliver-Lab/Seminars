@@ -87,6 +87,11 @@
         padding: 12px;
       }
 
+      .week-box.current-week {
+        border-color: #1c2430;
+        box-shadow: inset 0 0 0 2px #1c2430;
+      }
+
       .week-date {
         color: #586576;
         font-size: 13px;
@@ -194,7 +199,7 @@
       <div class="calendar-page">
         <section class="calendar-grid" aria-label="Seminar weeks">
           {% for week in calendar_weeks %}
-            <article class="week-box">
+            <article class="week-box{% if week.is_current %} current-week{% endif %}">
               <div class="week-date">{{ week.monday }}</div>
               {% if week.talk %}
                 <div class="week-talk">

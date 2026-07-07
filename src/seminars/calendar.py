@@ -19,6 +19,7 @@ FUTURE_WEEKS = 26
 class CalendarWeek:
     monday: str
     talk: dict[str, str] | None
+    is_current: bool
 
 
 def monday_of_week(value: datetime.datetime) -> datetime.date:
@@ -52,6 +53,7 @@ def build_calendar_weeks(
             CalendarWeek(
                 monday=monday.isoformat(),
                 talk=talk_by_monday.get(monday),
+                is_current=monday == current_monday,
             )
         )
         monday += datetime.timedelta(weeks=1)

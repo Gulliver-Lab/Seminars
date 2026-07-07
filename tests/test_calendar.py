@@ -36,3 +36,12 @@ def test_build_calendar_weeks_extends_six_months_after_current_week():
     assert weeks[0].monday == "2027-01-04"
     assert weeks[-1].monday == "2026-07-06"
     assert len(weeks) == 27
+
+
+def test_build_calendar_weeks_marks_current_week():
+    weeks = build_calendar_weeks(pd.DataFrame(), current_date=datetime.date(2026, 7, 7))
+
+    current_weeks = [week for week in weeks if week.is_current]
+
+    assert len(current_weeks) == 1
+    assert current_weeks[0].monday == "2026-07-06"
