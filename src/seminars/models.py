@@ -6,6 +6,7 @@ from typing import Literal
 
 class TalkStatus(StrEnum):
     COMPLETED = "completed"
+    PLANNED = "planned"
 
 
 ResearchTopic = Literal["Active Matter", "Theory", "BioPhys", "Soft Matter", "Other"]
