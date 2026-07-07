@@ -35,7 +35,7 @@ def build_calendar_weeks(
         for row in talks.sort_values("date").to_dict("records"):
             monday = monday_of_week(row["date"])
             if monday in talk_by_monday:
-                raise ValueError("multiple talks in the same week")
+                continue
             talk_by_monday[monday] = _calendar_talk(row)
 
     first_monday = min(talk_by_monday, default=current_monday)

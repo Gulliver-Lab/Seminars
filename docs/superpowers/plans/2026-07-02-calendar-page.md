@@ -75,7 +75,7 @@ def test_calendar_page_includes_legend(tmp_path):
 ```
 
 ```python
-def test_calendar_page_rejects_multiple_talks_same_week(tmp_path):
+def test_calendar_page_displays_one_talk_when_multiple_talks_share_week(tmp_path):
     db_path = tmp_path / "seminars.db"
     connection = open_or_create_db(db_path)
     insert_speaker(
@@ -129,8 +129,9 @@ def test_calendar_page_rejects_multiple_talks_same_week(tmp_path):
     client = TestClient(build_app(db_path))
     response = client.get("/calendar")
 
-    assert response.status_code == 400
-    assert "multiple talks in the same week" in response.text
+    assert response.status_code == 200
+    assert "Alice Example" in response.text
+    assert "Bob Example" not in response.text
 ```
 
 - [ ] **Step 2: Run test to verify it fails**
@@ -201,7 +202,7 @@ def build_calendar_weeks(talks: pd.DataFrame) -> list[CalendarWeek]:
     for row in talk_rows:
         monday = monday_of_week(row["date"])
         if monday in talk_by_monday:
-            raise ValueError("multiple talks in the same week")
+            continue
         talk_by_monday[monday] = {
             "speaker": row["speaker"],
             "topic": row["topic"],

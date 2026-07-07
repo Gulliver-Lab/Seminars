@@ -344,7 +344,7 @@ def test_calendar_page_includes_legend(tmp_path):
     assert "Other" in response.text
 
 
-def test_calendar_page_rejects_multiple_talks_same_week(tmp_path):
+def test_calendar_page_displays_one_talk_when_multiple_talks_share_week(tmp_path):
     db_path = tmp_path / "seminars.db"
     connection = open_or_create_db(db_path)
     insert_speaker(
@@ -399,8 +399,9 @@ def test_calendar_page_rejects_multiple_talks_same_week(tmp_path):
 
     response = client.get("/calendar")
 
-    assert response.status_code == 400
-    assert "multiple talks in the same week" in response.text
+    assert response.status_code == 200
+    assert "Alice Example" in response.text
+    assert "Bob Example" not in response.text
 
 
 def test_homepage_displays_new_speaker_form(tmp_path):
