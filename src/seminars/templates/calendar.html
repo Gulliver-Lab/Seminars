@@ -149,6 +149,18 @@
         line-height: 1.35;
       }
 
+      .title-abstract-field {
+        align-items: center;
+        color: #2f3a48;
+        display: flex;
+        font-size: 13px;
+        gap: 7px;
+      }
+
+      .title-abstract-checkbox {
+        accent-color: #2f7d6d;
+      }
+
       .topic-dot {
         border-radius: 999px;
         display: inline-block;
@@ -238,6 +250,12 @@
                       <span class="topic-dot {{ week.talk.topic_class }}"></span>
                       <span>{{ week.talk.topic }}</span>
                     </div>
+                    {% if week.talk.status == "completed" %}
+                      <label class="title-abstract-field">
+                        <input class="title-abstract-checkbox"{% if week.talk.has_title_abstract %} checked{% endif %} disabled type="checkbox">
+                        Title/Abstract
+                      </label>
+                    {% endif %}
                   {% endif %}
                 </div>
               {% endif %}

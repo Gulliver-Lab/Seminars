@@ -104,3 +104,34 @@ def test_build_calendar_weeks_colors_empty_future_weeks():
 
     assert weeks_by_monday["2026-07-13"].color_class == "future-empty-week"
     assert weeks_by_monday["2026-07-06"].color_class == ""
+
+
+def test_build_calendar_weeks_marks_completed_talks_with_title_abstract():
+    talks = pd.DataFrame(
+        [
+            {
+                "date": datetime.datetime(2026, 7, 6, 14, 30),
+                "speaker": "Missing Title",
+                "topic": "Other",
+                "status": "completed",
+                "title": "",
+                "comments": "",
+            },
+            {
+                "date": datetime.datetime(2026, 7, 13, 14, 30),
+                "speaker": "Ready Title",
+                "topic": "Other",
+                "status": "completed",
+                "title": "A completed talk",
+                "comments": "",
+            },
+        ]
+    )
+
+    weeks = build_calendar_weeks(talks, current_date=datetime.date(2026, 7, 7))
+    weeks_by_monday = {week.monday: week for week in weeks}
+
+    assert weeks_by_monday["2026-07-06"].talk is not None
+    assert not weeks_by_monday["2026-07-06"].talk.has_title_abstract
+    assert weeks_by_monday["2026-07-13"].talk is not None
+    assert weeks_by_monday["2026-07-13"].talk.has_title_abstract

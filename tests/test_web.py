@@ -455,6 +455,67 @@ def test_calendar_page_includes_week_color_classes(tmp_path):
     assert "future-empty-week" in response.text
 
 
+def test_calendar_page_shows_title_abstract_checkbox_for_completed_talks(tmp_path):
+    db_path = tmp_path / "seminars.db"
+    connection = open_or_create_db(db_path)
+    insert_speaker(
+        connection,
+        Speaker(
+            name="Missing Title",
+            affiliation="Example University",
+            email="missing@example.edu",
+            topic="Active Matter",
+            contact_persons=[],
+            notes="",
+            want_to_invite=False,
+        ),
+    )
+    insert_speaker(
+        connection,
+        Speaker(
+            name="Ready Title",
+            affiliation="Example University",
+            email="ready@example.edu",
+            topic="Theory",
+            contact_persons=[],
+            notes="",
+            want_to_invite=False,
+        ),
+    )
+    insert_talk(
+        connection,
+        Talk(
+            date=datetime.datetime(2026, 7, 6, 14, 30),
+            speaker="Missing Title",
+            title="",
+            abstract="",
+            status="completed",
+            comments="",
+        ),
+    )
+    insert_talk(
+        connection,
+        Talk(
+            date=datetime.datetime(2026, 7, 13, 14, 30),
+            speaker="Ready Title",
+            title="A completed talk",
+            abstract="",
+            status="completed",
+            comments="",
+        ),
+    )
+    connection.close()
+
+    client = TestClient(build_app(db_path))
+
+    response = client.get("/calendar")
+
+    assert response.status_code == 200
+    assert response.text.count("Title/Abstract") == 2
+    assert 'class="title-abstract-checkbox" checked disabled' in response.text
+    assert 'class="title-abstract-checkbox" disabled' in response.text
+
+
 def test_calendar_page_displays_one_talk_when_multiple_talks_share_week(tmp_path):
     db_path = tmp_path / "seminars.db"
     connection = open_or_create_db(db_path)
