@@ -157,6 +157,10 @@
         gap: 7px;
       }
 
+      .title-abstract-spacer {
+        min-height: 18px;
+      }
+
       .title-abstract-checkbox {
         accent-color: #2f7d6d;
       }
@@ -255,6 +259,8 @@
                         <input class="title-abstract-checkbox"{% if week.talk.has_title_abstract %} checked{% endif %} disabled type="checkbox">
                         Title/Abstract
                       </label>
+                    {% else %}
+                      <div class="title-abstract-spacer" aria-hidden="true"></div>
                     {% endif %}
                   {% endif %}
                 </div>
