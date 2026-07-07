@@ -357,6 +357,43 @@ def test_calendar_page_marks_current_week(tmp_path):
     assert "current-week" in response.text
 
 
+def test_calendar_page_displays_comments_for_blank_speaker_talk(tmp_path):
+    db_path = tmp_path / "seminars.db"
+    connection = open_or_create_db(db_path)
+    insert_speaker(
+        connection,
+        Speaker(
+            name="",
+            affiliation="",
+            email="",
+            topic="Other",
+            contact_persons=[],
+            notes="",
+            want_to_invite=False,
+        ),
+    )
+    insert_talk(
+        connection,
+        Talk(
+            date=datetime.datetime(2026, 7, 6, 14, 30),
+            speaker="",
+            title="Blocked week",
+            abstract="",
+            status="completed",
+            comments="Reserved for internal meeting",
+        ),
+    )
+    connection.close()
+
+    client = TestClient(build_app(db_path))
+
+    response = client.get("/calendar")
+
+    assert response.status_code == 200
+    assert "Reserved for internal meeting" in response.text
+    assert "unavailable-week" in response.text
+
+
 def test_calendar_page_displays_one_talk_when_multiple_talks_share_week(tmp_path):
     db_path = tmp_path / "seminars.db"
     connection = open_or_create_db(db_path)

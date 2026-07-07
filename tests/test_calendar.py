@@ -45,3 +45,23 @@ def test_build_calendar_weeks_marks_current_week():
 
     assert len(current_weeks) == 1
     assert current_weeks[0].monday == "2026-07-06"
+
+
+def test_build_calendar_weeks_marks_blank_speaker_talk_as_unavailable():
+    talks = pd.DataFrame(
+        [
+            {
+                "date": datetime.datetime(2026, 7, 6, 14, 30),
+                "speaker": "",
+                "topic": "Other",
+                "comments": "Reserved for internal meeting",
+            }
+        ]
+    )
+
+    weeks = build_calendar_weeks(talks, current_date=datetime.date(2026, 7, 7))
+    week = next(week for week in weeks if week.monday == "2026-07-06")
+
+    assert week.talk is not None
+    assert week.talk.is_unavailable
+    assert week.talk.comments == "Reserved for internal meeting"

@@ -16,9 +16,18 @@ FUTURE_WEEKS = 26
 
 
 @dataclasses.dataclass
+class CalendarTalk:
+    speaker: str
+    topic: str
+    topic_class: str
+    comments: str
+    is_unavailable: bool
+
+
+@dataclasses.dataclass
 class CalendarWeek:
     monday: str
-    talk: dict[str, str] | None
+    talk: CalendarTalk | None
     is_current: bool
 
 
@@ -31,7 +40,7 @@ def build_calendar_weeks(
 ) -> list[CalendarWeek]:
     current_date = current_date or datetime.datetime.now().date()
     current_monday = current_date - datetime.timedelta(days=current_date.weekday())
-    talk_by_monday: dict[datetime.date, dict[str, str]] = {}
+    talk_by_monday: dict[datetime.date, CalendarTalk] = {}
 
     if not talks.empty:
         for row in talks.sort_values("date").to_dict("records"):
@@ -61,13 +70,16 @@ def build_calendar_weeks(
     return list(reversed(weeks))
 
 
-def _calendar_talk(row: Mapping[Any, Any]) -> dict[str, str]:
+def _calendar_talk(row: Mapping[Any, Any]) -> CalendarTalk:
+    speaker = str(row["speaker"]).strip()
     topic = row.get("topic")
     if topic not in TOPIC_COLORS:
         topic = "Other"
 
-    return {
-        "speaker": str(row["speaker"]),
-        "topic": str(topic),
-        "topic_class": TOPIC_COLORS[str(topic)],
-    }
+    return CalendarTalk(
+        speaker=speaker,
+        topic=str(topic),
+        topic_class=TOPIC_COLORS[str(topic)],
+        comments=str(row.get("comments", "")),
+        is_unavailable=speaker == "",
+    )
