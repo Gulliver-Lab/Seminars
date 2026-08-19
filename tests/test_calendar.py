@@ -13,12 +13,14 @@ def test_build_calendar_weeks_lists_newest_monday_first():
                 "speaker": "Past Speaker",
                 "topic": "Theory",
                 "status": "completed",
+                "contact_persons": [],
             },
             {
                 "date": datetime.datetime(2026, 8, 3, 14, 30),
                 "speaker": "Future Speaker",
                 "topic": "Active Matter",
                 "status": "planned",
+                "contact_persons": [],
             },
         ]
     )
@@ -58,6 +60,7 @@ def test_build_calendar_weeks_marks_blank_speaker_talk_as_unavailable():
                 "topic": "Other",
                 "status": "planned",
                 "comments": "Reserved for internal meeting",
+                "contact_persons": [],
             }
         ]
     )
@@ -80,6 +83,7 @@ def test_build_calendar_weeks_colors_completed_and_planned_talks():
                 "topic": "Other",
                 "status": "completed",
                 "comments": "",
+                "contact_persons": [],
             },
             {
                 "date": datetime.datetime(2026, 7, 13, 14, 30),
@@ -87,6 +91,7 @@ def test_build_calendar_weeks_colors_completed_and_planned_talks():
                 "topic": "Other",
                 "status": "planned",
                 "comments": "",
+                "contact_persons": [],
             },
         ]
     )
@@ -116,6 +121,7 @@ def test_build_calendar_weeks_marks_completed_talks_with_title_abstract():
                 "status": "completed",
                 "title": "",
                 "comments": "",
+                "contact_persons": [],
             },
             {
                 "date": datetime.datetime(2026, 7, 13, 14, 30),
@@ -124,6 +130,7 @@ def test_build_calendar_weeks_marks_completed_talks_with_title_abstract():
                 "status": "completed",
                 "title": "A completed talk",
                 "comments": "",
+                "contact_persons": [],
             },
         ]
     )
@@ -135,3 +142,25 @@ def test_build_calendar_weeks_marks_completed_talks_with_title_abstract():
     assert not weeks_by_monday["2026-07-06"].talk.has_title_abstract
     assert weeks_by_monday["2026-07-13"].talk is not None
     assert weeks_by_monday["2026-07-13"].talk.has_title_abstract
+
+
+def test_build_calendar_weeks_formats_contact_persons_for_planned_speaker():
+    talks = pd.DataFrame(
+        [
+            {
+                "date": datetime.datetime(2026, 7, 13, 14, 30),
+                "speaker": "Planned Speaker",
+                "topic": "Other",
+                "status": "planned",
+                "title": "",
+                "comments": "",
+                "contact_persons": ["David", "Josh"],
+            }
+        ]
+    )
+
+    weeks = build_calendar_weeks(talks, current_date=datetime.date(2026, 7, 7))
+    week = next(week for week in weeks if week.monday == "2026-07-13")
+
+    assert week.talk is not None
+    assert week.talk.contact_persons == "David, Josh"

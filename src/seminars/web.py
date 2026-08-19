@@ -13,7 +13,7 @@ from fastapi.responses import (
 )
 from fastapi.templating import Jinja2Templates
 
-from seminars.calendar import TOPIC_COLORS, build_calendar_weeks
+from seminars.calendar import build_calendar_weeks
 from seminars.db import (
     delete_speaker,
     insert_speaker,
@@ -96,7 +96,6 @@ def build_app(db_path: str | Path) -> FastAPI:
             "calendar.html",
             {
                 "calendar_weeks": calendar_weeks,
-                "topic_colors": TOPIC_COLORS,
             },
         )
 
@@ -222,11 +221,20 @@ def _talks_with_topics(talks: pd.DataFrame, speakers: pd.DataFrame) -> pd.DataFr
     if talks.empty:
         talks = talks.copy()
         talks["topic"] = []
+        talks["contact_persons"] = []
         return talks
 
-    topics = speakers[["name", "topic"]]
-    merged = talks.merge(topics, how="left", left_on="speaker", right_on="name")
+    speaker_details = speakers[["name", "topic", "contact_persons"]]
+    merged = talks.merge(
+        speaker_details,
+        how="left",
+        left_on="speaker",
+        right_on="name",
+    )
     merged["topic"] = merged["topic"].fillna("Other")
+    merged["contact_persons"] = merged["contact_persons"].map(
+        lambda value: value if isinstance(value, list) else []
+    )
     return merged.drop(columns=["name"])
 
 

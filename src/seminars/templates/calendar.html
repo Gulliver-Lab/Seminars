@@ -65,16 +65,13 @@
       }
 
       .calendar-page {
-        align-items: start;
-        display: grid;
-        gap: 18px;
-        grid-template-columns: minmax(0, 1fr) 220px;
+        display: block;
       }
 
       .calendar-grid {
         display: grid;
         gap: 10px;
-        grid-template-columns: repeat(auto-fill, minmax(180px, 1fr));
+        grid-template-columns: repeat(4, minmax(0, 1fr));
       }
 
       .week-box {
@@ -131,16 +128,20 @@
         line-height: 1.25;
       }
 
-      .talk-topic,
-      .legend-item {
+      .talk-topic {
         align-items: center;
         display: flex;
         gap: 8px;
       }
 
-      .talk-topic {
+      .talk-topic,
+      .talk-contacts {
         color: #465365;
         font-size: 13px;
+      }
+
+      .talk-contacts {
+        line-height: 1.3;
       }
 
       .talk-comments {
@@ -192,26 +193,6 @@
         background: #65717f;
       }
 
-      .calendar-legend {
-        background: #ffffff;
-        border: 1px solid #d9dee7;
-        display: grid;
-        gap: 12px;
-        padding: 14px;
-        position: sticky;
-        top: 24px;
-      }
-
-      .legend-items {
-        display: grid;
-        gap: 9px;
-      }
-
-      .legend-item {
-        color: #2f3a48;
-        font-size: 14px;
-      }
-
       @media (max-width: 760px) {
         main {
           padding: 14px;
@@ -223,11 +204,17 @@
         }
 
         .calendar-page {
-          grid-template-columns: 1fr;
+          display: block;
         }
 
-        .calendar-legend {
-          position: static;
+        .calendar-grid {
+          grid-template-columns: repeat(2, minmax(0, 1fr));
+        }
+      }
+
+      @media (max-width: 520px) {
+        .calendar-grid {
+          grid-template-columns: 1fr;
         }
       }
     </style>
@@ -254,6 +241,9 @@
                       <span class="topic-dot {{ week.talk.topic_class }}"></span>
                       <span>{{ week.talk.topic }}</span>
                     </div>
+                    {% if week.talk.contact_persons %}
+                      <div class="talk-contacts">Contact: {{ week.talk.contact_persons }}</div>
+                    {% endif %}
                     {% if week.talk.status == "completed" %}
                       <label class="title-abstract-field">
                         <input class="title-abstract-checkbox"{% if week.talk.has_title_abstract %} checked{% endif %} disabled type="checkbox">
@@ -268,18 +258,6 @@
             </article>
           {% endfor %}
         </section>
-
-        <aside class="calendar-legend">
-          <h2>Legend</h2>
-          <div class="legend-items">
-            {% for topic, color_class in topic_colors.items() %}
-              <div class="legend-item">
-                <span class="topic-dot {{ color_class }}"></span>
-                <span>{{ topic }}</span>
-              </div>
-            {% endfor %}
-          </div>
-        </aside>
       </div>
     </main>
   </body>

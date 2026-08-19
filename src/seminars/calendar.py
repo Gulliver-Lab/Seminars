@@ -20,6 +20,7 @@ class CalendarTalk:
     speaker: str
     topic: str
     topic_class: str
+    contact_persons: str
     status: str
     has_title_abstract: bool
     comments: str
@@ -85,6 +86,7 @@ def _calendar_talk(row: Mapping[Any, Any]) -> CalendarTalk:
         speaker=speaker,
         topic=str(topic),
         topic_class=TOPIC_COLORS[str(topic)],
+        contact_persons=_format_contact_persons(row.get("contact_persons")),
         status=str(row.get("status", "")),
         has_title_abstract=bool(str(row.get("title", "")).strip()),
         comments=str(row.get("comments", "")),
@@ -104,3 +106,9 @@ def _week_color_class(
     if talk is None and monday > current_monday:
         return "future-empty-week"
     return ""
+
+
+def _format_contact_persons(value: Any) -> str:
+    if not isinstance(value, list):
+        return ""
+    return ", ".join(str(person) for person in value if str(person))
