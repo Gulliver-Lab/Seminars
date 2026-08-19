@@ -374,6 +374,7 @@ def test_calendar_page_keeps_header_sticky_and_centers_current_week(tmp_path):
 
     assert response.status_code == 200
     assert "position: sticky" in response.text
+    assert "overflow-x: auto" not in response.text
     assert 'querySelector("[data-current-week]")' in response.text
     assert 'scrollIntoView({ block: "center", inline: "nearest" })' in response.text
 

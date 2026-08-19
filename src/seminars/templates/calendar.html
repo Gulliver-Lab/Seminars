@@ -65,7 +65,7 @@
       }
 
       .calendar-page {
-        overflow-x: auto;
+        max-width: 100%;
       }
 
       .calendar-table {
@@ -75,6 +75,12 @@
         width: 100%;
       }
 
+      .calendar-table thead {
+        position: sticky;
+        top: 0;
+        z-index: 3;
+      }
+
       .calendar-table th {
         background: #f6f7f9;
         color: #586576;
@@ -82,11 +88,8 @@
         font-weight: 650;
         letter-spacing: 0.04em;
         padding: 0 12px 6px;
-        position: sticky;
         text-align: left;
         text-transform: uppercase;
-        top: 0;
-        z-index: 2;
       }
 
       .calendar-table td {
