@@ -13,6 +13,7 @@ from fastapi.responses import (
 )
 from fastapi.templating import Jinja2Templates
 
+from seminars.calendar import build_calendar_weeks
 from seminars.db import (
     delete_speaker,
     insert_speaker,
@@ -78,6 +79,26 @@ def build_app(db_path: str | Path) -> FastAPI:
             },
         )
 
+    @app.get("/calendar", response_class=HTMLResponse)
+    def calendar_index(request: Request) -> Any:
+        connection = open_or_create_db(database_path)
+        try:
+            talks = read_talks(connection)
+            speakers = read_speakers(connection)
+            calendar_weeks = build_calendar_weeks(_talks_with_topics(talks, speakers))
+        except ValueError as error:
+            return PlainTextResponse(str(error), status_code=400)
+        finally:
+            connection.close()
+
+        return TEMPLATES.TemplateResponse(
+            request,
+            "calendar.html",
+            {
+                "calendar_weeks": calendar_weeks,
+            },
+        )
+
     @app.post("/speakers")
     def create_speaker(
         name: str = Form(),
@@ -87,7 +108,7 @@ def build_app(db_path: str | Path) -> FastAPI:
         contact_persons: list[str] = Form([]),
         notes: str = Form(""),
         want_to_invite: str | None = Form(None),
-    ) -> RedirectResponse:
+    ) -> Response:
         try:
             speaker = _speaker_from_form(
                 name, affiliation, email, topic, contact_persons, notes, want_to_invite
@@ -111,7 +132,7 @@ def build_app(db_path: str | Path) -> FastAPI:
         contact_persons: list[str] = Form([]),
         notes: str = Form(""),
         want_to_invite: str | None = Form(None),
-    ) -> RedirectResponse:
+    ) -> Response:
         try:
             speaker = _speaker_from_form(
                 name, affiliation, email, topic, contact_persons, notes, want_to_invite
@@ -194,6 +215,27 @@ def speakers_with_talks(speakers: pd.DataFrame, talks: pd.DataFrame) -> pd.DataF
         .map(lambda value: value if isinstance(value, list) else [])
     )
     return speakers
+
+
+def _talks_with_topics(talks: pd.DataFrame, speakers: pd.DataFrame) -> pd.DataFrame:
+    if talks.empty:
+        talks = talks.copy()
+        talks["topic"] = []
+        talks["contact_persons"] = []
+        return talks
+
+    speaker_details = speakers[["name", "topic", "contact_persons"]]
+    merged = talks.merge(
+        speaker_details,
+        how="left",
+        left_on="speaker",
+        right_on="name",
+    )
+    merged["topic"] = merged["topic"].fillna("Other")
+    merged["contact_persons"] = merged["contact_persons"].map(
+        lambda value: value if isinstance(value, list) else []
+    )
+    return merged.drop(columns=["name"])
 
 
 def _format_speaker(row: dict[str, Any]) -> dict[str, Any]:
