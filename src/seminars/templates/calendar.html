@@ -116,6 +116,14 @@
         scroll-margin-block: 45vh;
       }
 
+      .calendar-row {
+        cursor: pointer;
+      }
+
+      .calendar-row:hover td {
+        filter: brightness(0.97);
+      }
+
       .calendar-row.completed-week td {
         background: #e7f4ed;
         border-color: #9bcbb4;
@@ -217,6 +225,76 @@
         background: #65717f;
       }
 
+      .week-dialog {
+        background: #ffffff;
+        border: 1px solid #cbd3df;
+        box-shadow: 0 24px 70px rgb(28 36 48 / 24%);
+        color: #1c2430;
+        padding: 0;
+        width: min(420px, calc(100vw - 28px));
+      }
+
+      .week-dialog::backdrop {
+        background: rgb(28 36 48 / 36%);
+      }
+
+      .week-form {
+        display: grid;
+        gap: 16px;
+        padding: 18px;
+      }
+
+      .week-form-header {
+        display: flex;
+        gap: 12px;
+        justify-content: space-between;
+      }
+
+      .week-form-title {
+        font-size: 18px;
+        font-weight: 650;
+      }
+
+      .week-form-date {
+        color: #586576;
+        font-size: 13px;
+        margin-top: 4px;
+      }
+
+      .week-form-field {
+        display: grid;
+        gap: 6px;
+      }
+
+      .week-form-field label {
+        color: #465365;
+        font-size: 13px;
+        font-weight: 650;
+      }
+
+      .week-form-field select {
+        border: 1px solid #cbd3df;
+        color: #1c2430;
+        font: inherit;
+        min-height: 38px;
+        padding: 7px 10px;
+      }
+
+      .week-form-actions {
+        display: flex;
+        gap: 10px;
+        justify-content: end;
+      }
+
+      .dialog-close {
+        background: transparent;
+        border: 0;
+        color: #586576;
+        cursor: pointer;
+        font: inherit;
+        padding: 2px 4px;
+      }
+
       @media (max-width: 760px) {
         main {
           padding: 14px;
@@ -250,7 +328,7 @@
           </thead>
           <tbody>
             {% for week in calendar_weeks %}
-              <tr class="calendar-row{% if week.color_class %} {{ week.color_class }}{% endif %}{% if week.is_current %} current-week{% endif %}"{% if week.is_current %} data-current-week{% endif %}>
+              <tr class="calendar-row{% if week.color_class %} {{ week.color_class }}{% endif %}{% if week.is_current %} current-week{% endif %}" data-week-monday="{{ week.monday }}"{% if week.talk %} data-week-speaker="{{ week.talk.speaker }}" data-week-status="{{ week.talk.status }}"{% else %} data-week-speaker="" data-week-status="planned"{% endif %}{% if week.is_current %} data-current-week{% endif %} role="button" tabindex="0">
                 <td class="week-date">{{ week.monday }}</td>
                 {% if week.talk and week.talk.is_unavailable %}
                   <td><div class="talk-comments">{{ week.talk.comments }}</div></td>
@@ -284,8 +362,68 @@
           </tbody>
         </table>
       </div>
+
+      <dialog class="week-dialog" id="week-dialog">
+        <form class="week-form" id="week-form" method="post">
+          <div class="week-form-header">
+            <div>
+              <div class="week-form-title">Update calendar week</div>
+              <div class="week-form-date" id="week-form-date"></div>
+            </div>
+            <button class="dialog-close" formmethod="dialog" type="submit">Close</button>
+          </div>
+
+          <div class="week-form-field">
+            <label for="week-speaker">Speaker</label>
+            <select id="week-speaker" name="speaker" required>
+              <option disabled value="">Select a speaker</option>
+              {% for speaker in speaker_options %}
+                <option value="{{ speaker }}">{{ speaker }}</option>
+              {% endfor %}
+            </select>
+          </div>
+
+          <div class="week-form-field">
+            <label for="week-status">Status</label>
+            <select id="week-status" name="status" required>
+              <option value="planned">Planned</option>
+              <option value="completed">Already confirmed</option>
+            </select>
+          </div>
+
+          <div class="week-form-actions">
+            <button class="button" formmethod="dialog" type="submit">Cancel</button>
+            <button class="button" type="submit">Save</button>
+          </div>
+        </form>
+      </dialog>
     </main>
     <script>
+      const weekDialog = document.querySelector("#week-dialog");
+      const weekForm = document.querySelector("#week-form");
+      const weekFormDate = document.querySelector("#week-form-date");
+      const weekSpeaker = document.querySelector("#week-speaker");
+      const weekStatus = document.querySelector("#week-status");
+
+      function openWeekDialog(row) {
+        const monday = row.dataset.weekMonday;
+        weekForm.action = `/calendar/weeks/${monday}`;
+        weekFormDate.textContent = monday;
+        weekSpeaker.value = row.dataset.weekSpeaker || "";
+        weekStatus.value = row.dataset.weekStatus || "planned";
+        weekDialog.showModal();
+      }
+
+      document.querySelectorAll(".calendar-row").forEach((row) => {
+        row.addEventListener("click", () => openWeekDialog(row));
+        row.addEventListener("keydown", (event) => {
+          if (event.key === "Enter" || event.key === " ") {
+            event.preventDefault();
+            openWeekDialog(row);
+          }
+        });
+      });
+
       window.addEventListener("load", () => {
         document
           .querySelector("[data-current-week]")

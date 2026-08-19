@@ -1,4 +1,6 @@
 import argparse
+import datetime
+import sqlite3
 from pathlib import Path
 from typing import Any, Sequence, cast, get_args
 
@@ -21,6 +23,7 @@ from seminars.db import (
     read_speakers,
     read_talks,
     update_speaker,
+    upsert_talk_for_week,
 )
 from seminars.models import PERSONS, ResearchTopic, Speaker
 
@@ -86,6 +89,7 @@ def build_app(db_path: str | Path) -> FastAPI:
             talks = read_talks(connection)
             speakers = read_speakers(connection)
             calendar_weeks = build_calendar_weeks(_talks_with_topics(talks, speakers))
+            speaker_options = speakers["name"].sort_values().tolist()
         except ValueError as error:
             return PlainTextResponse(str(error), status_code=400)
         finally:
@@ -96,8 +100,30 @@ def build_app(db_path: str | Path) -> FastAPI:
             "calendar.html",
             {
                 "calendar_weeks": calendar_weeks,
+                "speaker_options": speaker_options,
             },
         )
+
+    @app.post("/calendar/weeks/{monday}")
+    def update_calendar_week(
+        monday: str,
+        speaker: str = Form(),
+        status: str = Form(),
+    ) -> Response:
+        try:
+            monday_date = datetime.date.fromisoformat(monday)
+            talk_status = _parse_calendar_talk_status(status)
+        except ValueError as error:
+            return PlainTextResponse(str(error), status_code=400)
+
+        connection = open_or_create_db(database_path)
+        try:
+            upsert_talk_for_week(connection, monday_date, speaker, talk_status)
+        except sqlite3.IntegrityError as error:
+            return PlainTextResponse(str(error), status_code=400)
+        finally:
+            connection.close()
+        return RedirectResponse("/calendar", status_code=303)
 
     @app.post("/speakers")
     def create_speaker(
@@ -283,6 +309,14 @@ def _parse_contact_persons(value: Sequence[str]) -> list[PERSONS]:
 
     deduplicated = list(dict.fromkeys(selected))
     return cast(list[PERSONS], deduplicated)
+
+
+def _parse_calendar_talk_status(value: str) -> str:
+    if value == "planned":
+        return "planned"
+    if value in {"completed", "complete", "confirmed"}:
+        return "completed"
+    raise ValueError("invalid talk status")
 
 
 def build_parser() -> argparse.ArgumentParser:

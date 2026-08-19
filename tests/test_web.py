@@ -575,6 +575,148 @@ def test_calendar_page_displays_contact_persons_for_planned_speaker(tmp_path):
     assert "David, Josh" in response.text
 
 
+def test_calendar_page_includes_week_edit_dialog(tmp_path):
+    db_path = tmp_path / "seminars.db"
+    connection = open_or_create_db(db_path)
+    insert_speaker(
+        connection,
+        Speaker(
+            name="Alice Example",
+            affiliation="Example University",
+            email="alice@example.edu",
+            topic="Active Matter",
+            contact_persons=[],
+            notes="",
+            want_to_invite=False,
+        ),
+    )
+    insert_talk(
+        connection,
+        Talk(
+            date=datetime.datetime(2026, 7, 13, 14, 30),
+            speaker="Alice Example",
+            title="Future talk",
+            abstract="",
+            status="planned",
+            comments="",
+        ),
+    )
+    connection.close()
+
+    client = TestClient(build_app(db_path))
+
+    response = client.get("/calendar")
+
+    assert response.status_code == 200
+    assert 'id="week-dialog"' in response.text
+    assert 'data-week-monday="2026-07-13"' in response.text
+    assert 'data-week-speaker="Alice Example"' in response.text
+    assert 'data-week-status="planned"' in response.text
+    assert '<option value="Alice Example">Alice Example</option>' in response.text
+    assert '<option value="planned">Planned</option>' in response.text
+    assert '<option value="completed">Already confirmed</option>' in response.text
+    assert "openWeekDialog" in response.text
+
+
+def test_post_calendar_week_inserts_talk(tmp_path):
+    db_path = tmp_path / "seminars.db"
+    connection = open_or_create_db(db_path)
+    insert_speaker(
+        connection,
+        Speaker(
+            name="Alice Example",
+            affiliation="Example University",
+            email="alice@example.edu",
+            topic="Active Matter",
+            contact_persons=[],
+            notes="",
+            want_to_invite=False,
+        ),
+    )
+    connection.close()
+
+    client = TestClient(build_app(db_path))
+
+    response = client.post(
+        "/calendar/weeks/2026-07-13",
+        data={"speaker": "Alice Example", "status": "planned"},
+        follow_redirects=False,
+    )
+
+    assert response.status_code == 303
+    connection = open_or_create_db(db_path)
+    talks = read_talks(connection).to_dict("records")
+    connection.close()
+    assert len(talks) == 1
+    assert talks[0]["date"] == datetime.datetime(2026, 7, 13, 14, 30)
+    assert talks[0]["speaker"] == "Alice Example"
+    assert talks[0]["status"] == "planned"
+    assert talks[0]["title"] == ""
+    assert talks[0]["abstract"] == ""
+    assert talks[0]["comments"] == ""
+
+
+def test_post_calendar_week_updates_existing_talk(tmp_path):
+    db_path = tmp_path / "seminars.db"
+    connection = open_or_create_db(db_path)
+    insert_speaker(
+        connection,
+        Speaker(
+            name="Alice Example",
+            affiliation="Example University",
+            email="alice@example.edu",
+            topic="Active Matter",
+            contact_persons=[],
+            notes="",
+            want_to_invite=False,
+        ),
+    )
+    insert_speaker(
+        connection,
+        Speaker(
+            name="Bob Example",
+            affiliation="Example University",
+            email="bob@example.edu",
+            topic="Theory",
+            contact_persons=[],
+            notes="",
+            want_to_invite=False,
+        ),
+    )
+    insert_talk(
+        connection,
+        Talk(
+            date=datetime.datetime(2026, 7, 15, 14, 30),
+            speaker="Alice Example",
+            title="Existing title",
+            abstract="Existing abstract",
+            status="planned",
+            comments="Existing comments",
+        ),
+    )
+    connection.close()
+
+    client = TestClient(build_app(db_path))
+
+    response = client.post(
+        "/calendar/weeks/2026-07-13",
+        data={"speaker": "Bob Example", "status": "completed"},
+        follow_redirects=False,
+    )
+
+    assert response.status_code == 303
+    connection = open_or_create_db(db_path)
+    talks = read_talks(connection).to_dict("records")
+    connection.close()
+    assert len(talks) == 1
+    assert talks[0]["date"] == datetime.datetime(2026, 7, 15, 14, 30)
+    assert talks[0]["speaker"] == "Bob Example"
+    assert talks[0]["status"] == "completed"
+    assert talks[0]["title"] == "Existing title"
+    assert talks[0]["abstract"] == "Existing abstract"
+    assert talks[0]["comments"] == "Existing comments"
+
+
 def test_calendar_page_displays_one_talk_when_multiple_talks_share_week(tmp_path):
     db_path = tmp_path / "seminars.db"
     connection = open_or_create_db(db_path)
@@ -632,7 +774,8 @@ def test_calendar_page_displays_one_talk_when_multiple_talks_share_week(tmp_path
 
     assert response.status_code == 200
     assert "Alice Example" in response.text
-    assert "Bob Example" not in response.text
+    assert 'data-week-speaker="Alice Example"' in response.text
+    assert 'data-week-speaker="Bob Example"' not in response.text
 
 
 def test_homepage_displays_new_speaker_form(tmp_path):

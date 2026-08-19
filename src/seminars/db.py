@@ -1,3 +1,4 @@
+import datetime
 import json
 import sqlite3
 from pathlib import Path
@@ -156,6 +157,60 @@ def insert_talk(connection: sqlite3.Connection, talk: Talk) -> None:
             talk.comments,
         ),
     )
+    connection.commit()
+
+
+def upsert_talk_for_week(
+    connection: sqlite3.Connection,
+    monday: datetime.date,
+    speaker: str,
+    status: str,
+) -> None:
+    start = datetime.datetime.combine(monday, datetime.time())
+    end = start + datetime.timedelta(days=7)
+    existing = connection.execute(
+        """
+        SELECT rowid
+        FROM talks
+        WHERE date >= ? AND date < ?
+        ORDER BY date
+        LIMIT 1
+        """,
+        (start.isoformat(), end.isoformat()),
+    ).fetchone()
+
+    if existing is None:
+        connection.execute(
+            """
+            INSERT INTO talks (
+                date,
+                speaker,
+                title,
+                abstract,
+                status,
+                comments
+            )
+            VALUES (?, ?, ?, ?, ?, ?)
+            """,
+            (
+                datetime.datetime.combine(monday, datetime.time(14, 30)).isoformat(),
+                speaker,
+                "",
+                "",
+                status,
+                "",
+            ),
+        )
+    else:
+        connection.execute(
+            """
+            UPDATE talks
+            SET speaker = ?, status = ?
+            WHERE rowid = ?
+            """,
+            (speaker, status, existing[0]),
+        )
+
     connection.commit()
 
 

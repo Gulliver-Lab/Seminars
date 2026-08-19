@@ -15,6 +15,7 @@ from seminars.db import (
     read_talks,
     serialize_contact_persons,
     update_speaker,
+    upsert_talk_for_week,
 )
 from seminars.models import Speaker, Talk
 
@@ -442,6 +443,71 @@ def test_insert_talk_allows_multiple_talks_with_same_date():
             "tentative",
             "Updated comments",
         ),
+    ]
+
+
+def test_upsert_talk_for_week_updates_existing_talk_and_preserves_details():
+    connection = sqlite3.connect(":memory:")
+    connection.execute("PRAGMA foreign_keys = ON")
+    _create_schema(connection)
+    insert_speaker(
+        connection,
+        Speaker(
+            name="Alice Example",
+            affiliation="Example University",
+            email="alice@example.edu",
+            topic="Active Matter",
+            contact_persons=[],
+            notes="",
+            want_to_invite=False,
+        ),
+    )
+    insert_speaker(
+        connection,
+        Speaker(
+            name="Bob Example",
+            affiliation="Example University",
+            email="bob@example.edu",
+            topic="Theory",
+            contact_persons=[],
+            notes="",
+            want_to_invite=False,
+        ),
+    )
+    insert_talk(
+        connection,
+        Talk(
+            date=datetime.datetime(2026, 7, 8, 14, 30),
+            speaker="Alice Example",
+            title="Existing title",
+            abstract="Existing abstract",
+            status="planned",
+            comments="Existing comments",
+        ),
+    )
+
+    upsert_talk_for_week(
+        connection,
+        datetime.date(2026, 7, 6),
+        "Bob Example",
+        "completed",
+    )
+
+    rows = connection.execute(
+        """
+        SELECT date, speaker, title, abstract, status, comments
+        FROM talks
+        """
+    ).fetchall()
+    assert rows == [
+        (
+            "2026-07-08T14:30:00",
+            "Bob Example",
+            "Existing title",
+            "Existing abstract",
+            "completed",
+            "Existing comments",
+        )
     ]
 
 
