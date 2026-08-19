@@ -65,46 +65,65 @@
       }
 
       .calendar-page {
-        display: block;
+        overflow-x: auto;
       }
 
-      .calendar-grid {
-        display: grid;
-        gap: 10px;
-        grid-template-columns: repeat(4, minmax(0, 1fr));
+      .calendar-table {
+        border-collapse: separate;
+        border-spacing: 0 6px;
+        min-width: 760px;
+        width: 100%;
       }
 
-      .week-box {
-        aspect-ratio: 1.35;
+      .calendar-table th {
+        color: #586576;
+        font-size: 12px;
+        font-weight: 650;
+        letter-spacing: 0.04em;
+        padding: 0 12px 6px;
+        text-align: left;
+        text-transform: uppercase;
+      }
+
+      .calendar-table td {
         background: #ffffff;
-        border: 1px solid #d9dee7;
-        display: grid;
-        gap: 10px;
-        grid-template-rows: auto minmax(0, 1fr);
+        border-bottom: 1px solid #d9dee7;
+        border-top: 1px solid #d9dee7;
         padding: 12px;
+        vertical-align: middle;
       }
 
-      .week-box.current-week {
-        border-color: #1c2430;
-        box-shadow: inset 0 0 0 2px #1c2430;
+      .calendar-table td:first-child {
+        border-left: 1px solid #d9dee7;
+        border-radius: 8px 0 0 8px;
       }
 
-      .week-box.completed-week {
+      .calendar-table td:last-child {
+        border-radius: 0 8px 8px 0;
+        border-right: 1px solid #d9dee7;
+      }
+
+      .calendar-row.current-week {
+        outline: 3px solid #1c2430;
+        outline-offset: -3px;
+      }
+
+      .calendar-row.completed-week td {
         background: #e7f4ed;
         border-color: #9bcbb4;
       }
 
-      .week-box.planned-week {
+      .calendar-row.planned-week td {
         background: #fff0db;
         border-color: #e0b56c;
       }
 
-      .week-box.future-empty-week {
+      .calendar-row.future-empty-week td {
         background: #f9e3e2;
         border-color: #dcaaa6;
       }
 
-      .week-box.unavailable-week {
+      .calendar-row.unavailable-week td {
         background: #eef0f3;
         border-color: #c6ccd5;
         color: #65717f;
@@ -114,16 +133,11 @@
         color: #586576;
         font-size: 13px;
         font-variant-numeric: tabular-nums;
-      }
-
-      .week-talk {
-        align-content: end;
-        display: grid;
-        gap: 8px;
+        white-space: nowrap;
       }
 
       .talk-speaker {
-        font-size: 16px;
+        font-size: 14px;
         font-weight: 650;
         line-height: 1.25;
       }
@@ -156,10 +170,12 @@
         display: flex;
         font-size: 13px;
         gap: 7px;
+        justify-content: center;
       }
 
-      .title-abstract-spacer {
-        min-height: 18px;
+      .title-abstract-cell {
+        text-align: center;
+        width: 120px;
       }
 
       .title-abstract-checkbox {
@@ -203,19 +219,6 @@
           flex-direction: column;
         }
 
-        .calendar-page {
-          display: block;
-        }
-
-        .calendar-grid {
-          grid-template-columns: repeat(2, minmax(0, 1fr));
-        }
-      }
-
-      @media (max-width: 520px) {
-        .calendar-grid {
-          grid-template-columns: 1fr;
-        }
       }
     </style>
   </head>
@@ -227,37 +230,51 @@
       </div>
 
       <div class="calendar-page">
-        <section class="calendar-grid" aria-label="Seminar weeks">
-          {% for week in calendar_weeks %}
-            <article class="week-box{% if week.color_class %} {{ week.color_class }}{% endif %}{% if week.is_current %} current-week{% endif %}">
-              <div class="week-date">{{ week.monday }}</div>
-              {% if week.talk %}
-                <div class="week-talk">
-                  {% if week.talk.is_unavailable %}
-                    <div class="talk-comments">{{ week.talk.comments }}</div>
-                  {% else %}
-                    <div class="talk-speaker">{{ week.talk.speaker }}</div>
+        <table class="calendar-table" aria-label="Seminar weeks">
+          <thead>
+            <tr>
+              <th scope="col">Date</th>
+              <th scope="col">Name</th>
+              <th scope="col">Topic</th>
+              <th scope="col">Contact person</th>
+              <th scope="col">Title/Abstract</th>
+            </tr>
+          </thead>
+          <tbody>
+            {% for week in calendar_weeks %}
+              <tr class="calendar-row{% if week.color_class %} {{ week.color_class }}{% endif %}{% if week.is_current %} current-week{% endif %}">
+                <td class="week-date">{{ week.monday }}</td>
+                {% if week.talk and week.talk.is_unavailable %}
+                  <td><div class="talk-comments">{{ week.talk.comments }}</div></td>
+                  <td></td>
+                  <td></td>
+                  <td class="title-abstract-cell"></td>
+                {% elif week.talk %}
+                  <td><div class="talk-speaker">{{ week.talk.speaker }}</div></td>
+                  <td>
                     <div class="talk-topic">
                       <span class="topic-dot {{ week.talk.topic_class }}"></span>
                       <span>{{ week.talk.topic }}</span>
                     </div>
-                    {% if week.talk.contact_persons %}
-                      <div class="talk-contacts">Contact: {{ week.talk.contact_persons }}</div>
-                    {% endif %}
+                  </td>
+                  <td><div class="talk-contacts">{{ week.talk.contact_persons }}</div></td>
+                  <td class="title-abstract-cell">
                     {% if week.talk.status == "completed" %}
-                      <label class="title-abstract-field">
+                      <label class="title-abstract-field" aria-label="Title/Abstract">
                         <input class="title-abstract-checkbox"{% if week.talk.has_title_abstract %} checked{% endif %} disabled type="checkbox">
-                        Title/Abstract
                       </label>
-                    {% else %}
-                      <div class="title-abstract-spacer" aria-hidden="true"></div>
                     {% endif %}
-                  {% endif %}
-                </div>
-              {% endif %}
-            </article>
-          {% endfor %}
-        </section>
+                  </td>
+                {% else %}
+                  <td></td>
+                  <td></td>
+                  <td></td>
+                  <td class="title-abstract-cell"></td>
+                {% endif %}
+              </tr>
+            {% endfor %}
+          </tbody>
+        </table>
       </div>
     </main>
   </body>

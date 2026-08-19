@@ -287,7 +287,7 @@ def test_homepage_links_to_calendar(tmp_path):
     assert 'href="/calendar"' in response.text
 
 
-def test_calendar_page_renders_week_boxes(tmp_path):
+def test_calendar_page_renders_week_rows(tmp_path):
     db_path = tmp_path / "seminars.db"
     connection = open_or_create_db(db_path)
     insert_speaker(
@@ -321,12 +321,18 @@ def test_calendar_page_renders_week_boxes(tmp_path):
 
     assert response.status_code == 200
     assert "Calendar" in response.text
+    assert 'class="calendar-table"' in response.text
+    assert '<th scope="col">Date</th>' in response.text
+    assert '<th scope="col">Name</th>' in response.text
+    assert '<th scope="col">Topic</th>' in response.text
+    assert '<th scope="col">Contact person</th>' in response.text
+    assert '<th scope="col">Title/Abstract</th>' in response.text
     assert "2026-06-29" in response.text
     assert "Alice Example" in response.text
     assert "Active Matter" in response.text
 
 
-def test_calendar_page_uses_four_columns_without_legend(tmp_path):
+def test_calendar_page_uses_table_without_legend(tmp_path):
     db_path = tmp_path / "seminars.db"
     connection = open_or_create_db(db_path)
     connection.close()
@@ -336,7 +342,9 @@ def test_calendar_page_uses_four_columns_without_legend(tmp_path):
     response = client.get("/calendar")
 
     assert response.status_code == 200
-    assert "repeat(4, minmax(0, 1fr))" in response.text
+    assert "calendar-table" in response.text
+    assert "calendar-grid" not in response.text
+    assert "week-box" not in response.text
     assert "calendar-legend" not in response.text
     assert "Legend" not in response.text
 
@@ -508,7 +516,7 @@ def test_calendar_page_shows_title_abstract_checkbox_for_completed_talks(tmp_pat
     response = client.get("/calendar")
 
     assert response.status_code == 200
-    assert response.text.count("Title/Abstract") == 2
+    assert '<th scope="col">Title/Abstract</th>' in response.text
     assert 'class="title-abstract-checkbox" checked disabled' in response.text
     assert 'class="title-abstract-checkbox" disabled' in response.text
 
