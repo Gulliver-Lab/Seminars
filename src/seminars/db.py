@@ -214,6 +214,26 @@ def upsert_talk_for_week(
     connection.commit()
 
 
+def delete_talk_for_week(connection: sqlite3.Connection, monday: datetime.date) -> None:
+    start = datetime.datetime.combine(monday, datetime.time())
+    end = start + datetime.timedelta(days=7)
+    existing = connection.execute(
+        """
+        SELECT rowid
+        FROM talks
+        WHERE date >= ? AND date < ?
+        ORDER BY date
+        LIMIT 1
+        """,
+        (start.isoformat(), end.isoformat()),
+    ).fetchone()
+    if existing is None:
+        return
+
+    connection.execute("DELETE FROM talks WHERE rowid = ?", (existing[0],))
+    connection.commit()
+
+
 def read_talks(connection: sqlite3.Connection) -> pd.DataFrame:
     columns = [name for name, _type in EXPECTED_TALKS_SCHEMA]
     dataframe = pd.read_sql_query(

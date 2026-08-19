@@ -7,6 +7,7 @@ import pytest
 from seminars.db import (
     _create_schema,
     delete_speaker,
+    delete_talk_for_week,
     deserialize_contact_persons,
     insert_speaker,
     insert_talk,
@@ -509,6 +510,51 @@ def test_upsert_talk_for_week_updates_existing_talk_and_preserves_details():
             "Existing comments",
         )
     ]
+
+
+def test_delete_talk_for_week_removes_first_talk_in_week():
+    connection = sqlite3.connect(":memory:")
+    connection.execute("PRAGMA foreign_keys = ON")
+    _create_schema(connection)
+    insert_speaker(
+        connection,
+        Speaker(
+            name="Alice Example",
+            affiliation="Example University",
+            email="alice@example.edu",
+            topic="Active Matter",
+            contact_persons=[],
+            notes="",
+            want_to_invite=False,
+        ),
+    )
+    insert_talk(
+        connection,
+        Talk(
+            date=datetime.datetime(2026, 7, 8, 14, 30),
+            speaker="Alice Example",
+            title="First talk",
+            abstract="",
+            status="planned",
+            comments="",
+        ),
+    )
+    insert_talk(
+        connection,
+        Talk(
+            date=datetime.datetime(2026, 7, 10, 14, 30),
+            speaker="Alice Example",
+            title="Second talk",
+            abstract="",
+            status="planned",
+            comments="",
+        ),
+    )
+
+    delete_talk_for_week(connection, datetime.date(2026, 7, 6))
+
+    rows = connection.execute("SELECT title FROM talks ORDER BY date").fetchall()
+    assert rows == [("Second talk",)]
 
 
 def test_reads_talks_as_dataframe():

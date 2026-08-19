@@ -18,6 +18,7 @@ from fastapi.templating import Jinja2Templates
 from seminars.calendar import build_calendar_weeks
 from seminars.db import (
     delete_speaker,
+    delete_talk_for_week,
     insert_speaker,
     open_or_create_db,
     read_speakers,
@@ -121,6 +122,20 @@ def build_app(db_path: str | Path) -> FastAPI:
             upsert_talk_for_week(connection, monday_date, speaker, talk_status)
         except sqlite3.IntegrityError as error:
             return PlainTextResponse(str(error), status_code=400)
+        finally:
+            connection.close()
+        return RedirectResponse("/calendar", status_code=303)
+
+    @app.post("/calendar/weeks/{monday}/delete")
+    def delete_calendar_week(monday: str) -> Response:
+        try:
+            monday_date = datetime.date.fromisoformat(monday)
+        except ValueError as error:
+            return PlainTextResponse(str(error), status_code=400)
+
+        connection = open_or_create_db(database_path)
+        try:
+            delete_talk_for_week(connection, monday_date)
         finally:
             connection.close()
         return RedirectResponse("/calendar", status_code=303)

@@ -283,7 +283,23 @@
       .week-form-actions {
         display: flex;
         gap: 10px;
-        justify-content: end;
+        justify-content: space-between;
+      }
+
+      .week-form-save-actions {
+        display: flex;
+        gap: 10px;
+      }
+
+      .delete-button {
+        border-color: #dcaaa6;
+        color: #8d2f2a;
+      }
+
+      .delete-button:disabled {
+        color: #9aa4b2;
+        cursor: not-allowed;
+        opacity: 0.58;
       }
 
       .dialog-close {
@@ -328,7 +344,7 @@
           </thead>
           <tbody>
             {% for week in calendar_weeks %}
-              <tr class="calendar-row{% if week.color_class %} {{ week.color_class }}{% endif %}{% if week.is_current %} current-week{% endif %}" data-week-monday="{{ week.monday }}"{% if week.talk %} data-week-speaker="{{ week.talk.speaker }}" data-week-status="{{ week.talk.status }}"{% else %} data-week-speaker="" data-week-status="planned"{% endif %}{% if week.is_current %} data-current-week{% endif %} role="button" tabindex="0">
+              <tr class="calendar-row{% if week.color_class %} {{ week.color_class }}{% endif %}{% if week.is_current %} current-week{% endif %}" data-week-monday="{{ week.monday }}" data-week-has-talk="{% if week.talk %}true{% else %}false{% endif %}"{% if week.talk %} data-week-speaker="{{ week.talk.speaker }}" data-week-status="{{ week.talk.status }}"{% else %} data-week-speaker="" data-week-status="planned"{% endif %}{% if week.is_current %} data-current-week{% endif %} role="button" tabindex="0">
                 <td class="week-date">{{ week.monday }}</td>
                 {% if week.talk and week.talk.is_unavailable %}
                   <td><div class="talk-comments">{{ week.talk.comments }}</div></td>
@@ -392,10 +408,14 @@
           </div>
 
           <div class="week-form-actions">
-            <button class="button" formmethod="dialog" type="submit">Cancel</button>
-            <button class="button" type="submit">Save</button>
+            <button class="button delete-button" form="week-delete-form" id="week-delete-button" type="submit">Remove talk</button>
+            <div class="week-form-save-actions">
+              <button class="button" formmethod="dialog" type="submit">Cancel</button>
+              <button class="button" type="submit">Save</button>
+            </div>
           </div>
         </form>
+        <form id="week-delete-form" method="post"></form>
       </dialog>
     </main>
     <script>
@@ -404,13 +424,17 @@
       const weekFormDate = document.querySelector("#week-form-date");
       const weekSpeaker = document.querySelector("#week-speaker");
       const weekStatus = document.querySelector("#week-status");
+      const weekDeleteForm = document.querySelector("#week-delete-form");
+      const weekDeleteButton = document.querySelector("#week-delete-button");
 
       function openWeekDialog(row) {
         const monday = row.dataset.weekMonday;
         weekForm.action = `/calendar/weeks/${monday}`;
+        weekDeleteForm.action = `/calendar/weeks/${monday}/delete`;
         weekFormDate.textContent = monday;
         weekSpeaker.value = row.dataset.weekSpeaker || "";
         weekStatus.value = row.dataset.weekStatus || "planned";
+        weekDeleteButton.disabled = row.dataset.weekHasTalk !== "true";
         weekDialog.showModal();
       }
 

@@ -615,6 +615,10 @@ def test_calendar_page_includes_week_edit_dialog(tmp_path):
     assert '<option value="Alice Example">Alice Example</option>' in response.text
     assert '<option value="planned">Planned</option>' in response.text
     assert '<option value="completed">Already confirmed</option>' in response.text
+    assert 'id="week-delete-button"' in response.text
+    assert 'id="week-delete-form"' in response.text
+    assert "weekDeleteForm.action" in response.text
+    assert "weekDeleteButton.disabled" in response.text
     assert "openWeekDialog" in response.text
 
 
@@ -715,6 +719,48 @@ def test_post_calendar_week_updates_existing_talk(tmp_path):
     assert talks[0]["title"] == "Existing title"
     assert talks[0]["abstract"] == "Existing abstract"
     assert talks[0]["comments"] == "Existing comments"
+
+
+def test_post_calendar_week_delete_removes_existing_talk(tmp_path):
+    db_path = tmp_path / "seminars.db"
+    connection = open_or_create_db(db_path)
+    insert_speaker(
+        connection,
+        Speaker(
+            name="Alice Example",
+            affiliation="Example University",
+            email="alice@example.edu",
+            topic="Active Matter",
+            contact_persons=[],
+            notes="",
+            want_to_invite=False,
+        ),
+    )
+    insert_talk(
+        connection,
+        Talk(
+            date=datetime.datetime(2026, 7, 15, 14, 30),
+            speaker="Alice Example",
+            title="Existing title",
+            abstract="",
+            status="planned",
+            comments="",
+        ),
+    )
+    connection.close()
+
+    client = TestClient(build_app(db_path))
+
+    response = client.post(
+        "/calendar/weeks/2026-07-13/delete",
+        follow_redirects=False,
+    )
+
+    assert response.status_code == 303
+    connection = open_or_create_db(db_path)
+    talks = read_talks(connection).to_dict("records")
+    connection.close()
+    assert talks == []
 
 
 def test_calendar_page_displays_one_talk_when_multiple_talks_share_week(tmp_path):
