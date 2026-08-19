@@ -76,13 +76,17 @@
       }
 
       .calendar-table th {
+        background: #f6f7f9;
         color: #586576;
         font-size: 12px;
         font-weight: 650;
         letter-spacing: 0.04em;
         padding: 0 12px 6px;
+        position: sticky;
         text-align: left;
         text-transform: uppercase;
+        top: 0;
+        z-index: 2;
       }
 
       .calendar-table td {
@@ -106,6 +110,7 @@
       .calendar-row.current-week {
         outline: 3px solid #1c2430;
         outline-offset: -3px;
+        scroll-margin-block: 45vh;
       }
 
       .calendar-row.completed-week td {
@@ -242,7 +247,7 @@
           </thead>
           <tbody>
             {% for week in calendar_weeks %}
-              <tr class="calendar-row{% if week.color_class %} {{ week.color_class }}{% endif %}{% if week.is_current %} current-week{% endif %}">
+              <tr class="calendar-row{% if week.color_class %} {{ week.color_class }}{% endif %}{% if week.is_current %} current-week{% endif %}"{% if week.is_current %} data-current-week{% endif %}>
                 <td class="week-date">{{ week.monday }}</td>
                 {% if week.talk and week.talk.is_unavailable %}
                   <td><div class="talk-comments">{{ week.talk.comments }}</div></td>
@@ -277,5 +282,12 @@
         </table>
       </div>
     </main>
+    <script>
+      window.addEventListener("load", () => {
+        document
+          .querySelector("[data-current-week]")
+          ?.scrollIntoView({ block: "center", inline: "nearest" });
+      });
+    </script>
   </body>
 </html>

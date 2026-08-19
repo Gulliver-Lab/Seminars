@@ -360,6 +360,22 @@ def test_calendar_page_marks_current_week(tmp_path):
 
     assert response.status_code == 200
     assert "current-week" in response.text
+    assert "data-current-week" in response.text
+
+
+def test_calendar_page_keeps_header_sticky_and_centers_current_week(tmp_path):
+    db_path = tmp_path / "seminars.db"
+    connection = open_or_create_db(db_path)
+    connection.close()
+
+    client = TestClient(build_app(db_path))
+
+    response = client.get("/calendar")
+
+    assert response.status_code == 200
+    assert "position: sticky" in response.text
+    assert 'querySelector("[data-current-week]")' in response.text
+    assert 'scrollIntoView({ block: "center", inline: "nearest" })' in response.text
 
 
 def test_calendar_page_displays_comments_for_blank_speaker_talk(tmp_path):
