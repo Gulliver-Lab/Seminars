@@ -492,6 +492,8 @@ def test_upsert_talk_for_week_updates_existing_talk_and_preserves_details():
         datetime.date(2026, 7, 6),
         "Bob Example",
         "completed",
+        "Updated title",
+        "Updated abstract",
     )
 
     rows = connection.execute(
@@ -504,8 +506,8 @@ def test_upsert_talk_for_week_updates_existing_talk_and_preserves_details():
         (
             "2026-07-08T14:30:00",
             "Bob Example",
-            "Existing title",
-            "Existing abstract",
+            "Updated title",
+            "Updated abstract",
             "completed",
             "Existing comments",
         )

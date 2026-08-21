@@ -110,6 +110,8 @@ def build_app(db_path: str | Path) -> FastAPI:
         monday: str,
         speaker: str = Form(),
         status: str = Form(),
+        title: str = Form(""),
+        abstract: str = Form(""),
     ) -> Response:
         try:
             monday_date = datetime.date.fromisoformat(monday)
@@ -119,7 +121,14 @@ def build_app(db_path: str | Path) -> FastAPI:
 
         connection = open_or_create_db(database_path)
         try:
-            upsert_talk_for_week(connection, monday_date, speaker, talk_status)
+            upsert_talk_for_week(
+                connection,
+                monday_date,
+                speaker,
+                talk_status,
+                title,
+                abstract,
+            )
         except sqlite3.IntegrityError as error:
             return PlainTextResponse(str(error), status_code=400)
         finally:

@@ -165,6 +165,8 @@ def upsert_talk_for_week(
     monday: datetime.date,
     speaker: str,
     status: str,
+    title: str = "",
+    abstract: str = "",
 ) -> None:
     start = datetime.datetime.combine(monday, datetime.time())
     end = start + datetime.timedelta(days=7)
@@ -195,8 +197,8 @@ def upsert_talk_for_week(
             (
                 datetime.datetime.combine(monday, datetime.time(14, 30)).isoformat(),
                 speaker,
-                "",
-                "",
+                title,
+                abstract,
                 status,
                 "",
             ),
@@ -205,10 +207,10 @@ def upsert_talk_for_week(
         connection.execute(
             """
             UPDATE talks
-            SET speaker = ?, status = ?
+            SET speaker = ?, title = ?, abstract = ?, status = ?
             WHERE rowid = ?
             """,
-            (speaker, status, existing[0]),
+            (speaker, title, abstract, status, existing[0]),
         )
 
     connection.commit()

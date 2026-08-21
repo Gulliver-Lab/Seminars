@@ -288,6 +288,15 @@
         padding: 7px 10px;
       }
 
+      .week-form-field textarea {
+        border: 1px solid #cbd3df;
+        color: #1c2430;
+        font: inherit;
+        min-height: 100px;
+        padding: 7px 10px;
+        resize: vertical;
+      }
+
       .week-form-help {
         color: #65717f;
         font-size: 12px;
@@ -385,7 +394,7 @@
           </thead>
           <tbody>
             {% for week in calendar_weeks %}
-              <tr class="calendar-row{% if week.color_class %} {{ week.color_class }}{% endif %}{% if week.is_current %} current-week{% endif %}" data-week-monday="{{ week.monday }}" data-week-has-talk="{% if week.talk %}true{% else %}false{% endif %}"{% if week.talk %} data-week-speaker="{{ week.talk.speaker }}" data-week-status="{{ week.talk.status }}"{% else %} data-week-speaker="" data-week-status="planned"{% endif %}{% if week.is_current %} data-current-week{% endif %} role="button" tabindex="0">
+              <tr class="calendar-row{% if week.color_class %} {{ week.color_class }}{% endif %}{% if week.is_current %} current-week{% endif %}" data-week-monday="{{ week.monday }}" data-week-has-talk="{% if week.talk %}true{% else %}false{% endif %}"{% if week.talk %} data-week-speaker="{{ week.talk.speaker }}" data-week-status="{{ week.talk.status }}" data-week-title="{{ week.talk.title }}" data-week-abstract="{{ week.talk.abstract }}"{% else %} data-week-speaker="" data-week-status="planned" data-week-title="" data-week-abstract=""{% endif %}{% if week.is_current %} data-current-week{% endif %} role="button" tabindex="0">
                 <td class="week-date">{{ week.monday }}</td>
                 {% if week.talk and week.talk.is_unavailable %}
                   <td><div class="talk-comments">{{ week.talk.comments }}</div></td>
@@ -446,6 +455,16 @@
             </select>
           </div>
 
+          <div class="week-form-field">
+            <label for="week-title">Title</label>
+            <input id="week-title" name="title" type="text">
+          </div>
+
+          <div class="week-form-field">
+            <label for="week-abstract">Abstract</label>
+            <textarea id="week-abstract" name="abstract"></textarea>
+          </div>
+
           <div class="week-form-actions">
             <button class="button delete-button" form="week-delete-form" id="week-delete-button" type="submit">Remove talk</button>
             <div class="week-form-save-actions">
@@ -465,6 +484,8 @@
       const weekSpeaker = document.querySelector("#week-speaker");
       const weekSpeakerResults = document.querySelector("#week-speaker-results");
       const weekStatus = document.querySelector("#week-status");
+      const weekTitle = document.querySelector("#week-title");
+      const weekAbstract = document.querySelector("#week-abstract");
       const weekDeleteForm = document.querySelector("#week-delete-form");
       const weekDeleteButton = document.querySelector("#week-delete-button");
       const speakerOptions = [
@@ -521,6 +542,8 @@
         weekSpeakerFilter.value = row.dataset.weekSpeaker || "";
         renderSpeakerOptions(weekSpeaker.value);
         weekStatus.value = row.dataset.weekStatus || "planned";
+        weekTitle.value = row.dataset.weekTitle || "";
+        weekAbstract.value = row.dataset.weekAbstract || "";
         weekDeleteButton.disabled = row.dataset.weekHasTalk !== "true";
         weekDialog.showModal();
       }

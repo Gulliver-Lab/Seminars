@@ -612,6 +612,8 @@ def test_calendar_page_includes_week_edit_dialog(tmp_path):
     assert 'data-week-monday="2026-07-13"' in response.text
     assert 'data-week-speaker="Alice Example"' in response.text
     assert 'data-week-status="planned"' in response.text
+    assert 'data-week-title="Future talk"' in response.text
+    assert 'data-week-abstract=""' in response.text
     assert 'id="week-speaker-filter"' in response.text
     assert "Type a regex to filter speakers" in response.text
     assert 'id="week-speaker" name="speaker" required type="hidden"' in response.text
@@ -623,6 +625,10 @@ def test_calendar_page_includes_week_edit_dialog(tmp_path):
     assert "No matching speakers" in response.text
     assert '<option value="planned">Planned</option>' in response.text
     assert '<option value="completed">Already confirmed</option>' in response.text
+    assert 'id="week-title" name="title"' in response.text
+    assert 'id="week-abstract" name="abstract"' in response.text
+    assert "weekTitle.value = row.dataset.weekTitle" in response.text
+    assert "weekAbstract.value = row.dataset.weekAbstract" in response.text
     assert 'id="week-delete-button"' in response.text
     assert 'id="week-delete-form"' in response.text
     assert "weekDeleteForm.action" in response.text
@@ -651,7 +657,12 @@ def test_post_calendar_week_inserts_talk(tmp_path):
 
     response = client.post(
         "/calendar/weeks/2026-07-13",
-        data={"speaker": "Alice Example", "status": "planned"},
+        data={
+            "speaker": "Alice Example",
+            "status": "planned",
+            "title": "Inserted title",
+            "abstract": "Inserted abstract",
+        },
         follow_redirects=False,
     )
 
@@ -663,8 +674,8 @@ def test_post_calendar_week_inserts_talk(tmp_path):
     assert talks[0]["date"] == datetime.datetime(2026, 7, 13, 14, 30)
     assert talks[0]["speaker"] == "Alice Example"
     assert talks[0]["status"] == "planned"
-    assert talks[0]["title"] == ""
-    assert talks[0]["abstract"] == ""
+    assert talks[0]["title"] == "Inserted title"
+    assert talks[0]["abstract"] == "Inserted abstract"
     assert talks[0]["comments"] == ""
 
 
@@ -712,7 +723,12 @@ def test_post_calendar_week_updates_existing_talk(tmp_path):
 
     response = client.post(
         "/calendar/weeks/2026-07-13",
-        data={"speaker": "Bob Example", "status": "completed"},
+        data={
+            "speaker": "Bob Example",
+            "status": "completed",
+            "title": "Updated title",
+            "abstract": "Updated abstract",
+        },
         follow_redirects=False,
     )
 
@@ -724,8 +740,8 @@ def test_post_calendar_week_updates_existing_talk(tmp_path):
     assert talks[0]["date"] == datetime.datetime(2026, 7, 15, 14, 30)
     assert talks[0]["speaker"] == "Bob Example"
     assert talks[0]["status"] == "completed"
-    assert talks[0]["title"] == "Existing title"
-    assert talks[0]["abstract"] == "Existing abstract"
+    assert talks[0]["title"] == "Updated title"
+    assert talks[0]["abstract"] == "Updated abstract"
     assert talks[0]["comments"] == "Existing comments"
 
 
