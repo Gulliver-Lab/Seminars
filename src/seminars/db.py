@@ -1,3 +1,4 @@
+import datetime
 import json
 import sqlite3
 from pathlib import Path
@@ -156,6 +157,82 @@ def insert_talk(connection: sqlite3.Connection, talk: Talk) -> None:
             talk.comments,
         ),
     )
+    connection.commit()
+
+
+def upsert_talk_for_week(
+    connection: sqlite3.Connection,
+    monday: datetime.date,
+    speaker: str,
+    status: str,
+    title: str = "",
+    abstract: str = "",
+) -> None:
+    start = datetime.datetime.combine(monday, datetime.time())
+    end = start + datetime.timedelta(days=7)
+    existing = connection.execute(
+        """
+        SELECT rowid
+        FROM talks
+        WHERE date >= ? AND date < ?
+        ORDER BY date
+        LIMIT 1
+        """,
+        (start.isoformat(), end.isoformat()),
+    ).fetchone()
+
+    if existing is None:
+        connection.execute(
+            """
+            INSERT INTO talks (
+                date,
+                speaker,
+                title,
+                abstract,
+                status,
+                comments
+            )
+            VALUES (?, ?, ?, ?, ?, ?)
+            """,
+            (
+                datetime.datetime.combine(monday, datetime.time(14, 30)).isoformat(),
+                speaker,
+                title,
+                abstract,
+                status,
+                "",
+            ),
+        )
+    else:
+        connection.execute(
+            """
+            UPDATE talks
+            SET speaker = ?, title = ?, abstract = ?, status = ?
+            WHERE rowid = ?
+            """,
+            (speaker, title, abstract, status, existing[0]),
+        )
+
+    connection.commit()
+
+
+def delete_talk_for_week(connection: sqlite3.Connection, monday: datetime.date) -> None:
+    start = datetime.datetime.combine(monday, datetime.time())
+    end = start + datetime.timedelta(days=7)
+    existing = connection.execute(
+        """
+        SELECT rowid
+        FROM talks
+        WHERE date >= ? AND date < ?
+        ORDER BY date
+        LIMIT 1
+        """,
+        (start.isoformat(), end.isoformat()),
+    ).fetchone()
+    if existing is None:
+        return
+
+    connection.execute("DELETE FROM talks WHERE rowid = ?", (existing[0],))
     connection.commit()
 
 

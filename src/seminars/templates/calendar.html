@@ -116,6 +116,14 @@
         scroll-margin-block: 45vh;
       }
 
+      .calendar-row {
+        cursor: pointer;
+      }
+
+      .calendar-row:hover td {
+        filter: brightness(0.97);
+      }
+
       .calendar-row.completed-week td {
         background: #e7f4ed;
         border-color: #9bcbb4;
@@ -217,6 +225,142 @@
         background: #65717f;
       }
 
+      .week-dialog {
+        background: #ffffff;
+        border: 1px solid #cbd3df;
+        box-shadow: 0 24px 70px rgb(28 36 48 / 24%);
+        color: #1c2430;
+        padding: 0;
+        width: min(420px, calc(100vw - 28px));
+      }
+
+      .week-dialog::backdrop {
+        background: rgb(28 36 48 / 36%);
+      }
+
+      .week-form {
+        display: grid;
+        gap: 16px;
+        padding: 18px;
+      }
+
+      .week-form-header {
+        display: flex;
+        gap: 12px;
+        justify-content: space-between;
+      }
+
+      .week-form-title {
+        font-size: 18px;
+        font-weight: 650;
+      }
+
+      .week-form-date {
+        color: #586576;
+        font-size: 13px;
+        margin-top: 4px;
+      }
+
+      .week-form-field {
+        display: grid;
+        gap: 6px;
+      }
+
+      .week-form-field label {
+        color: #465365;
+        font-size: 13px;
+        font-weight: 650;
+      }
+
+      .week-form-field select {
+        border: 1px solid #cbd3df;
+        color: #1c2430;
+        font: inherit;
+        min-height: 38px;
+        padding: 7px 10px;
+      }
+
+      .week-form-field input {
+        border: 1px solid #cbd3df;
+        color: #1c2430;
+        font: inherit;
+        min-height: 38px;
+        padding: 7px 10px;
+      }
+
+      .week-form-field textarea {
+        border: 1px solid #cbd3df;
+        color: #1c2430;
+        font: inherit;
+        min-height: 100px;
+        padding: 7px 10px;
+        resize: vertical;
+      }
+
+      .week-form-help {
+        color: #65717f;
+        font-size: 12px;
+      }
+
+      .speaker-result-list {
+        border: 1px solid #cbd3df;
+        display: grid;
+        max-height: 180px;
+        overflow-y: auto;
+      }
+
+      .speaker-result {
+        background: #ffffff;
+        border: 0;
+        border-bottom: 1px solid #eef2f7;
+        color: #1c2430;
+        cursor: pointer;
+        font: inherit;
+        padding: 8px 10px;
+        text-align: left;
+      }
+
+      .speaker-result:hover,
+      .speaker-result.selected {
+        background: #eef2f7;
+      }
+
+      .speaker-result.empty {
+        color: #65717f;
+        cursor: default;
+      }
+
+      .week-form-actions {
+        display: flex;
+        gap: 10px;
+        justify-content: space-between;
+      }
+
+      .week-form-save-actions {
+        display: flex;
+        gap: 10px;
+      }
+
+      .delete-button {
+        border-color: #dcaaa6;
+        color: #8d2f2a;
+      }
+
+      .delete-button:disabled {
+        color: #9aa4b2;
+        cursor: not-allowed;
+        opacity: 0.58;
+      }
+
+      .dialog-close {
+        background: transparent;
+        border: 0;
+        color: #586576;
+        cursor: pointer;
+        font: inherit;
+        padding: 2px 4px;
+      }
+
       @media (max-width: 760px) {
         main {
           padding: 14px;
@@ -250,7 +394,7 @@
           </thead>
           <tbody>
             {% for week in calendar_weeks %}
-              <tr class="calendar-row{% if week.color_class %} {{ week.color_class }}{% endif %}{% if week.is_current %} current-week{% endif %}"{% if week.is_current %} data-current-week{% endif %}>
+              <tr class="calendar-row{% if week.color_class %} {{ week.color_class }}{% endif %}{% if week.is_current %} current-week{% endif %}" data-week-monday="{{ week.monday }}" data-week-has-talk="{% if week.talk %}true{% else %}false{% endif %}"{% if week.talk %} data-week-speaker="{{ week.talk.speaker }}" data-week-status="{{ week.talk.status }}" data-week-title="{{ week.talk.title }}" data-week-abstract="{{ week.talk.abstract }}"{% else %} data-week-speaker="" data-week-status="planned" data-week-title="" data-week-abstract=""{% endif %}{% if week.is_current %} data-current-week{% endif %} role="button" tabindex="0">
                 <td class="week-date">{{ week.monday }}</td>
                 {% if week.talk and week.talk.is_unavailable %}
                   <td><div class="talk-comments">{{ week.talk.comments }}</div></td>
@@ -284,8 +428,138 @@
           </tbody>
         </table>
       </div>
+
+      <dialog class="week-dialog" id="week-dialog">
+        <form class="week-form" id="week-form" method="post">
+          <div class="week-form-header">
+            <div>
+              <div class="week-form-title">Update calendar week</div>
+              <div class="week-form-date" id="week-form-date"></div>
+            </div>
+            <button class="dialog-close" formmethod="dialog" type="submit">Close</button>
+          </div>
+
+          <div class="week-form-field">
+            <label for="week-speaker-filter">Speaker</label>
+            <input autocomplete="off" id="week-speaker-filter" placeholder="Type a regex to filter speakers" type="text">
+            <input id="week-speaker" name="speaker" required type="hidden">
+            <div class="speaker-result-list" id="week-speaker-results"></div>
+            <div class="week-form-help">Regex filter, then click a speaker below.</div>
+          </div>
+
+          <div class="week-form-field">
+            <label for="week-status">Status</label>
+            <select id="week-status" name="status" required>
+              <option value="planned">Planned</option>
+              <option value="completed">Already confirmed</option>
+            </select>
+          </div>
+
+          <div class="week-form-field">
+            <label for="week-title">Title</label>
+            <input id="week-title" name="title" type="text">
+          </div>
+
+          <div class="week-form-field">
+            <label for="week-abstract">Abstract</label>
+            <textarea id="week-abstract" name="abstract"></textarea>
+          </div>
+
+          <div class="week-form-actions">
+            <button class="button delete-button" form="week-delete-form" id="week-delete-button" type="submit">Remove talk</button>
+            <div class="week-form-save-actions">
+              <button class="button" formmethod="dialog" type="submit">Cancel</button>
+              <button class="button" type="submit">Save</button>
+            </div>
+          </div>
+        </form>
+        <form id="week-delete-form" method="post"></form>
+      </dialog>
     </main>
     <script>
+      const weekDialog = document.querySelector("#week-dialog");
+      const weekForm = document.querySelector("#week-form");
+      const weekFormDate = document.querySelector("#week-form-date");
+      const weekSpeakerFilter = document.querySelector("#week-speaker-filter");
+      const weekSpeaker = document.querySelector("#week-speaker");
+      const weekSpeakerResults = document.querySelector("#week-speaker-results");
+      const weekStatus = document.querySelector("#week-status");
+      const weekTitle = document.querySelector("#week-title");
+      const weekAbstract = document.querySelector("#week-abstract");
+      const weekDeleteForm = document.querySelector("#week-delete-form");
+      const weekDeleteButton = document.querySelector("#week-delete-button");
+      const speakerOptions = [
+        {% for speaker in speaker_options %}
+          {{ speaker | tojson }},
+        {% endfor %}
+      ];
+
+      function selectSpeaker(speaker) {
+        weekSpeaker.value = speaker;
+        weekSpeakerFilter.value = speaker;
+        renderSpeakerOptions(speaker);
+      }
+
+      function renderSpeakerOptions(selectedSpeaker = weekSpeaker.value) {
+        const filter = weekSpeakerFilter.value.trim();
+        let regex = null;
+        if (filter) {
+          try {
+            regex = new RegExp(filter, "i");
+          } catch {
+            regex = /$a/;
+          }
+        }
+        const speakers = regex
+          ? speakerOptions.filter((speaker) => regex.test(speaker))
+          : speakerOptions;
+        weekSpeakerResults.replaceChildren();
+        if (speakers.length === 0) {
+          const empty = document.createElement("div");
+          empty.className = "speaker-result empty";
+          empty.textContent = "No matching speakers";
+          weekSpeakerResults.append(empty);
+          weekSpeaker.value = "";
+          return;
+        }
+        speakers.forEach((speaker) => {
+          const button = document.createElement("button");
+          button.className = speaker === selectedSpeaker ? "speaker-result selected" : "speaker-result";
+          button.textContent = speaker;
+          button.type = "button";
+          button.addEventListener("click", () => selectSpeaker(speaker));
+          weekSpeakerResults.append(button);
+        });
+        weekSpeaker.value = speakers.includes(selectedSpeaker) ? selectedSpeaker : "";
+      }
+
+      function openWeekDialog(row) {
+        const monday = row.dataset.weekMonday;
+        weekForm.action = `/calendar/weeks/${monday}`;
+        weekDeleteForm.action = `/calendar/weeks/${monday}/delete`;
+        weekFormDate.textContent = monday;
+        weekSpeaker.value = row.dataset.weekSpeaker || "";
+        weekSpeakerFilter.value = row.dataset.weekSpeaker || "";
+        renderSpeakerOptions(weekSpeaker.value);
+        weekStatus.value = row.dataset.weekStatus || "planned";
+        weekTitle.value = row.dataset.weekTitle || "";
+        weekAbstract.value = row.dataset.weekAbstract || "";
+        weekDeleteButton.disabled = row.dataset.weekHasTalk !== "true";
+        weekDialog.showModal();
+      }
+
+      weekSpeakerFilter.addEventListener("input", () => renderSpeakerOptions(weekSpeaker.value));
+
+      document.querySelectorAll(".calendar-row").forEach((row) => {
+        row.addEventListener("click", () => openWeekDialog(row));
+        row.addEventListener("keydown", (event) => {
+          if (event.key === "Enter" || event.key === " ") {
+            event.preventDefault();
+            openWeekDialog(row);
+          }
+        });
+      });
+
       window.addEventListener("load", () => {
         document
           .querySelector("[data-current-week]")
