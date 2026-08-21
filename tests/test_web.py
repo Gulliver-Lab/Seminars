@@ -612,7 +612,15 @@ def test_calendar_page_includes_week_edit_dialog(tmp_path):
     assert 'data-week-monday="2026-07-13"' in response.text
     assert 'data-week-speaker="Alice Example"' in response.text
     assert 'data-week-status="planned"' in response.text
-    assert '<option value="Alice Example">Alice Example</option>' in response.text
+    assert 'id="week-speaker-filter"' in response.text
+    assert "Type a regex to filter speakers" in response.text
+    assert 'id="week-speaker" name="speaker" required type="hidden"' in response.text
+    assert 'id="week-speaker-results"' in response.text
+    assert "speaker-result-list" in response.text
+    assert 'new RegExp(filter, "i")' in response.text
+    assert "renderSpeakerOptions" in response.text
+    assert "selectSpeaker" in response.text
+    assert "No matching speakers" in response.text
     assert '<option value="planned">Planned</option>' in response.text
     assert '<option value="completed">Already confirmed</option>' in response.text
     assert 'id="week-delete-button"' in response.text

@@ -280,6 +280,47 @@
         padding: 7px 10px;
       }
 
+      .week-form-field input {
+        border: 1px solid #cbd3df;
+        color: #1c2430;
+        font: inherit;
+        min-height: 38px;
+        padding: 7px 10px;
+      }
+
+      .week-form-help {
+        color: #65717f;
+        font-size: 12px;
+      }
+
+      .speaker-result-list {
+        border: 1px solid #cbd3df;
+        display: grid;
+        max-height: 180px;
+        overflow-y: auto;
+      }
+
+      .speaker-result {
+        background: #ffffff;
+        border: 0;
+        border-bottom: 1px solid #eef2f7;
+        color: #1c2430;
+        cursor: pointer;
+        font: inherit;
+        padding: 8px 10px;
+        text-align: left;
+      }
+
+      .speaker-result:hover,
+      .speaker-result.selected {
+        background: #eef2f7;
+      }
+
+      .speaker-result.empty {
+        color: #65717f;
+        cursor: default;
+      }
+
       .week-form-actions {
         display: flex;
         gap: 10px;
@@ -390,13 +431,11 @@
           </div>
 
           <div class="week-form-field">
-            <label for="week-speaker">Speaker</label>
-            <select id="week-speaker" name="speaker" required>
-              <option disabled value="">Select a speaker</option>
-              {% for speaker in speaker_options %}
-                <option value="{{ speaker }}">{{ speaker }}</option>
-              {% endfor %}
-            </select>
+            <label for="week-speaker-filter">Speaker</label>
+            <input autocomplete="off" id="week-speaker-filter" placeholder="Type a regex to filter speakers" type="text">
+            <input id="week-speaker" name="speaker" required type="hidden">
+            <div class="speaker-result-list" id="week-speaker-results"></div>
+            <div class="week-form-help">Regex filter, then click a speaker below.</div>
           </div>
 
           <div class="week-form-field">
@@ -422,10 +461,56 @@
       const weekDialog = document.querySelector("#week-dialog");
       const weekForm = document.querySelector("#week-form");
       const weekFormDate = document.querySelector("#week-form-date");
+      const weekSpeakerFilter = document.querySelector("#week-speaker-filter");
       const weekSpeaker = document.querySelector("#week-speaker");
+      const weekSpeakerResults = document.querySelector("#week-speaker-results");
       const weekStatus = document.querySelector("#week-status");
       const weekDeleteForm = document.querySelector("#week-delete-form");
       const weekDeleteButton = document.querySelector("#week-delete-button");
+      const speakerOptions = [
+        {% for speaker in speaker_options %}
+          {{ speaker | tojson }},
+        {% endfor %}
+      ];
+
+      function selectSpeaker(speaker) {
+        weekSpeaker.value = speaker;
+        weekSpeakerFilter.value = speaker;
+        renderSpeakerOptions(speaker);
+      }
+
+      function renderSpeakerOptions(selectedSpeaker = weekSpeaker.value) {
+        const filter = weekSpeakerFilter.value.trim();
+        let regex = null;
+        if (filter) {
+          try {
+            regex = new RegExp(filter, "i");
+          } catch {
+            regex = /$a/;
+          }
+        }
+        const speakers = regex
+          ? speakerOptions.filter((speaker) => regex.test(speaker))
+          : speakerOptions;
+        weekSpeakerResults.replaceChildren();
+        if (speakers.length === 0) {
+          const empty = document.createElement("div");
+          empty.className = "speaker-result empty";
+          empty.textContent = "No matching speakers";
+          weekSpeakerResults.append(empty);
+          weekSpeaker.value = "";
+          return;
+        }
+        speakers.forEach((speaker) => {
+          const button = document.createElement("button");
+          button.className = speaker === selectedSpeaker ? "speaker-result selected" : "speaker-result";
+          button.textContent = speaker;
+          button.type = "button";
+          button.addEventListener("click", () => selectSpeaker(speaker));
+          weekSpeakerResults.append(button);
+        });
+        weekSpeaker.value = speakers.includes(selectedSpeaker) ? selectedSpeaker : "";
+      }
 
       function openWeekDialog(row) {
         const monday = row.dataset.weekMonday;
@@ -433,10 +518,14 @@
         weekDeleteForm.action = `/calendar/weeks/${monday}/delete`;
         weekFormDate.textContent = monday;
         weekSpeaker.value = row.dataset.weekSpeaker || "";
+        weekSpeakerFilter.value = row.dataset.weekSpeaker || "";
+        renderSpeakerOptions(weekSpeaker.value);
         weekStatus.value = row.dataset.weekStatus || "planned";
         weekDeleteButton.disabled = row.dataset.weekHasTalk !== "true";
         weekDialog.showModal();
       }
+
+      weekSpeakerFilter.addEventListener("input", () => renderSpeakerOptions(weekSpeaker.value));
 
       document.querySelectorAll(".calendar-row").forEach((row) => {
         row.addEventListener("click", () => openWeekDialog(row));
