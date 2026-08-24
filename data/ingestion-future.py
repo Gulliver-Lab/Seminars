@@ -98,6 +98,7 @@ if __name__ == "__main__":
                 abstract="",
                 status=status,
                 comments=row["comment"],
+                organizer=row["organizer"],
             )
         )
 

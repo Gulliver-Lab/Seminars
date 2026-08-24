@@ -389,15 +389,17 @@
               <th scope="col">Name</th>
               <th scope="col">Topic</th>
               <th scope="col">Contact person</th>
+              <th scope="col">Organizer</th>
               <th scope="col">Title/Abstract</th>
             </tr>
           </thead>
           <tbody>
             {% for week in calendar_weeks %}
-              <tr class="calendar-row{% if week.color_class %} {{ week.color_class }}{% endif %}{% if week.is_current %} current-week{% endif %}" data-week-monday="{{ week.monday }}" data-week-has-talk="{% if week.talk %}true{% else %}false{% endif %}"{% if week.talk %} data-week-speaker="{{ week.talk.speaker }}" data-week-status="{{ week.talk.status }}" data-week-title="{{ week.talk.title }}" data-week-abstract="{{ week.talk.abstract }}"{% else %} data-week-speaker="" data-week-status="planned" data-week-title="" data-week-abstract=""{% endif %}{% if week.is_current %} data-current-week{% endif %} role="button" tabindex="0">
+              <tr class="calendar-row{% if week.color_class %} {{ week.color_class }}{% endif %}{% if week.is_current %} current-week{% endif %}" data-week-monday="{{ week.monday }}" data-week-has-talk="{% if week.talk %}true{% else %}false{% endif %}"{% if week.talk %} data-week-speaker="{{ week.talk.speaker }}" data-week-status="{{ week.talk.status }}" data-week-title="{{ week.talk.title }}" data-week-abstract="{{ week.talk.abstract }}" data-week-organizer="{{ week.talk.organizer }}"{% else %} data-week-speaker="" data-week-status="planned" data-week-title="" data-week-abstract="" data-week-organizer=""{% endif %}{% if week.is_current %} data-current-week{% endif %} role="button" tabindex="0">
                 <td class="week-date">{{ week.monday }}</td>
                 {% if week.talk and week.talk.is_unavailable %}
                   <td><div class="talk-comments">{{ week.talk.comments }}</div></td>
+                  <td></td>
                   <td></td>
                   <td></td>
                   <td class="title-abstract-cell"></td>
@@ -410,6 +412,7 @@
                     </div>
                   </td>
                   <td><div class="talk-contacts">{{ week.talk.contact_persons }}</div></td>
+                  <td>{{ week.talk.organizer }}</td>
                   <td class="title-abstract-cell">
                     {% if week.talk.status == "completed" %}
                       <label class="title-abstract-field" aria-label="Title/Abstract">
@@ -418,6 +421,7 @@
                     {% endif %}
                   </td>
                 {% else %}
+                  <td></td>
                   <td></td>
                   <td></td>
                   <td></td>
@@ -456,6 +460,16 @@
           </div>
 
           <div class="week-form-field">
+            <label for="week-organizer">Organizer</label>
+            <select id="week-organizer" name="organizer">
+              <option value="">No organizer</option>
+              {% for organizer in organizer_options %}
+                <option value="{{ organizer }}">{{ organizer }}</option>
+              {% endfor %}
+            </select>
+          </div>
+
+          <div class="week-form-field">
             <label for="week-title">Title</label>
             <input id="week-title" name="title" type="text">
           </div>
@@ -484,6 +498,7 @@
       const weekSpeaker = document.querySelector("#week-speaker");
       const weekSpeakerResults = document.querySelector("#week-speaker-results");
       const weekStatus = document.querySelector("#week-status");
+      const weekOrganizer = document.querySelector("#week-organizer");
       const weekTitle = document.querySelector("#week-title");
       const weekAbstract = document.querySelector("#week-abstract");
       const weekDeleteForm = document.querySelector("#week-delete-form");
@@ -542,6 +557,7 @@
         weekSpeakerFilter.value = row.dataset.weekSpeaker || "";
         renderSpeakerOptions(weekSpeaker.value);
         weekStatus.value = row.dataset.weekStatus || "planned";
+        weekOrganizer.value = row.dataset.weekOrganizer || "";
         weekTitle.value = row.dataset.weekTitle || "";
         weekAbstract.value = row.dataset.weekAbstract || "";
         weekDeleteButton.disabled = row.dataset.weekHasTalk !== "true";
