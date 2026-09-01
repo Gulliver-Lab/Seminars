@@ -43,8 +43,9 @@ RESEARCH_TOPICS = list(get_args(ResearchTopic))
 CONTACT_PERSON_OPTIONS = [person for person in get_args(PERSONS) if person]
 
 
-def build_app(db_path: str | Path) -> FastAPI:
-    app = FastAPI(title="Seminars")
+def build_app(db_path: str | Path, root_path: str = "") -> FastAPI:
+    print("root path:", root_path)
+    app = FastAPI(title="Seminars", root_path=root_path)
     database_path = Path(db_path)
 
     @app.get("/", response_class=HTMLResponse)
@@ -357,6 +358,9 @@ def _parse_organizer(value: str) -> PERSONS:
 def build_parser() -> argparse.ArgumentParser:
     parser = argparse.ArgumentParser(description="Run Seminar web interface")
     parser.add_argument("--db_path", required=True, help="Path to sqlite database")
+    parser.add_argument(
+        "--root_path", required=False, help="Path prefix added by the proxy", default=""
+    )
     parser.add_argument("--host", default="127.0.0.1", help="Host to bind")
     parser.add_argument("--port", default=8000, type=int, help="Port to bind")
     return parser
@@ -364,4 +368,4 @@ def build_parser() -> argparse.ArgumentParser:
 
 def main(argv: Sequence[str] | None = None) -> None:
     args = build_parser().parse_args(argv)
-    uvicorn.run(build_app(args.db_path), host=args.host, port=args.port)
+    uvicorn.run(build_app(args.db_path, args.root_path), host=args.host, port=args.port)

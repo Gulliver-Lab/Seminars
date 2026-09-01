@@ -20,7 +20,7 @@ def parse_person(person_str: str) -> list[seminars.models.PERSONS]:
         if person not in possible_values:
             raise ValueError(f"Wrong person {person}")
 
-    return persons
+    return persons  # type:ignore
 
 
 if __name__ == "__main__":
