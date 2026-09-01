@@ -24,6 +24,7 @@ EXPECTED_TALKS_SCHEMA = [
     ("abstract", "TEXT"),
     ("status", "TEXT"),
     ("comments", "TEXT"),
+    ("organizer", "TEXT"),
 ]
 
 
@@ -144,9 +145,10 @@ def insert_talk(connection: sqlite3.Connection, talk: Talk) -> None:
             title,
             abstract,
             status,
-            comments
+            comments,
+            organizer
         )
-        VALUES (?, ?, ?, ?, ?, ?)
+        VALUES (?, ?, ?, ?, ?, ?, ?)
         """,
         (
             talk.date.isoformat(),
@@ -155,6 +157,7 @@ def insert_talk(connection: sqlite3.Connection, talk: Talk) -> None:
             talk.abstract,
             talk.status,
             talk.comments,
+            talk.organizer,
         ),
     )
     connection.commit()
@@ -167,6 +170,7 @@ def upsert_talk_for_week(
     status: str,
     title: str = "",
     abstract: str = "",
+    organizer: str = "",
 ) -> None:
     start = datetime.datetime.combine(monday, datetime.time())
     end = start + datetime.timedelta(days=7)
@@ -190,9 +194,10 @@ def upsert_talk_for_week(
                 title,
                 abstract,
                 status,
-                comments
+                comments,
+                organizer
             )
-            VALUES (?, ?, ?, ?, ?, ?)
+            VALUES (?, ?, ?, ?, ?, ?, ?)
             """,
             (
                 datetime.datetime.combine(monday, datetime.time(14, 30)).isoformat(),
@@ -201,16 +206,17 @@ def upsert_talk_for_week(
                 abstract,
                 status,
                 "",
+                organizer,
             ),
         )
     else:
         connection.execute(
             """
             UPDATE talks
-            SET speaker = ?, title = ?, abstract = ?, status = ?
+            SET speaker = ?, title = ?, abstract = ?, status = ?, organizer = ?
             WHERE rowid = ?
             """,
-            (speaker, title, abstract, status, existing[0]),
+            (speaker, title, abstract, status, organizer, existing[0]),
         )
 
     connection.commit()
@@ -281,6 +287,7 @@ def _create_schema(connection: sqlite3.Connection) -> None:
             abstract TEXT,
             status TEXT,
             comments TEXT,
+            organizer TEXT,
             FOREIGN KEY (speaker) REFERENCES speakers(name) ON UPDATE CASCADE
         )
         """

@@ -326,6 +326,7 @@ def test_calendar_page_renders_week_rows(tmp_path):
     assert '<th scope="col">Name</th>' in response.text
     assert '<th scope="col">Topic</th>' in response.text
     assert '<th scope="col">Contact person</th>' in response.text
+    assert '<th scope="col">Organizer</th>' in response.text
     assert '<th scope="col">Title/Abstract</th>' in response.text
     assert "2026-06-29" in response.text
     assert "Alice Example" in response.text
@@ -463,6 +464,7 @@ def test_calendar_page_includes_week_color_classes(tmp_path):
             abstract="",
             status="planned",
             comments="",
+            organizer="David",
         ),
     )
     connection.close()
@@ -562,6 +564,7 @@ def test_calendar_page_displays_contact_persons_for_planned_speaker(tmp_path):
             abstract="",
             status="planned",
             comments="",
+            organizer="David",
         ),
     )
     connection.close()
@@ -599,6 +602,7 @@ def test_calendar_page_includes_week_edit_dialog(tmp_path):
             abstract="",
             status="planned",
             comments="",
+            organizer="David",
         ),
     )
     connection.close()
@@ -614,6 +618,7 @@ def test_calendar_page_includes_week_edit_dialog(tmp_path):
     assert 'data-week-status="planned"' in response.text
     assert 'data-week-title="Future talk"' in response.text
     assert 'data-week-abstract=""' in response.text
+    assert 'data-week-organizer="David"' in response.text
     assert 'id="week-speaker-filter"' in response.text
     assert "Type a regex to filter speakers" in response.text
     assert 'id="week-speaker" name="speaker" required type="hidden"' in response.text
@@ -625,6 +630,9 @@ def test_calendar_page_includes_week_edit_dialog(tmp_path):
     assert "No matching speakers" in response.text
     assert '<option value="planned">Planned</option>' in response.text
     assert '<option value="completed">Already confirmed</option>' in response.text
+    assert 'id="week-organizer" name="organizer"' in response.text
+    assert '<option value="David">David</option>' in response.text
+    assert "weekOrganizer.value = row.dataset.weekOrganizer" in response.text
     assert 'id="week-title" name="title"' in response.text
     assert 'id="week-abstract" name="abstract"' in response.text
     assert "weekTitle.value = row.dataset.weekTitle" in response.text
@@ -662,6 +670,7 @@ def test_post_calendar_week_inserts_talk(tmp_path):
             "status": "planned",
             "title": "Inserted title",
             "abstract": "Inserted abstract",
+            "organizer": "David",
         },
         follow_redirects=False,
     )
@@ -677,6 +686,7 @@ def test_post_calendar_week_inserts_talk(tmp_path):
     assert talks[0]["title"] == "Inserted title"
     assert talks[0]["abstract"] == "Inserted abstract"
     assert talks[0]["comments"] == ""
+    assert talks[0]["organizer"] == "David"
 
 
 def test_post_calendar_week_updates_existing_talk(tmp_path):
@@ -728,6 +738,7 @@ def test_post_calendar_week_updates_existing_talk(tmp_path):
             "status": "completed",
             "title": "Updated title",
             "abstract": "Updated abstract",
+            "organizer": "Josh",
         },
         follow_redirects=False,
     )
@@ -743,6 +754,7 @@ def test_post_calendar_week_updates_existing_talk(tmp_path):
     assert talks[0]["title"] == "Updated title"
     assert talks[0]["abstract"] == "Updated abstract"
     assert talks[0]["comments"] == "Existing comments"
+    assert talks[0]["organizer"] == "Josh"
 
 
 def test_post_calendar_week_delete_removes_existing_talk(tmp_path):

@@ -24,6 +24,7 @@ class CalendarTalk:
     status: str
     title: str
     abstract: str
+    organizer: str
     has_title_abstract: bool
     comments: str
     is_unavailable: bool
@@ -92,6 +93,7 @@ def _calendar_talk(row: Mapping[Any, Any]) -> CalendarTalk:
         status=str(row.get("status", "")),
         title=str(row.get("title", "")),
         abstract=str(row.get("abstract", "")),
+        organizer=str(row.get("organizer", "")),
         has_title_abstract=bool(str(row.get("title", "")).strip()),
         comments=str(row.get("comments", "")),
         is_unavailable=speaker == "",

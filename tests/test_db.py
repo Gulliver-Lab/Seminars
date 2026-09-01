@@ -343,12 +343,13 @@ def test_inserts_talk():
             abstract="An abstract",
             status="confirmed",
             comments="Bring projector",
+            organizer="David",
         ),
     )
 
     row = connection.execute(
         """
-        SELECT date, speaker, title, abstract, status, comments
+        SELECT date, speaker, title, abstract, status, comments, organizer
         FROM talks
         """
     ).fetchone()
@@ -359,6 +360,7 @@ def test_inserts_talk():
         "An abstract",
         "confirmed",
         "Bring projector",
+        "David",
     )
 
 
@@ -494,11 +496,12 @@ def test_upsert_talk_for_week_updates_existing_talk_and_preserves_details():
         "completed",
         "Updated title",
         "Updated abstract",
+        "Josh",
     )
 
     rows = connection.execute(
         """
-        SELECT date, speaker, title, abstract, status, comments
+        SELECT date, speaker, title, abstract, status, comments, organizer
         FROM talks
         """
     ).fetchall()
@@ -510,6 +513,7 @@ def test_upsert_talk_for_week_updates_existing_talk_and_preserves_details():
             "Updated abstract",
             "completed",
             "Existing comments",
+            "Josh",
         )
     ]
 
@@ -596,6 +600,7 @@ def test_reads_talks_as_dataframe():
         "abstract",
         "status",
         "comments",
+        "organizer",
     ]
     assert dataframe.to_dict("records") == [
         {
@@ -605,5 +610,6 @@ def test_reads_talks_as_dataframe():
             "abstract": "An abstract",
             "status": "confirmed",
             "comments": "Bring projector",
+            "organizer": "",
         }
     ]

@@ -102,6 +102,7 @@ def build_app(db_path: str | Path) -> FastAPI:
             {
                 "calendar_weeks": calendar_weeks,
                 "speaker_options": speaker_options,
+                "organizer_options": CONTACT_PERSON_OPTIONS,
             },
         )
 
@@ -112,10 +113,12 @@ def build_app(db_path: str | Path) -> FastAPI:
         status: str = Form(),
         title: str = Form(""),
         abstract: str = Form(""),
+        organizer: str = Form(""),
     ) -> Response:
         try:
             monday_date = datetime.date.fromisoformat(monday)
             talk_status = _parse_calendar_talk_status(status)
+            talk_organizer = _parse_organizer(organizer)
         except ValueError as error:
             return PlainTextResponse(str(error), status_code=400)
 
@@ -128,6 +131,7 @@ def build_app(db_path: str | Path) -> FastAPI:
                 talk_status,
                 title,
                 abstract,
+                talk_organizer,
             )
         except sqlite3.IntegrityError as error:
             return PlainTextResponse(str(error), status_code=400)
@@ -341,6 +345,13 @@ def _parse_calendar_talk_status(value: str) -> str:
     if value in {"completed", "complete", "confirmed"}:
         return "completed"
     raise ValueError("invalid talk status")
+
+
+def _parse_organizer(value: str) -> PERSONS:
+    organizer = value.strip()
+    if organizer in get_args(PERSONS):
+        return cast(PERSONS, organizer)
+    raise ValueError("invalid organizer")
 
 
 def build_parser() -> argparse.ArgumentParser:

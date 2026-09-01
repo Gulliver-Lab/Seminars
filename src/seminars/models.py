@@ -56,3 +56,4 @@ class Talk:
     abstract: str
     status: TalkStatus
     comments: str
+    organizer: PERSONS = ""
