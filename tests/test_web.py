@@ -287,6 +287,25 @@ def test_homepage_links_to_calendar(tmp_path):
     assert 'href="/calendar"' in response.text
 
 
+def test_homepage_links_to_calendar_under_root_path(tmp_path):
+    db_path = tmp_path / "seminars.db"
+    connection = open_or_create_db(db_path)
+    connection.close()
+
+    client = TestClient(build_app(db_path, root_path="/seminars"))
+
+    response = client.get("/")
+
+    assert response.status_code == 200
+    assert 'href="/seminars/calendar"' in response.text
+    assert 'action="/seminars/speakers"' in response.text
+    assert 'const editSpeakerPath = "/seminars/speakers/__name__";' in response.text
+    assert (
+        'const deleteSpeakerPath = "/seminars/speakers/__name__/delete";'
+        in response.text
+    )
+
+
 def test_calendar_page_renders_week_rows(tmp_path):
     db_path = tmp_path / "seminars.db"
     connection = open_or_create_db(db_path)
@@ -331,6 +350,27 @@ def test_calendar_page_renders_week_rows(tmp_path):
     assert "2026-06-29" in response.text
     assert "Alice Example" in response.text
     assert "Active Matter" in response.text
+
+
+def test_calendar_page_links_under_root_path(tmp_path):
+    db_path = tmp_path / "seminars.db"
+    connection = open_or_create_db(db_path)
+    connection.close()
+
+    client = TestClient(build_app(db_path, root_path="/seminars"))
+
+    response = client.get("/calendar")
+
+    assert response.status_code == 200
+    assert 'href="/seminars/"' in response.text
+    assert (
+        'const updateCalendarWeekPath = "/seminars/calendar/weeks/__monday__";'
+        in response.text
+    )
+    assert (
+        'const deleteCalendarWeekPath = "/seminars/calendar/weeks/__monday__/delete";'
+        in response.text
+    )
 
 
 def test_calendar_page_uses_table_without_legend(tmp_path):
@@ -689,6 +729,41 @@ def test_post_calendar_week_inserts_talk(tmp_path):
     assert talks[0]["organizer"] == "David"
 
 
+def test_post_calendar_week_redirects_under_root_path(tmp_path):
+    db_path = tmp_path / "seminars.db"
+    connection = open_or_create_db(db_path)
+    insert_speaker(
+        connection,
+        Speaker(
+            name="Alice Example",
+            affiliation="Example University",
+            email="alice@example.edu",
+            topic="Active Matter",
+            contact_persons=[],
+            notes="",
+            want_to_invite=False,
+        ),
+    )
+    connection.close()
+
+    client = TestClient(build_app(db_path, root_path="/seminars"))
+
+    response = client.post(
+        "/calendar/weeks/2026-07-13",
+        data={
+            "speaker": "Alice Example",
+            "status": "planned",
+            "title": "",
+            "abstract": "",
+            "organizer": "David",
+        },
+        follow_redirects=False,
+    )
+
+    assert response.status_code == 303
+    assert response.headers["location"] == "/seminars/calendar"
+
+
 def test_post_calendar_week_updates_existing_talk(tmp_path):
     db_path = tmp_path / "seminars.db"
     connection = open_or_create_db(db_path)
@@ -925,6 +1000,28 @@ def test_post_speaker_creates_speaker(tmp_path):
             "want_to_invite": 1,
         }
     ]
+
+
+def test_post_speaker_redirects_under_root_path(tmp_path):
+    db_path = tmp_path / "seminars.db"
+    connection = open_or_create_db(db_path)
+    connection.close()
+    client = TestClient(build_app(db_path, root_path="/seminars"))
+
+    response = client.post(
+        "/speakers",
+        data={
+            "name": "New Speaker",
+            "affiliation": "New University",
+            "email": "new@example.edu",
+            "topic": "BioPhys",
+            "notes": "New notes",
+        },
+        follow_redirects=False,
+    )
+
+    assert response.status_code == 303
+    assert response.headers["location"] == "/seminars/"
 
 
 def test_post_speaker_creates_speaker_with_blank_contact_persons(tmp_path):

@@ -43,8 +43,13 @@ RESEARCH_TOPICS = list(get_args(ResearchTopic))
 CONTACT_PERSON_OPTIONS = [person for person in get_args(PERSONS) if person]
 
 
+def url_path_for(request: Request, endpoint_name: str, **path_params: str) -> str:
+    root_path = request.scope.get("root_path", "").rstrip("/")
+    route_path = str(request.app.url_path_for(endpoint_name, **path_params))
+    return f"{root_path}{route_path}"
+
+
 def build_app(db_path: str | Path, root_path: str = "") -> FastAPI:
-    print("root path:", root_path)
     app = FastAPI(title="Seminars", root_path=root_path)
     database_path = Path(db_path)
 
@@ -81,6 +86,7 @@ def build_app(db_path: str | Path, root_path: str = "") -> FastAPI:
                 ),
                 "active_sort": active_sort,
                 "active_direction": active_direction,
+                "url_path_for": url_path_for,
             },
         )
 
@@ -104,11 +110,13 @@ def build_app(db_path: str | Path, root_path: str = "") -> FastAPI:
                 "calendar_weeks": calendar_weeks,
                 "speaker_options": speaker_options,
                 "organizer_options": CONTACT_PERSON_OPTIONS,
+                "url_path_for": url_path_for,
             },
         )
 
     @app.post("/calendar/weeks/{monday}")
     def update_calendar_week(
+        request: Request,
         monday: str,
         speaker: str = Form(),
         status: str = Form(),
@@ -138,10 +146,12 @@ def build_app(db_path: str | Path, root_path: str = "") -> FastAPI:
             return PlainTextResponse(str(error), status_code=400)
         finally:
             connection.close()
-        return RedirectResponse("/calendar", status_code=303)
+        return RedirectResponse(
+            url_path_for(request, "calendar_index"), status_code=303
+        )
 
     @app.post("/calendar/weeks/{monday}/delete")
-    def delete_calendar_week(monday: str) -> Response:
+    def delete_calendar_week(request: Request, monday: str) -> Response:
         try:
             monday_date = datetime.date.fromisoformat(monday)
         except ValueError as error:
@@ -152,10 +162,13 @@ def build_app(db_path: str | Path, root_path: str = "") -> FastAPI:
             delete_talk_for_week(connection, monday_date)
         finally:
             connection.close()
-        return RedirectResponse("/calendar", status_code=303)
+        return RedirectResponse(
+            url_path_for(request, "calendar_index"), status_code=303
+        )
 
     @app.post("/speakers")
     def create_speaker(
+        request: Request,
         name: str = Form(),
         affiliation: str = Form(""),
         email: str = Form(""),
@@ -175,10 +188,13 @@ def build_app(db_path: str | Path, root_path: str = "") -> FastAPI:
             insert_speaker(connection, speaker)
         finally:
             connection.close()
-        return RedirectResponse("/", status_code=303)
+        return RedirectResponse(
+            url_path_for(request, "speakers_index"), status_code=303
+        )
 
     @app.post("/speakers/{original_name}")
     def edit_speaker(
+        request: Request,
         original_name: str,
         name: str = Form(),
         affiliation: str = Form(""),
@@ -199,10 +215,12 @@ def build_app(db_path: str | Path, root_path: str = "") -> FastAPI:
             update_speaker(connection, original_name, speaker)
         finally:
             connection.close()
-        return RedirectResponse("/", status_code=303)
+        return RedirectResponse(
+            url_path_for(request, "speakers_index"), status_code=303
+        )
 
     @app.post("/speakers/{name}/delete")
-    def remove_speaker(name: str) -> Response:
+    def remove_speaker(request: Request, name: str) -> Response:
         connection = open_or_create_db(database_path)
         try:
             delete_speaker(connection, name)
@@ -210,7 +228,9 @@ def build_app(db_path: str | Path, root_path: str = "") -> FastAPI:
             return PlainTextResponse(str(error), status_code=409)
         finally:
             connection.close()
-        return RedirectResponse("/", status_code=303)
+        return RedirectResponse(
+            url_path_for(request, "speakers_index"), status_code=303
+        )
 
     return app
 
