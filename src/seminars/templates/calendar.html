@@ -378,7 +378,7 @@
     <main>
       <div class="page-header">
         <h1>Calendar</h1>
-        <a class="button" href="/">Speakers</a>
+        <a class="button" href="{{ url_path_for(request, 'speakers_index') }}">Speakers</a>
       </div>
 
       <div class="calendar-page">
@@ -508,6 +508,8 @@
           {{ speaker | tojson }},
         {% endfor %}
       ];
+      const updateCalendarWeekPath = {{ url_path_for(request, 'update_calendar_week', monday='__monday__') | tojson }};
+      const deleteCalendarWeekPath = {{ url_path_for(request, 'delete_calendar_week', monday='__monday__') | tojson }};
 
       function selectSpeaker(speaker) {
         weekSpeaker.value = speaker;
@@ -550,8 +552,8 @@
 
       function openWeekDialog(row) {
         const monday = row.dataset.weekMonday;
-        weekForm.action = `/calendar/weeks/${monday}`;
-        weekDeleteForm.action = `/calendar/weeks/${monday}/delete`;
+        weekForm.action = updateCalendarWeekPath.replace("__monday__", encodeURIComponent(monday));
+        weekDeleteForm.action = deleteCalendarWeekPath.replace("__monday__", encodeURIComponent(monday));
         weekFormDate.textContent = monday;
         weekSpeaker.value = row.dataset.weekSpeaker || "";
         weekSpeakerFilter.value = row.dataset.weekSpeaker || "";

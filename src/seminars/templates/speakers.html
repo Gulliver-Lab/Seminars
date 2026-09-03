@@ -477,7 +477,7 @@
             <input id="want-to-invite-filter" type="checkbox" checked>
             Want to invite
           </label>
-          <a class="button secondary-button" href="/calendar">Calendar</a>
+          <a class="button secondary-button" href="{{ url_path_for(request, 'calendar_index') }}">Calendar</a>
           <button type="button" id="new-speaker-button">New Speaker</button>
         </div>
       </div>
@@ -543,7 +543,7 @@
             <h2 id="new-speaker-title">New Speaker</h2>
             <button class="secondary-button" type="button" id="close-new-speaker">Close</button>
           </div>
-          <form class="speaker-form" action="/speakers" method="post">
+          <form class="speaker-form" action="{{ url_path_for(request, 'create_speaker') }}" method="post">
             <div class="form-grid">
               <div class="field">
                 <label for="speaker-name">Name</label>
@@ -703,6 +703,8 @@
           (option) => option.value,
         ),
       );
+      const editSpeakerPath = {{ url_path_for(request, 'edit_speaker', original_name='__name__') | tojson }};
+      const deleteSpeakerPath = {{ url_path_for(request, 'remove_speaker', name='__name__') | tojson }};
 
       const createContactPersonPicker = ({ inputId, tokensId, blankId }) => {
         const input = document.getElementById(inputId);
@@ -849,8 +851,8 @@
       const openEditSpeakerModal = (row) => {
         const speaker = row.dataset;
         const talks = JSON.parse(speaker.editTalks);
-        editSpeakerForm.action = `/speakers/${encodeURIComponent(speaker.editName)}`;
-        deleteSpeakerForm.action = `/speakers/${encodeURIComponent(speaker.editName)}/delete`;
+        editSpeakerForm.action = editSpeakerPath.replace("__name__", encodeURIComponent(speaker.editName));
+        deleteSpeakerForm.action = deleteSpeakerPath.replace("__name__", encodeURIComponent(speaker.editName));
         document.getElementById("edit-speaker-name").value = speaker.editName;
         document.getElementById("edit-speaker-affiliation").value = speaker.editAffiliation;
         document.getElementById("edit-speaker-email").value = speaker.editEmail;
