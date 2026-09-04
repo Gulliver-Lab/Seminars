@@ -54,7 +54,7 @@ def test_homepage_displays_next_confirmed_talk(tmp_path):
     response = client.get("/")
 
     assert response.status_code == 200
-    assert "Next confirmed talk" in response.text
+    assert "Next talk:" in response.text
     assert "2099-01-15" in response.text
     assert "Alice Example" in response.text
     assert "Future confirmed talk" in response.text
@@ -101,6 +101,43 @@ def test_homepage_links_under_root_path(tmp_path):
     assert 'href="/seminars/"' in response.text
     assert 'href="/seminars/speakers"' in response.text
     assert 'href="/seminars/calendar"' in response.text
+
+
+def test_app_allows_wordpress_private_network_preflight(tmp_path):
+    db_path = tmp_path / "seminars.db"
+    connection = open_or_create_db(db_path)
+    connection.close()
+
+    client = TestClient(build_app(db_path))
+
+    response = client.options(
+        "/",
+        headers={
+            "Origin": "https://blog.espci.fr",
+            "Access-Control-Request-Method": "GET",
+            "Access-Control-Request-Private-Network": "true",
+        },
+    )
+
+    assert response.status_code == 200
+    assert response.headers["access-control-allow-origin"] == "https://blog.espci.fr"
+    assert response.headers["access-control-allow-private-network"] == "true"
+
+
+def test_app_restricts_frame_ancestors_to_wordpress(tmp_path):
+    db_path = tmp_path / "seminars.db"
+    connection = open_or_create_db(db_path)
+    connection.close()
+
+    client = TestClient(build_app(db_path))
+
+    response = client.get("/")
+
+    assert response.status_code == 200
+    assert (
+        response.headers["content-security-policy"]
+        == "frame-ancestors 'self' https://blog.espci.fr"
+    )
 
 
 def test_next_upcoming_confirmed_talk_keeps_nearest_confirmed(tmp_path):

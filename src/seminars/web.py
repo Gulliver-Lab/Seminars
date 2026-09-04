@@ -7,6 +7,7 @@ from typing import Any, Sequence, cast, get_args
 import pandas as pd
 import uvicorn
 from fastapi import FastAPI, Form, Request
+from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import (
     HTMLResponse,
     PlainTextResponse,
@@ -42,6 +43,7 @@ SORTABLE_COLUMNS = {key for key, _label in COLUMNS}
 RESEARCH_TOPICS = list(get_args(ResearchTopic))
 CONTACT_PERSON_OPTIONS = [person for person in get_args(PERSONS) if person]
 CONFERENCE_ROOM_URL = "https://visio.numerique.gouv.fr/vuf-njri-opc"
+WORDPRESS_ORIGIN = "https://blog.espci.fr"
 
 
 def url_path_for(request: Request, endpoint_name: str, **path_params: str) -> str:
@@ -50,9 +52,28 @@ def url_path_for(request: Request, endpoint_name: str, **path_params: str) -> st
     return f"{root_path}{route_path}"
 
 
-def build_app(db_path: str | Path, root_path: str = "") -> FastAPI:
+def build_app(
+    db_path: str | Path,
+    root_path: str = "",
+    cors_origins: Sequence[str] = (WORDPRESS_ORIGIN,),
+) -> FastAPI:
     app = FastAPI(title="Seminars", root_path=root_path)
+    app.add_middleware(
+        CORSMiddleware,
+        allow_origins=cors_origins,
+        allow_methods=["GET", "POST", "OPTIONS"],
+        allow_headers=["*"],
+        allow_private_network=True,
+    )
     database_path = Path(db_path)
+
+    @app.middleware("http")
+    async def add_frame_ancestor_policy(request: Request, call_next: Any) -> Response:
+        response = cast(Response, await call_next(request))
+        response.headers["Content-Security-Policy"] = (
+            "frame-ancestors 'self' " + " ".join(cors_origins)
+        )
+        return response
 
     @app.get("/", response_class=HTMLResponse)
     def home_index(request: Request) -> Any:
@@ -417,6 +438,12 @@ def build_parser() -> argparse.ArgumentParser:
     parser.add_argument(
         "--root_path", required=False, help="Path prefix added by the proxy", default=""
     )
+    parser.add_argument(
+        "--cors_origin",
+        action="append",
+        default=[WORDPRESS_ORIGIN],
+        help="Origin allowed to embed and access the app",
+    )
     parser.add_argument("--host", default="127.0.0.1", help="Host to bind")
     parser.add_argument("--port", default=8000, type=int, help="Port to bind")
     return parser
@@ -424,4 +451,8 @@ def build_parser() -> argparse.ArgumentParser:
 
 def main(argv: Sequence[str] | None = None) -> None:
     args = build_parser().parse_args(argv)
-    uvicorn.run(build_app(args.db_path, args.root_path), host=args.host, port=args.port)
+    uvicorn.run(
+        build_app(args.db_path, args.root_path, args.cors_origin),
+        host=args.host,
+        port=args.port,
+    )
