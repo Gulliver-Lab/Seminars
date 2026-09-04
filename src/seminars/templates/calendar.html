@@ -33,6 +33,11 @@
         margin-bottom: 16px;
       }
 
+      .nav {
+        display: flex;
+        gap: 8px;
+      }
+
       h1,
       h2 {
         line-height: 1.2;
@@ -378,7 +383,10 @@
     <main>
       <div class="page-header">
         <h1>Calendar</h1>
-        <a class="button" href="{{ url_path_for(request, 'speakers_index') }}">Speakers</a>
+        <nav class="nav" aria-label="Primary">
+          <a class="button" href="{{ url_path_for(request, 'home_index') }}">Home</a>
+          <a class="button" href="{{ url_path_for(request, 'speakers_index') }}">Speakers</a>
+        </nav>
       </div>
 
       <div class="calendar-page">

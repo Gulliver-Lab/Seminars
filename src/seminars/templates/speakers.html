@@ -60,6 +60,11 @@
         gap: 8px;
       }
 
+      .nav {
+        display: flex;
+        gap: 8px;
+      }
+
       .search-input {
         background: #ffffff;
         border: 1px solid #cbd3df;
@@ -477,7 +482,10 @@
             <input id="want-to-invite-filter" type="checkbox" checked>
             Want to invite
           </label>
-          <a class="button secondary-button" href="{{ url_path_for(request, 'calendar_index') }}">Calendar</a>
+          <nav class="nav" aria-label="Primary">
+            <a class="button secondary-button" href="{{ url_path_for(request, 'home_index') }}">Home</a>
+            <a class="button secondary-button" href="{{ url_path_for(request, 'calendar_index') }}">Calendar</a>
+          </nav>
           <button type="button" id="new-speaker-button">New Speaker</button>
         </div>
       </div>

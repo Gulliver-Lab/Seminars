@@ -10,10 +10,160 @@ from seminars.db import (
     read_talks,
 )
 from seminars.models import Speaker, Talk
-from seminars.web import build_app, speakers_with_last_talk
+from seminars.web import (
+    build_app,
+    next_upcoming_confirmed_talk,
+    speakers_with_last_talk,
+)
 
 
-def test_homepage_displays_speakers_table(tmp_path):
+def insert_test_speaker(connection, name: str) -> None:
+    insert_speaker(
+        connection,
+        Speaker(
+            name=name,
+            affiliation="Example University",
+            email="",
+            topic="Other",
+            contact_persons=[],
+            notes="",
+            want_to_invite=False,
+        ),
+    )
+
+
+def test_homepage_displays_next_confirmed_talk(tmp_path):
+    db_path = tmp_path / "seminars.db"
+    connection = open_or_create_db(db_path)
+    insert_test_speaker(connection, "Alice Example")
+    insert_talk(
+        connection,
+        Talk(
+            date=datetime.datetime(2099, 1, 15, 14, 30),
+            speaker="Alice Example",
+            title="Future confirmed talk",
+            abstract="Future abstract",
+            status="completed",
+            comments="",
+        ),
+    )
+    connection.close()
+
+    client = TestClient(build_app(db_path))
+
+    response = client.get("/")
+
+    assert response.status_code == 200
+    assert "Next confirmed talk" in response.text
+    assert "2099-01-15" in response.text
+    assert "Alice Example" in response.text
+    assert "Future confirmed talk" in response.text
+    assert "Future abstract" in response.text
+    assert "https://visio.numerique.gouv.fr/vuf-njri-opc" in response.text
+
+
+def test_homepage_ignores_planned_talks(tmp_path):
+    db_path = tmp_path / "seminars.db"
+    connection = open_or_create_db(db_path)
+    insert_test_speaker(connection, "Alice Example")
+    insert_talk(
+        connection,
+        Talk(
+            date=datetime.datetime(2099, 1, 15, 14, 30),
+            speaker="Alice Example",
+            title="Planned talk",
+            abstract="",
+            status="planned",
+            comments="",
+        ),
+    )
+    connection.close()
+
+    client = TestClient(build_app(db_path))
+
+    response = client.get("/")
+
+    assert response.status_code == 200
+    assert "No upcoming confirmed talk." in response.text
+    assert "Planned talk" not in response.text
+
+
+def test_homepage_links_under_root_path(tmp_path):
+    db_path = tmp_path / "seminars.db"
+    connection = open_or_create_db(db_path)
+    connection.close()
+
+    client = TestClient(build_app(db_path, root_path="/seminars"))
+
+    response = client.get("/")
+
+    assert response.status_code == 200
+    assert 'href="/seminars/"' in response.text
+    assert 'href="/seminars/speakers"' in response.text
+    assert 'href="/seminars/calendar"' in response.text
+
+
+def test_next_upcoming_confirmed_talk_keeps_nearest_confirmed(tmp_path):
+    db_path = tmp_path / "seminars.db"
+    connection = open_or_create_db(db_path)
+    insert_test_speaker(connection, "Later Example")
+    insert_test_speaker(connection, "Nearest Example")
+    insert_talk(
+        connection,
+        Talk(
+            date=datetime.datetime(2099, 1, 22, 14, 30),
+            speaker="Later Example",
+            title="Later talk",
+            abstract="",
+            status="completed",
+            comments="",
+        ),
+    )
+    insert_talk(
+        connection,
+        Talk(
+            date=datetime.datetime(2099, 1, 15, 14, 30),
+            speaker="Nearest Example",
+            title="Nearest talk",
+            abstract="",
+            status="completed",
+            comments="",
+        ),
+    )
+
+    next_talk = next_upcoming_confirmed_talk(read_talks(connection))
+    connection.close()
+
+    assert next_talk is not None
+    assert next_talk["date"] == "2099-01-15"
+    assert next_talk["speaker"] == "Nearest Example"
+    assert next_talk["title"] == "Nearest talk"
+
+
+def test_next_upcoming_confirmed_talk_accepts_legacy_confirmed_status(tmp_path):
+    db_path = tmp_path / "seminars.db"
+    connection = open_or_create_db(db_path)
+    insert_test_speaker(connection, "Alice Example")
+    insert_talk(
+        connection,
+        Talk(
+            date=datetime.datetime(2099, 1, 15, 14, 30),
+            speaker="Alice Example",
+            title="Legacy confirmed talk",
+            abstract="",
+            status="confirmed",
+            comments="",
+        ),
+    )
+
+    next_talk = next_upcoming_confirmed_talk(read_talks(connection))
+    connection.close()
+
+    assert next_talk is not None
+    assert next_talk["title"] == "Legacy confirmed talk"
+
+
+def test_speakers_page_displays_speakers_table(tmp_path):
     db_path = tmp_path / "seminars.db"
     connection = open_or_create_db(db_path)
     insert_speaker(
@@ -32,7 +182,7 @@ def test_homepage_displays_speakers_table(tmp_path):
 
     client = TestClient(build_app(db_path))
 
-    response = client.get("/")
+    response = client.get("/speakers")
 
     assert response.status_code == 200
     assert "<table" in response.text
@@ -103,7 +253,7 @@ def test_speakers_with_last_talk_keeps_latest_talk_date_and_blank_missing(tmp_pa
     ]
 
 
-def test_homepage_displays_last_talk_date(tmp_path):
+def test_speakers_page_displays_last_talk_date(tmp_path):
     db_path = tmp_path / "seminars.db"
     connection = open_or_create_db(db_path)
     insert_speaker(
@@ -133,14 +283,14 @@ def test_homepage_displays_last_talk_date(tmp_path):
 
     client = TestClient(build_app(db_path))
 
-    response = client.get("/")
+    response = client.get("/speakers")
 
     assert response.status_code == 200
     assert "Last talk" in response.text
     assert "2025-03-20" in response.text
 
 
-def test_homepage_sorts_speakers_by_column(tmp_path):
+def test_speakers_page_sorts_speakers_by_column(tmp_path):
     db_path = tmp_path / "seminars.db"
     connection = open_or_create_db(db_path)
     insert_speaker(
@@ -171,13 +321,13 @@ def test_homepage_sorts_speakers_by_column(tmp_path):
 
     client = TestClient(build_app(db_path))
 
-    response = client.get("/?sort=name&direction=desc")
+    response = client.get("/speakers?sort=name&direction=desc")
 
     assert response.status_code == 200
     assert response.text.index("Zoe Example") < response.text.index("Alice Example")
 
 
-def test_homepage_displays_sort_links(tmp_path):
+def test_speakers_page_displays_sort_links(tmp_path):
     db_path = tmp_path / "seminars.db"
     connection = open_or_create_db(db_path)
     insert_speaker(
@@ -196,7 +346,7 @@ def test_homepage_displays_sort_links(tmp_path):
 
     client = TestClient(build_app(db_path))
 
-    response = client.get("/")
+    response = client.get("/speakers")
 
     assert response.status_code == 200
     assert "?sort=name&amp;direction=asc" in response.text
@@ -205,7 +355,7 @@ def test_homepage_displays_sort_links(tmp_path):
     assert "?sort=last_talk&amp;direction=desc" in response.text
 
 
-def test_homepage_displays_name_search_controls(tmp_path):
+def test_speakers_page_displays_name_search_controls(tmp_path):
     db_path = tmp_path / "seminars.db"
     connection = open_or_create_db(db_path)
     insert_speaker(
@@ -224,7 +374,7 @@ def test_homepage_displays_name_search_controls(tmp_path):
 
     client = TestClient(build_app(db_path))
 
-    response = client.get("/")
+    response = client.get("/speakers")
 
     assert response.status_code == 200
     assert 'id="speaker-search"' in response.text
@@ -233,7 +383,7 @@ def test_homepage_displays_name_search_controls(tmp_path):
     assert 'id="visible-count"' in response.text
 
 
-def test_homepage_displays_want_to_invite_filter(tmp_path):
+def test_speakers_page_displays_want_to_invite_filter(tmp_path):
     db_path = tmp_path / "seminars.db"
     connection = open_or_create_db(db_path)
     insert_speaker(
@@ -264,7 +414,7 @@ def test_homepage_displays_want_to_invite_filter(tmp_path):
 
     client = TestClient(build_app(db_path))
 
-    response = client.get("/")
+    response = client.get("/speakers")
 
     assert response.status_code == 200
     assert 'id="want-to-invite-filter"' in response.text
@@ -274,29 +424,31 @@ def test_homepage_displays_want_to_invite_filter(tmp_path):
     assert 'data-want-to-invite="0"' in response.text
 
 
-def test_homepage_links_to_calendar(tmp_path):
+def test_speakers_page_links_to_home_and_calendar(tmp_path):
     db_path = tmp_path / "seminars.db"
     connection = open_or_create_db(db_path)
     connection.close()
 
     client = TestClient(build_app(db_path))
 
-    response = client.get("/")
+    response = client.get("/speakers")
 
     assert response.status_code == 200
+    assert 'href="/"' in response.text
     assert 'href="/calendar"' in response.text
 
 
-def test_homepage_links_to_calendar_under_root_path(tmp_path):
+def test_speakers_page_links_under_root_path(tmp_path):
     db_path = tmp_path / "seminars.db"
     connection = open_or_create_db(db_path)
     connection.close()
 
     client = TestClient(build_app(db_path, root_path="/seminars"))
 
-    response = client.get("/")
+    response = client.get("/speakers")
 
     assert response.status_code == 200
+    assert 'href="/seminars/"' in response.text
     assert 'href="/seminars/calendar"' in response.text
     assert 'action="/seminars/speakers"' in response.text
     assert 'const editSpeakerPath = "/seminars/speakers/__name__";' in response.text
@@ -935,14 +1087,14 @@ def test_calendar_page_displays_one_talk_when_multiple_talks_share_week(tmp_path
     assert 'data-week-speaker="Bob Example"' not in response.text
 
 
-def test_homepage_displays_new_speaker_form(tmp_path):
+def test_speakers_page_displays_new_speaker_form(tmp_path):
     db_path = tmp_path / "seminars.db"
     connection = open_or_create_db(db_path)
     connection.close()
 
     client = TestClient(build_app(db_path))
 
-    response = client.get("/")
+    response = client.get("/speakers")
 
     assert response.status_code == 200
     assert "New Speaker" in response.text
@@ -985,7 +1137,7 @@ def test_post_speaker_creates_speaker(tmp_path):
     )
 
     assert response.status_code == 303
-    assert response.headers["location"] == "/"
+    assert response.headers["location"] == "/speakers"
     connection = open_or_create_db(db_path)
     dataframe = read_speakers(connection)
     connection.close()
@@ -1021,7 +1173,7 @@ def test_post_speaker_redirects_under_root_path(tmp_path):
     )
 
     assert response.status_code == 303
-    assert response.headers["location"] == "/seminars/"
+    assert response.headers["location"] == "/seminars/speakers"
 
 
 def test_post_speaker_creates_speaker_with_blank_contact_persons(tmp_path):
@@ -1081,7 +1233,7 @@ def test_post_speaker_rejects_invalid_contact_person(tmp_path):
     assert response.status_code == 400
 
 
-def test_homepage_displays_edit_speaker_data(tmp_path):
+def test_speakers_page_displays_edit_speaker_data(tmp_path):
     db_path = tmp_path / "seminars.db"
     connection = open_or_create_db(db_path)
     insert_speaker(
@@ -1121,7 +1273,7 @@ def test_homepage_displays_edit_speaker_data(tmp_path):
     connection.close()
     client = TestClient(build_app(db_path))
 
-    response = client.get("/")
+    response = client.get("/speakers")
 
     assert response.status_code == 200
     assert 'id="edit-speaker-modal"' in response.text
@@ -1178,7 +1330,7 @@ def test_post_speaker_edit_updates_speaker_and_cascades_talks(tmp_path):
     )
 
     assert response.status_code == 303
-    assert response.headers["location"] == "/"
+    assert response.headers["location"] == "/speakers"
     connection = open_or_create_db(db_path)
     speakers = read_speakers(connection).to_dict("records")
     talks = read_talks(connection).to_dict("records")
@@ -1218,7 +1370,7 @@ def test_post_speaker_delete_removes_speaker_without_talks(tmp_path):
     response = client.post("/speakers/Alice%20Example/delete", follow_redirects=False)
 
     assert response.status_code == 303
-    assert response.headers["location"] == "/"
+    assert response.headers["location"] == "/speakers"
     connection = open_or_create_db(db_path)
     speakers = read_speakers(connection).to_dict("records")
     connection.close()

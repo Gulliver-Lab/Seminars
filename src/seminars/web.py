@@ -41,6 +41,7 @@ COLUMNS = [
 SORTABLE_COLUMNS = {key for key, _label in COLUMNS}
 RESEARCH_TOPICS = list(get_args(ResearchTopic))
 CONTACT_PERSON_OPTIONS = [person for person in get_args(PERSONS) if person]
+CONFERENCE_ROOM_URL = "https://visio.numerique.gouv.fr/vuf-njri-opc"
 
 
 def url_path_for(request: Request, endpoint_name: str, **path_params: str) -> str:
@@ -54,6 +55,25 @@ def build_app(db_path: str | Path, root_path: str = "") -> FastAPI:
     database_path = Path(db_path)
 
     @app.get("/", response_class=HTMLResponse)
+    def home_index(request: Request) -> Any:
+        connection = open_or_create_db(database_path)
+        try:
+            talks = read_talks(connection)
+            next_talk = next_upcoming_confirmed_talk(talks)
+        finally:
+            connection.close()
+
+        return TEMPLATES.TemplateResponse(
+            request,
+            "home.html",
+            {
+                "conference_room_url": CONFERENCE_ROOM_URL,
+                "next_talk": next_talk,
+                "url_path_for": url_path_for,
+            },
+        )
+
+    @app.get("/speakers", response_class=HTMLResponse)
     def speakers_index(
         request: Request, sort: str = "name", direction: str = "asc"
     ) -> Any:
@@ -233,6 +253,22 @@ def build_app(db_path: str | Path, root_path: str = "") -> FastAPI:
         )
 
     return app
+
+
+def next_upcoming_confirmed_talk(talks: pd.DataFrame) -> dict[str, Any] | None:
+    if talks.empty:
+        return None
+
+    upcoming = talks[
+        talks["status"].isin(["completed", "confirmed"])
+        & (talks["date"].dt.date >= datetime.date.today())
+    ].sort_values("date", kind="mergesort")
+    if upcoming.empty:
+        return None
+
+    talk = cast(dict[str, Any], upcoming.iloc[0].to_dict())
+    talk["date"] = talk["date"].strftime("%Y-%m-%d")
+    return talk
 
 
 def speakers_with_last_talk(
