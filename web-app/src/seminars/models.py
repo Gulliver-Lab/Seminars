@@ -57,3 +57,12 @@ class Talk:
     status: TalkStatus
     comments: str
     organizer: PERSONS = ""
+
+
+@dataclasses.dataclass
+class Email:
+    gmail_id: str
+    date: datetime.datetime
+    sender: str
+    recipient: str
+    content: str
