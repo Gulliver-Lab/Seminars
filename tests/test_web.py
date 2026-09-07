@@ -54,12 +54,55 @@ def test_homepage_displays_next_confirmed_talk(tmp_path):
     response = client.get("/")
 
     assert response.status_code == 200
-    assert "Next talk:" in response.text
+    assert "Next talk:" not in response.text
     assert "2099-01-15" in response.text
     assert "Alice Example" in response.text
+    assert "Example University" in response.text
     assert "Future confirmed talk" in response.text
     assert "Future abstract" in response.text
     assert "https://visio.numerique.gouv.fr/vuf-njri-opc" in response.text
+
+
+def test_homepage_displays_two_following_confirmed_talks(tmp_path):
+    db_path = tmp_path / "seminars.db"
+    connection = open_or_create_db(db_path)
+    insert_test_speaker(connection, "Alice Example")
+    insert_test_speaker(connection, "Bob Example")
+    insert_test_speaker(connection, "Carol Example")
+    insert_test_speaker(connection, "Diane Example")
+    for day, speaker in [
+        (15, "Alice Example"),
+        (22, "Bob Example"),
+        (29, "Carol Example"),
+        (5, "Diane Example"),
+    ]:
+        insert_talk(
+            connection,
+            Talk(
+                date=datetime.datetime(2099, 1 if day != 5 else 2, day, 14, 30),
+                speaker=speaker,
+                title=f"{speaker} title",
+                abstract="",
+                status="completed",
+                comments="",
+            ),
+        )
+    connection.close()
+
+    client = TestClient(build_app(db_path))
+
+    response = client.get("/")
+
+    assert response.status_code == 200
+    assert "2099-01-15" in response.text
+    assert "Alice Example" in response.text
+    assert "2099-01-22" in response.text
+    assert "Bob Example" in response.text
+    assert "2099-01-29" in response.text
+    assert "Carol Example" in response.text
+    assert "Diane Example" not in response.text
+    assert "Bob Example title" not in response.text
+    assert "Carol Example title" not in response.text
 
 
 def test_homepage_ignores_planned_talks(tmp_path):
@@ -168,7 +211,9 @@ def test_next_upcoming_confirmed_talk_keeps_nearest_confirmed(tmp_path):
         ),
     )
 
-    next_talk = next_upcoming_confirmed_talk(read_talks(connection))
+    next_talk = next_upcoming_confirmed_talk(
+        read_talks(connection), read_speakers(connection)
+    )
     connection.close()
 
     assert next_talk is not None
@@ -193,7 +238,9 @@ def test_next_upcoming_confirmed_talk_accepts_legacy_confirmed_status(tmp_path):
         ),
     )
 
-    next_talk = next_upcoming_confirmed_talk(read_talks(connection))
+    next_talk = next_upcoming_confirmed_talk(
+        read_talks(connection), read_speakers(connection)
+    )
     connection.close()
 
     assert next_talk is not None

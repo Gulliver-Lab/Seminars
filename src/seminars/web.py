@@ -80,7 +80,7 @@ def build_app(
         connection = open_or_create_db(database_path)
         try:
             talks = read_talks(connection)
-            next_talk = next_upcoming_confirmed_talk(talks)
+            upcoming_talks = upcoming_confirmed_talks(talks, read_speakers(connection))
         finally:
             connection.close()
 
@@ -89,7 +89,8 @@ def build_app(
             "home.html",
             {
                 "conference_room_url": CONFERENCE_ROOM_URL,
-                "next_talk": next_talk,
+                "next_talk": upcoming_talks[0] if upcoming_talks else None,
+                "following_talks": upcoming_talks[1:3],
                 "url_path_for": url_path_for,
             },
         )
@@ -276,20 +277,37 @@ def build_app(
     return app
 
 
-def next_upcoming_confirmed_talk(talks: pd.DataFrame) -> dict[str, Any] | None:
+def upcoming_confirmed_talks(
+    talks: pd.DataFrame, speakers: pd.DataFrame, limit: int = 3
+) -> list[dict[str, Any]]:
     if talks.empty:
-        return None
+        return []
 
     upcoming = talks[
         talks["status"].isin(["completed", "confirmed"])
         & (talks["date"].dt.date >= datetime.date.today())
     ].sort_values("date", kind="mergesort")
     if upcoming.empty:
-        return None
+        return []
 
-    talk = cast(dict[str, Any], upcoming.iloc[0].to_dict())
-    talk["date"] = talk["date"].strftime("%Y-%m-%d")
-    return talk
+    speaker_details = speakers[["name", "affiliation"]]
+    upcoming = upcoming.merge(
+        speaker_details,
+        how="left",
+        left_on="speaker",
+        right_on="name",
+    ).head(limit)
+
+    upcoming["date"] = upcoming["date"].dt.strftime("%Y-%m-%d")
+    upcoming["affiliation"] = upcoming["affiliation"].fillna("")
+    return cast(list[dict[str, Any]], upcoming.to_dict("records"))
+
+
+def next_upcoming_confirmed_talk(
+    talks: pd.DataFrame, speakers: pd.DataFrame
+) -> dict[str, Any] | None:
+    upcoming_talks = upcoming_confirmed_talks(talks, speakers, limit=1)
+    return upcoming_talks[0] if upcoming_talks else None
 
 
 def speakers_with_last_talk(
