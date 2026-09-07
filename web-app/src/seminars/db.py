@@ -307,7 +307,7 @@ def _create_schema(connection: sqlite3.Connection) -> None:
             date TEXT,
             sender TEXT,
             recipient TEXT,
-            content TEXT,
+            content TEXT
         )
         """
     )

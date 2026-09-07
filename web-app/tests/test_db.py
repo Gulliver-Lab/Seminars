@@ -314,7 +314,7 @@ def test_open_or_create_db_creates_schema_for_missing_file(tmp_path):
     tables = connection.execute(
         "SELECT name FROM sqlite_master WHERE type = 'table'"
     ).fetchall()
-    assert tables == [("speakers",), ("talks",)]
+    assert tables == [("speakers",), ("talks",), ("emails",)]
 
 
 def test_inserts_talk():
