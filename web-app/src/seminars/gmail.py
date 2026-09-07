@@ -23,13 +23,11 @@ DEFAULT_TOKEN_PATH = Path("token.json")
 def fetch_emails(
     credentials_path: str | Path = DEFAULT_CREDENTIALS_PATH,
     token_path: str | Path = DEFAULT_TOKEN_PATH,
-    query: str = "",
-    max_results: int = 100,
 ) -> list[Email]:
     credentials = _load_credentials(Path(credentials_path), Path(token_path))
     service = build("gmail", "v1", credentials=credentials)
 
-    messages = _list_message_ids(service, query=query, max_results=max_results)
+    message_ids = _list_message_ids(service)
     return [
         parse_gmail_message(
             service.users()
@@ -37,7 +35,7 @@ def fetch_emails(
             .get(userId="me", id=message_id, format="raw")
             .execute()
         )
-        for message_id in messages
+        for message_id in message_ids
     ]
 
 
@@ -66,7 +64,7 @@ def _load_credentials(
     return credentials
 
 
-def _list_message_ids(service: Any, query: str, max_results: int) -> list[str]:
+def _list_message_ids(service: Any, max_results: int = 100) -> list[str]:
     message_ids: list[str] = []
     page_token = None
 
@@ -76,7 +74,7 @@ def _list_message_ids(service: Any, query: str, max_results: int) -> list[str]:
             .messages()
             .list(
                 userId="me",
-                q=query,
+                q="newer_than:10d",
                 maxResults=min(500, max_results - len(message_ids)),
                 pageToken=page_token,
             )
