@@ -13,8 +13,8 @@ dependencies = [
 ]
 
 [project.scripts]
-seminars = "seminars.cli:main"
 seminars-web = "seminars.web:main"
+seminars-email-parser = "seminars.emails:main"
 
 [dependency-groups]
 dev = [
