@@ -27,6 +27,14 @@ EXPECTED_TALKS_SCHEMA = [
     ("organizer", "TEXT"),
 ]
 
+EXPECTED_EMAILS_SCHEMA = [
+    ("gmail_id", "TEXT"),
+    ("date", "TEXT"),
+    ("sender", "TEXT"),
+    ("recipient", "TEXT"),
+    ("content", "TEXT"),
+]
+
 
 def serialize_contact_persons(contact_persons: list[PERSONS]) -> str:
     if not isinstance(contact_persons, list) or not all(
@@ -289,6 +297,17 @@ def _create_schema(connection: sqlite3.Connection) -> None:
             comments TEXT,
             organizer TEXT,
             FOREIGN KEY (speaker) REFERENCES speakers(name) ON UPDATE CASCADE
+        )
+        """
+    )
+    connection.execute(
+        """
+        CREATE TABLE emails (
+            gmail_id TEXT PRIMARY KEY,
+            date TEXT,
+            sender TEXT,
+            recipient TEXT,
+            content TEXT,
         )
         """
     )
