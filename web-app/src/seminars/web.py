@@ -1,6 +1,7 @@
 import argparse
 import datetime
 import sqlite3
+from collections.abc import Callable
 from pathlib import Path
 from typing import Any, Sequence, cast, get_args
 
@@ -22,6 +23,7 @@ from seminars.db import (
     delete_talk_for_week,
     insert_speaker,
     open_or_create_db,
+    read_emails,
     read_speakers,
     read_talks,
     update_speaker,
@@ -138,7 +140,10 @@ def build_app(
         try:
             talks = read_talks(connection)
             speakers = read_speakers(connection)
-            calendar_weeks = build_calendar_weeks(_talks_with_topics(talks, speakers))
+            emails = read_emails(connection)
+            calendar_weeks = build_calendar_weeks(
+                _talks_with_topics_and_last_email(talks, speakers, emails)
+            )
             speaker_options = speakers["name"].sort_values().tolist()
         except ValueError as error:
             return PlainTextResponse(str(error), status_code=400)
@@ -367,14 +372,20 @@ def speakers_with_talks(speakers: pd.DataFrame, talks: pd.DataFrame) -> pd.DataF
     return speakers
 
 
-def _talks_with_topics(talks: pd.DataFrame, speakers: pd.DataFrame) -> pd.DataFrame:
+def _talks_with_topics_and_last_email(
+    talks: pd.DataFrame,
+    speakers: pd.DataFrame,
+    emails: pd.DataFrame,
+    current_date: datetime.date | None = None,
+) -> pd.DataFrame:
     if talks.empty:
         talks = talks.copy()
         talks["topic"] = []
         talks["contact_persons"] = []
+        talks["last_email"] = []
         return talks
 
-    speaker_details = speakers[["name", "topic", "contact_persons"]]
+    speaker_details = speakers[["name", "email", "topic", "contact_persons"]]
     merged = talks.merge(
         speaker_details,
         how="left",
@@ -385,7 +396,34 @@ def _talks_with_topics(talks: pd.DataFrame, speakers: pd.DataFrame) -> pd.DataFr
     merged["contact_persons"] = merged["contact_persons"].map(
         lambda value: value if isinstance(value, list) else []
     )
-    return merged.drop(columns=["name"])
+    merged["last_email"] = merged["email"].map(
+        last_email_by_address(emails, current_date=current_date)
+    )
+    return merged.drop(columns=["name", "email"])
+
+
+def last_email_by_address(
+    emails: pd.DataFrame,
+    current_date: datetime.date | None = None,
+) -> Callable[[Any], str]:
+    current_date = current_date or datetime.date.today()
+
+    def format_last_email(address: Any) -> str:
+        if emails.empty or not isinstance(address, str) or not address:
+            return ""
+
+        address = address.lower()
+        matches = emails[
+            emails["recipient"].str.lower().str.contains(address, regex=False, na=False)
+        ]
+        if matches.empty:
+            return ""
+
+        days = (current_date - matches["date"].max().date()).days
+        unit = "day" if days == 1 else "days"
+        return f"{days} {unit} ago"
+
+    return format_last_email
 
 
 def _format_speaker(row: dict[str, Any]) -> dict[str, Any]:

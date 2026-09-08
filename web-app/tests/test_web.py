@@ -3,13 +3,14 @@ import datetime
 from fastapi.testclient import TestClient
 
 from seminars.db import (
+    insert_email,
     insert_speaker,
     insert_talk,
     open_or_create_db,
     read_speakers,
     read_talks,
 )
-from seminars.models import Speaker, Talk
+from seminars.models import Email, Speaker, Talk
 from seminars.web import (
     build_app,
     next_upcoming_confirmed_talk,
@@ -586,6 +587,79 @@ def test_calendar_page_renders_week_rows(tmp_path):
     assert "2026-06-29" in response.text
     assert "Alice Example" in response.text
     assert "Active Matter" in response.text
+
+
+def test_calendar_page_displays_days_since_last_email_to_speaker(tmp_path):
+    today = datetime.date.today()
+    monday = today - datetime.timedelta(days=today.weekday())
+    db_path = tmp_path / "seminars.db"
+    connection = open_or_create_db(db_path)
+    insert_speaker(
+        connection,
+        Speaker(
+            name="Alice Example",
+            affiliation="Example University",
+            email="alice@example.edu",
+            topic="Active Matter",
+            contact_persons=[],
+            notes="",
+            want_to_invite=False,
+        ),
+    )
+    insert_talk(
+        connection,
+        Talk(
+            date=datetime.datetime.combine(monday, datetime.time(14, 30)),
+            speaker="Alice Example",
+            title="Weekly talk",
+            abstract="",
+            status="planned",
+            comments="",
+        ),
+    )
+    insert_email(
+        connection,
+        Email(
+            gmail_id="older",
+            date=datetime.datetime.combine(
+                today - datetime.timedelta(days=45), datetime.time()
+            ),
+            sender="seminars@example.edu",
+            recipient="Alice Example <alice@example.edu>",
+            content="Older message",
+        ),
+    )
+    insert_email(
+        connection,
+        Email(
+            gmail_id="newer",
+            date=datetime.datetime.combine(
+                today - datetime.timedelta(days=32), datetime.time()
+            ),
+            sender="seminars@example.edu",
+            recipient="Alice Example <alice@example.edu>",
+            content="Newer message",
+        ),
+    )
+    insert_email(
+        connection,
+        Email(
+            gmail_id="unrelated",
+            date=datetime.datetime.combine(today, datetime.time()),
+            sender="seminars@example.edu",
+            recipient="bob@example.edu",
+            content="Unrelated message",
+        ),
+    )
+    connection.close()
+
+    client = TestClient(build_app(db_path))
+
+    response = client.get("/calendar")
+
+    assert response.status_code == 200
+    assert '<th scope="col">Last email</th>' in response.text
+    assert "32 days ago" in response.text
 
 
 def test_calendar_page_links_under_root_path(tmp_path):
