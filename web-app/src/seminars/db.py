@@ -5,7 +5,7 @@ from pathlib import Path
 
 import pandas as pd
 
-from seminars.models import PERSONS, Speaker, Talk
+from seminars.models import PERSONS, Email, Speaker, Talk
 
 EXPECTED_SPEAKERS_SCHEMA = [
     ("name", "TEXT"),
@@ -258,6 +258,30 @@ def read_talks(connection: sqlite3.Connection) -> pd.DataFrame:
     )
     dataframe["date"] = pd.to_datetime(dataframe["date"])
     return dataframe
+
+
+def insert_email(connection: sqlite3.Connection, email: Email) -> None:
+    connection.execute(
+        """
+        INSERT INTO emails (
+            gmail_id,
+            date,
+            sender,
+            recipient,
+            content
+        )
+        VALUES (?, ?, ?, ?, ?)
+        ON CONFLICT(gmail_id) DO NOTHING
+        """,
+        (
+            email.gmail_id,
+            email.date.isoformat(),
+            email.sender,
+            email.recipient,
+            email.content,
+        ),
+    )
+    connection.commit()
 
 
 def open_or_create_db(filepath: str | Path) -> sqlite3.Connection:

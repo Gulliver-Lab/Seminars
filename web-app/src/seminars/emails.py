@@ -1,7 +1,7 @@
 import argparse
 from typing import Sequence
 
-from seminars.gmail import fetch_emails
+from seminars import fetch_emails, insert_email, open_or_create_db
 
 
 def build_parser() -> argparse.ArgumentParser:
@@ -16,6 +16,10 @@ def build_parser() -> argparse.ArgumentParser:
 
 def main(argv: Sequence[str] | None = None) -> None:
     args = build_parser().parse_args(argv)
+
+    connection = open_or_create_db(args.db_path)
+
     emails = fetch_emails(args.credentials_path, args.token_path)
     for email in emails:
+        insert_email(connection, email)
         print(email)
