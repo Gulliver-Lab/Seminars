@@ -284,6 +284,16 @@ def insert_email(connection: sqlite3.Connection, email: Email) -> None:
     connection.commit()
 
 
+def read_emails(connection: sqlite3.Connection) -> pd.DataFrame:
+    columns = [name for name, _type in EXPECTED_EMAILS_SCHEMA]
+    dataframe = pd.read_sql_query(
+        f"SELECT {', '.join(columns)} FROM emails",
+        connection,
+    )
+    dataframe["date"] = pd.to_datetime(dataframe["date"])
+    return dataframe
+
+
 def open_or_create_db(filepath: str | Path) -> sqlite3.Connection:
     path = Path(filepath)
     exists = path.exists()
