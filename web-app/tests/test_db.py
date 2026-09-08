@@ -9,6 +9,7 @@ from seminars.db import (
     delete_speaker,
     delete_talk_for_week,
     deserialize_contact_persons,
+    insert_email,
     insert_speaker,
     insert_talk,
     open_or_create_db,
@@ -18,7 +19,7 @@ from seminars.db import (
     update_speaker,
     upsert_talk_for_week,
 )
-from seminars.models import Speaker, Talk
+from seminars.models import Email, Speaker, Talk
 
 
 def test_serializes_and_deserializes_contact_persons():
@@ -314,7 +315,7 @@ def test_open_or_create_db_creates_schema_for_missing_file(tmp_path):
     tables = connection.execute(
         "SELECT name FROM sqlite_master WHERE type = 'table'"
     ).fetchall()
-    assert tables == [("speakers",), ("talks",)]
+    assert tables == [("speakers",), ("talks",), ("emails",)]
 
 
 def test_inserts_talk():
@@ -612,4 +613,36 @@ def test_reads_talks_as_dataframe():
             "comments": "Bring projector",
             "organizer": "",
         }
+    ]
+
+
+def test_insert_email_ignores_duplicate_gmail_id():
+    connection = sqlite3.connect(":memory:")
+    _create_schema(connection)
+
+    email = Email(
+        gmail_id="abc123",
+        date=datetime.datetime(2026, 9, 8, 10, 15),
+        sender="alice@example.edu",
+        recipient="seminars@example.edu",
+        content="I would like to give a seminar.",
+    )
+
+    insert_email(connection, email)
+    insert_email(connection, email)
+
+    rows = connection.execute(
+        """
+        SELECT gmail_id, date, sender, recipient, content
+        FROM emails
+        """
+    ).fetchall()
+    assert rows == [
+        (
+            "abc123",
+            "2026-09-08T10:15:00",
+            "alice@example.edu",
+            "seminars@example.edu",
+            "I would like to give a seminar.",
+        )
     ]

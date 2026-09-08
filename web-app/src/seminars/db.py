@@ -5,7 +5,7 @@ from pathlib import Path
 
 import pandas as pd
 
-from seminars.models import PERSONS, Speaker, Talk
+from seminars.models import PERSONS, Email, Speaker, Talk
 
 EXPECTED_SPEAKERS_SCHEMA = [
     ("name", "TEXT"),
@@ -25,6 +25,14 @@ EXPECTED_TALKS_SCHEMA = [
     ("status", "TEXT"),
     ("comments", "TEXT"),
     ("organizer", "TEXT"),
+]
+
+EXPECTED_EMAILS_SCHEMA = [
+    ("gmail_id", "TEXT"),
+    ("date", "TEXT"),
+    ("sender", "TEXT"),
+    ("recipient", "TEXT"),
+    ("content", "TEXT"),
 ]
 
 
@@ -252,6 +260,40 @@ def read_talks(connection: sqlite3.Connection) -> pd.DataFrame:
     return dataframe
 
 
+def insert_email(connection: sqlite3.Connection, email: Email) -> None:
+    connection.execute(
+        """
+        INSERT INTO emails (
+            gmail_id,
+            date,
+            sender,
+            recipient,
+            content
+        )
+        VALUES (?, ?, ?, ?, ?)
+        ON CONFLICT(gmail_id) DO NOTHING
+        """,
+        (
+            email.gmail_id,
+            email.date.isoformat(),
+            email.sender,
+            email.recipient,
+            email.content,
+        ),
+    )
+    connection.commit()
+
+
+def read_emails(connection: sqlite3.Connection) -> pd.DataFrame:
+    columns = [name for name, _type in EXPECTED_EMAILS_SCHEMA]
+    dataframe = pd.read_sql_query(
+        f"SELECT {', '.join(columns)} FROM emails",
+        connection,
+    )
+    dataframe["date"] = pd.to_datetime(dataframe["date"])
+    return dataframe
+
+
 def open_or_create_db(filepath: str | Path) -> sqlite3.Connection:
     path = Path(filepath)
     exists = path.exists()
@@ -289,6 +331,17 @@ def _create_schema(connection: sqlite3.Connection) -> None:
             comments TEXT,
             organizer TEXT,
             FOREIGN KEY (speaker) REFERENCES speakers(name) ON UPDATE CASCADE
+        )
+        """
+    )
+    connection.execute(
+        """
+        CREATE TABLE emails (
+            gmail_id TEXT PRIMARY KEY,
+            date TEXT,
+            sender TEXT,
+            recipient TEXT,
+            content TEXT
         )
         """
     )
