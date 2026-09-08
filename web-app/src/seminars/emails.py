@@ -22,4 +22,3 @@ def main(argv: Sequence[str] | None = None) -> None:
     emails = fetch_emails(args.credentials_path, args.token_path)
     for email in emails:
         insert_email(connection, email)
-        print(email)
