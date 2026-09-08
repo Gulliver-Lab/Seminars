@@ -21,6 +21,7 @@ class CalendarTalk:
     topic: str
     topic_class: str
     contact_persons: str
+    last_email: str
     status: str
     title: str
     abstract: str
@@ -90,6 +91,7 @@ def _calendar_talk(row: Mapping[Any, Any]) -> CalendarTalk:
         topic=str(topic),
         topic_class=TOPIC_COLORS[str(topic)],
         contact_persons=_format_contact_persons(row.get("contact_persons")),
+        last_email=str(row.get("last_email", "")),
         status=str(row.get("status", "")),
         title=str(row.get("title", "")),
         abstract=str(row.get("abstract", "")),
