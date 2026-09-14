@@ -6,6 +6,7 @@ from typing import Any
 import pandas as pd
 
 from seminars.alerts import should_alert
+from seminars.models import TalkStatus, parse_talk_status
 
 TOPIC_COLORS = {
     "Active Matter": "topic-active-matter",
@@ -23,7 +24,7 @@ class CalendarTalk:
     topic: str
     topic_class: str
     contact_persons: str
-    status: str
+    status: TalkStatus
     status_label: str
     status_date: str
     status_age: str
@@ -85,6 +86,7 @@ def build_calendar_weeks(
 
 def _calendar_talk(row: Mapping[Any, Any], current_date: datetime.date) -> CalendarTalk:
     speaker = str(row["speaker"]).strip()
+    status = parse_talk_status(row.get("status"))
     topic = row.get("topic")
     if topic not in TOPIC_COLORS:
         topic = "Other"
@@ -94,12 +96,10 @@ def _calendar_talk(row: Mapping[Any, Any], current_date: datetime.date) -> Calen
         topic=str(topic),
         topic_class=TOPIC_COLORS[str(topic)],
         contact_persons=_format_contact_persons(row.get("contact_persons")),
-        status=str(row.get("status", "")),
-        status_label=_format_status_label(row.get("status")),
+        status=status,
+        status_label=status.value,
         status_date=_format_status_date(row.get("status_date")),
-        status_age=_format_status_age(
-            row.get("status"), row.get("status_date"), current_date
-        ),
+        status_age=_format_status_age(status, row.get("status_date"), current_date),
         title=str(row.get("title", "")),
         abstract=str(row.get("abstract", "")),
         organizer=str(row.get("organizer", "")),
@@ -122,13 +122,6 @@ def _format_contact_persons(value: Any) -> str:
     return ", ".join(str(person) for person in value if str(person))
 
 
-def _format_status_label(value: Any) -> str:
-    label = str(value or "")
-    if not label:
-        return ""
-    return label[:1].upper() + label[1:]
-
-
 def _format_status_date(value: Any) -> str:
     date_value = _parse_date(value)
     if date_value is None:
@@ -137,9 +130,9 @@ def _format_status_date(value: Any) -> str:
 
 
 def _format_status_age(
-    status: Any, value: Any, current_date: datetime.date
+    status: TalkStatus, value: Any, current_date: datetime.date
 ) -> str:
-    if str(status).casefold() == "completed":
+    if status == TalkStatus.COMPLETED:
         return ""
     status_date = _parse_date(value)
     if status_date is None:

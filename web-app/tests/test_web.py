@@ -44,7 +44,7 @@ def test_homepage_displays_next_confirmed_talk(tmp_path):
             speaker="Alice Example",
             title="Future confirmed talk",
             abstract="Future abstract",
-            status="completed",
+            status="Completed",
             comments="",
         ),
     )
@@ -84,7 +84,7 @@ def test_homepage_displays_two_following_confirmed_talks(tmp_path):
                 speaker=speaker,
                 title=f"{speaker} title",
                 abstract="",
-                status="completed",
+                status="Completed",
                 comments="",
             ),
         )
@@ -117,7 +117,7 @@ def test_homepage_ignores_planned_talks(tmp_path):
             speaker="Alice Example",
             title="Planned talk",
             abstract="",
-            status="planned",
+            status="Invited",
             comments="",
         ),
     )
@@ -196,7 +196,7 @@ def test_next_upcoming_confirmed_talk_keeps_nearest_confirmed(tmp_path):
             speaker="Later Example",
             title="Later talk",
             abstract="",
-            status="completed",
+            status="Completed",
             comments="",
         ),
     )
@@ -207,7 +207,7 @@ def test_next_upcoming_confirmed_talk_keeps_nearest_confirmed(tmp_path):
             speaker="Nearest Example",
             title="Nearest talk",
             abstract="",
-            status="completed",
+            status="Completed",
             comments="",
         ),
     )
@@ -223,7 +223,7 @@ def test_next_upcoming_confirmed_talk_keeps_nearest_confirmed(tmp_path):
     assert next_talk["title"] == "Nearest talk"
 
 
-def test_next_upcoming_confirmed_talk_accepts_legacy_confirmed_status(tmp_path):
+def test_next_upcoming_confirmed_talk_accepts_completed_status(tmp_path):
     db_path = tmp_path / "seminars.db"
     connection = open_or_create_db(db_path)
     insert_test_speaker(connection, "Alice Example")
@@ -232,9 +232,9 @@ def test_next_upcoming_confirmed_talk_accepts_legacy_confirmed_status(tmp_path):
         Talk(
             date=datetime.datetime(2099, 1, 15, 14, 30),
             speaker="Alice Example",
-            title="Legacy confirmed talk",
+            title="Completed talk",
             abstract="",
-            status="confirmed",
+            status="Completed",
             comments="",
         ),
     )
@@ -245,7 +245,7 @@ def test_next_upcoming_confirmed_talk_accepts_legacy_confirmed_status(tmp_path):
     connection.close()
 
     assert next_talk is not None
-    assert next_talk["title"] == "Legacy confirmed talk"
+    assert next_talk["title"] == "Completed talk"
 
 
 def test_speakers_page_displays_speakers_table(tmp_path):
@@ -312,7 +312,7 @@ def test_speakers_with_last_talk_keeps_latest_talk_date_and_blank_missing(tmp_pa
             speaker="Alice Example",
             title="Earlier talk",
             abstract="",
-            status="done",
+            status="Completed",
             comments="",
         ),
     )
@@ -323,7 +323,7 @@ def test_speakers_with_last_talk_keeps_latest_talk_date_and_blank_missing(tmp_pa
             speaker="Alice Example",
             title="Latest talk",
             abstract="",
-            status="done",
+            status="Completed",
             comments="",
         ),
     )
@@ -360,7 +360,7 @@ def test_speakers_page_displays_last_talk_date(tmp_path):
             speaker="Alice Example",
             title="Latest talk",
             abstract="",
-            status="done",
+            status="Completed",
             comments="",
         ),
     )
@@ -565,7 +565,7 @@ def test_calendar_page_renders_week_rows(tmp_path):
             speaker="Alice Example",
             title="Weekly talk",
             abstract="",
-            status="completed",
+            status="Completed",
             comments="",
         ),
     )
@@ -613,7 +613,7 @@ def test_calendar_page_displays_days_since_status_date(tmp_path):
             speaker="Alice Example",
             title="Weekly talk",
             abstract="",
-            status="invited",
+            status="Invited",
             status_date=datetime.datetime.combine(
                 today - datetime.timedelta(days=32), datetime.time()
             ),
@@ -756,7 +756,7 @@ def test_calendar_page_displays_comments_for_blank_speaker_talk(tmp_path):
             speaker="",
             title="Blocked week",
             abstract="",
-            status="completed",
+            status="Completed",
             comments="Reserved for internal meeting",
         ),
     )
@@ -873,7 +873,7 @@ def test_calendar_page_shows_status_for_talks(tmp_path):
             speaker="Missing Title",
             title="",
             abstract="",
-            status="completed",
+            status="Completed",
             comments="",
         ),
     )
@@ -884,7 +884,7 @@ def test_calendar_page_shows_status_for_talks(tmp_path):
             speaker="Ready Title",
             title="A completed talk",
             abstract="",
-            status="completed",
+            status="Completed",
             comments="",
         ),
     )
@@ -922,7 +922,7 @@ def test_calendar_page_displays_contact_persons_for_planned_speaker(tmp_path):
             speaker="Planned Speaker",
             title="Future talk",
             abstract="",
-            status="planned",
+            status="Invited",
             status_date=datetime.datetime(2026, 7, 1, 9, 0),
             comments="",
             organizer="David",
@@ -961,7 +961,7 @@ def test_calendar_page_includes_week_edit_dialog(tmp_path):
             speaker="Alice Example",
             title="Future talk",
             abstract="",
-            status="planned",
+            status="Invited",
             status_date=datetime.datetime(2026, 7, 1, 9, 0),
             comments="",
             organizer="David",
@@ -977,7 +977,7 @@ def test_calendar_page_includes_week_edit_dialog(tmp_path):
     assert 'id="week-dialog"' in response.text
     assert 'data-week-monday="2026-07-13"' in response.text
     assert 'data-week-speaker="Alice Example"' in response.text
-    assert 'data-week-status="planned"' in response.text
+    assert 'data-week-status="Invited"' in response.text
     assert 'data-week-status-date="2026-07-01"' in response.text
     assert 'data-week-title="Future talk"' in response.text
     assert 'data-week-abstract=""' in response.text
@@ -1033,7 +1033,7 @@ def test_post_calendar_week_inserts_talk(tmp_path):
         "/calendar/weeks/2026-07-13",
         data={
             "speaker": "Alice Example",
-            "status": "planned",
+            "status": "Invited",
             "status_date": "2026-07-01",
             "title": "Inserted title",
             "abstract": "Inserted abstract",
@@ -1049,7 +1049,7 @@ def test_post_calendar_week_inserts_talk(tmp_path):
     assert len(talks) == 1
     assert talks[0]["date"] == datetime.datetime(2026, 7, 13, 14, 30)
     assert talks[0]["speaker"] == "Alice Example"
-    assert talks[0]["status"] == "planned"
+    assert talks[0]["status"] == "Invited"
     assert talks[0]["status_date"] == datetime.datetime(2026, 7, 1)
     assert talks[0]["title"] == "Inserted title"
     assert talks[0]["abstract"] == "Inserted abstract"
@@ -1080,7 +1080,7 @@ def test_post_calendar_week_redirects_under_root_path(tmp_path):
         "/calendar/weeks/2026-07-13",
         data={
             "speaker": "Alice Example",
-            "status": "planned",
+            "status": "Invited",
             "status_date": "2026-07-01",
             "title": "",
             "abstract": "",
@@ -1127,7 +1127,7 @@ def test_post_calendar_week_updates_existing_talk(tmp_path):
             speaker="Alice Example",
             title="Existing title",
             abstract="Existing abstract",
-            status="planned",
+            status="Invited",
             comments="Existing comments",
         ),
     )
@@ -1139,7 +1139,7 @@ def test_post_calendar_week_updates_existing_talk(tmp_path):
         "/calendar/weeks/2026-07-13",
         data={
             "speaker": "Bob Example",
-            "status": "completed",
+            "status": "Completed",
             "status_date": "2026-07-02",
             "title": "Updated title",
             "abstract": "Updated abstract",
@@ -1185,7 +1185,7 @@ def test_post_calendar_week_delete_removes_existing_talk(tmp_path):
             speaker="Alice Example",
             title="Existing title",
             abstract="",
-            status="planned",
+            status="Invited",
             comments="",
         ),
     )
@@ -1239,7 +1239,7 @@ def test_calendar_page_displays_one_talk_when_multiple_talks_share_week(tmp_path
             speaker="Alice Example",
             title="First talk",
             abstract="",
-            status="completed",
+            status="Completed",
             comments="",
         ),
     )
@@ -1250,7 +1250,7 @@ def test_calendar_page_displays_one_talk_when_multiple_talks_share_week(tmp_path
             speaker="Bob Example",
             title="Second talk",
             abstract="",
-            status="completed",
+            status="Completed",
             comments="",
         ),
     )
@@ -1434,7 +1434,7 @@ def test_speakers_page_displays_edit_speaker_data(tmp_path):
             speaker="Alice Example",
             title="Earlier talk",
             abstract="",
-            status="done",
+            status="Completed",
             comments="",
         ),
     )
@@ -1445,7 +1445,7 @@ def test_speakers_page_displays_edit_speaker_data(tmp_path):
             speaker="Alice Example",
             title="Latest talk",
             abstract="",
-            status="done",
+            status="Completed",
             comments="",
         ),
     )
@@ -1488,7 +1488,7 @@ def test_post_speaker_edit_updates_speaker_and_cascades_talks(tmp_path):
             speaker="Alice Example",
             title="Active Matter",
             abstract="An abstract",
-            status="confirmed",
+            status="Completed",
             comments="Bring projector",
         ),
     )
@@ -1578,7 +1578,7 @@ def test_post_speaker_delete_rejects_speaker_with_talks(tmp_path):
             speaker="Alice Example",
             title="Active Matter",
             abstract="",
-            status="done",
+            status="Completed",
             comments="",
         ),
     )

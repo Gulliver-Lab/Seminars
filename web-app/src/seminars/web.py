@@ -29,7 +29,7 @@ from seminars.db import (
     update_speaker,
     upsert_talk_for_week,
 )
-from seminars.models import PERSONS, ResearchTopic, Speaker, TalkStatus
+from seminars.models import PERSONS, ResearchTopic, Speaker, TalkStatus, parse_talk_status
 
 TEMPLATES = Jinja2Templates(directory=Path(__file__).parent / "templates")
 
@@ -294,7 +294,7 @@ def upcoming_confirmed_talks(
         return []
 
     upcoming = talks[
-        talks["status"].isin(["completed", "confirmed"])
+        talks["status"].map(parse_talk_status).eq(TalkStatus.COMPLETED)
         & (talks["date"].dt.date >= datetime.date.today())
     ].sort_values("date", kind="mergesort")
     if upcoming.empty:
@@ -479,13 +479,7 @@ def _parse_contact_persons(value: Sequence[str]) -> list[PERSONS]:
 
 
 def _parse_calendar_talk_status(value: str) -> str:
-    normalized = value.strip().casefold()
-    status_by_normalized = {str(status).casefold(): str(status) for status in TALK_STATUSES}
-    if normalized in status_by_normalized:
-        return status_by_normalized[normalized]
-    if normalized in {"planned", "confirmed", "complete", "done"}:
-        return normalized
-    raise ValueError("invalid talk status")
+    return parse_talk_status(value).value
 
 
 def _parse_organizer(value: str) -> PERSONS:

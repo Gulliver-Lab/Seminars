@@ -12,14 +12,14 @@ def test_build_calendar_weeks_lists_newest_monday_first():
                 "date": datetime.datetime(2026, 6, 29, 14, 30),
                 "speaker": "Past Speaker",
                 "topic": "Theory",
-                "status": "completed",
+                "status": "Completed",
                 "contact_persons": [],
             },
             {
                 "date": datetime.datetime(2026, 8, 3, 14, 30),
                 "speaker": "Future Speaker",
                 "topic": "Active Matter",
-                "status": "planned",
+                "status": "Invited",
                 "contact_persons": [],
             },
         ]
@@ -58,7 +58,7 @@ def test_build_calendar_weeks_marks_blank_speaker_talk_as_unavailable():
                 "date": datetime.datetime(2026, 7, 6, 14, 30),
                 "speaker": "",
                 "topic": "Other",
-                "status": "planned",
+                "status": "Invited",
                 "comments": "Reserved for internal meeting",
                 "contact_persons": [],
             }
@@ -120,7 +120,7 @@ def test_build_calendar_weeks_formats_status_age():
                 "date": datetime.datetime(2026, 7, 6, 14, 30),
                 "speaker": "Recent Status",
                 "topic": "Other",
-                "status": "accepted",
+                "status": "Accepted",
                 "status_date": datetime.datetime(2026, 7, 6, 9, 0),
                 "title": "",
                 "comments": "",
@@ -130,7 +130,7 @@ def test_build_calendar_weeks_formats_status_age():
                 "date": datetime.datetime(2026, 7, 13, 14, 30),
                 "speaker": "Older Status",
                 "topic": "Other",
-                "status": "title requested",
+                "status": "Title Requested",
                 "status_date": datetime.datetime(2026, 7, 1, 9, 0),
                 "title": "A completed talk",
                 "comments": "",
@@ -146,7 +146,7 @@ def test_build_calendar_weeks_formats_status_age():
     assert weeks_by_monday["2026-07-06"].talk.status_label == "Accepted"
     assert weeks_by_monday["2026-07-06"].talk.status_age == "1 day ago"
     assert weeks_by_monday["2026-07-13"].talk is not None
-    assert weeks_by_monday["2026-07-13"].talk.status_label == "Title requested"
+    assert weeks_by_monday["2026-07-13"].talk.status_label == "Title Requested"
     assert weeks_by_monday["2026-07-13"].talk.status_age == "6 days ago"
 
 
@@ -157,7 +157,7 @@ def test_build_calendar_weeks_hides_status_age_for_completed_talks():
                 "date": datetime.datetime(2026, 7, 6, 14, 30),
                 "speaker": "Completed Status",
                 "topic": "Other",
-                "status": "completed",
+                "status": "Completed",
                 "status_date": datetime.datetime(2026, 7, 1, 9, 0),
                 "comments": "",
                 "contact_persons": [],
@@ -180,7 +180,7 @@ def test_build_calendar_weeks_formats_contact_persons_for_planned_speaker():
                 "date": datetime.datetime(2026, 7, 13, 14, 30),
                 "speaker": "Planned Speaker",
                 "topic": "Other",
-                "status": "planned",
+                "status": "Invited",
                 "title": "",
                 "comments": "",
                 "contact_persons": ["David", "Josh"],

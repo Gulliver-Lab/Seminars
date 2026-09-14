@@ -4,12 +4,14 @@ from typing import Any
 
 import pandas as pd
 
+from seminars.models import TalkStatus, parse_talk_status
+
 STATUS_ORDER = {
-    "invited": 1,
-    "accepted": 2,
-    "title requested": 3,
-    "announced": 4,
-    "completed": 5,
+    TalkStatus.INVITED: 1,
+    TalkStatus.ACCEPTED: 2,
+    TalkStatus.TITLE_REQUESTED: 3,
+    TalkStatus.ANNOUNCED: 4,
+    TalkStatus.COMPLETED: 5,
 }
 
 
@@ -25,18 +27,18 @@ def should_alert(
     if talk is None or not _get_value(talk, "speaker"):
         return 0 < days_until_talk < 42
 
-    status = str(_get_value(talk, "status")).casefold()
-    status_rank = STATUS_ORDER.get(status, 0)
+    status = parse_talk_status(_get_value(talk, "status"))
+    status_rank = STATUS_ORDER[status]
 
-    if days_until_talk <= 7 and status_rank < STATUS_ORDER["announced"]:
+    if days_until_talk <= 7 and status_rank < STATUS_ORDER[TalkStatus.ANNOUNCED]:
         return True
-    if days_until_talk <= 14 and status_rank < STATUS_ORDER["title requested"]:
+    if days_until_talk <= 14 and status_rank < STATUS_ORDER[TalkStatus.TITLE_REQUESTED]:
         return True
-    if days_until_talk < 42 and status_rank < STATUS_ORDER["invited"]:
+    if days_until_talk < 42 and status_rank < STATUS_ORDER[TalkStatus.INVITED]:
         return True
 
     status_date = _parse_date(_get_value(talk, "status_date"))
-    if status in {"invited", "title requested"} and status_date is not None:
+    if status in {TalkStatus.INVITED, TalkStatus.TITLE_REQUESTED} and status_date is not None:
         return (current_date - status_date).days > 6
 
     return False
