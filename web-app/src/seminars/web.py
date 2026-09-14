@@ -44,6 +44,7 @@ COLUMNS = [
 SORTABLE_COLUMNS = {key for key, _label in COLUMNS}
 RESEARCH_TOPICS = list(get_args(ResearchTopic))
 TALK_STATUSES = list(TalkStatus)
+TALK_STATUS_ORDER = {status: index for index, status in enumerate(TALK_STATUSES)}
 CONTACT_PERSON_OPTIONS = [person for person in get_args(PERSONS) if person]
 CONFERENCE_ROOM_URL = "https://visio.numerique.gouv.fr/vuf-njri-opc"
 WORDPRESS_ORIGIN = "https://blog.espci.fr"
@@ -294,7 +295,10 @@ def upcoming_confirmed_talks(
         return []
 
     upcoming = talks[
-        talks["status"].map(parse_talk_status).eq(TalkStatus.COMPLETED)
+        talks["status"]
+        .map(parse_talk_status)
+        .map(TALK_STATUS_ORDER.__getitem__)
+        .ge(TALK_STATUS_ORDER[TalkStatus.ACCEPTED])
         & (talks["date"].dt.date >= datetime.date.today())
     ].sort_values("date", kind="mergesort")
     if upcoming.empty:
