@@ -23,6 +23,7 @@ EXPECTED_TALKS_SCHEMA = [
     ("title", "TEXT"),
     ("abstract", "TEXT"),
     ("status", "TEXT"),
+    ("status_date", "TEXT"),
     ("comments", "TEXT"),
     ("organizer", "TEXT"),
 ]
@@ -153,10 +154,11 @@ def insert_talk(connection: sqlite3.Connection, talk: Talk) -> None:
             title,
             abstract,
             status,
+            status_date,
             comments,
             organizer
         )
-        VALUES (?, ?, ?, ?, ?, ?, ?)
+        VALUES (?, ?, ?, ?, ?, ?, ?, ?)
         """,
         (
             talk.date.isoformat(),
@@ -164,6 +166,7 @@ def insert_talk(connection: sqlite3.Connection, talk: Talk) -> None:
             talk.title,
             talk.abstract,
             talk.status,
+            talk.status_date.isoformat(),
             talk.comments,
             talk.organizer,
         ),
@@ -176,6 +179,7 @@ def upsert_talk_for_week(
     monday: datetime.date,
     speaker: str,
     status: str,
+    status_date: datetime.date,
     title: str = "",
     abstract: str = "",
     organizer: str = "",
@@ -202,10 +206,11 @@ def upsert_talk_for_week(
                 title,
                 abstract,
                 status,
+                status_date,
                 comments,
                 organizer
             )
-            VALUES (?, ?, ?, ?, ?, ?, ?)
+            VALUES (?, ?, ?, ?, ?, ?, ?, ?)
             """,
             (
                 datetime.datetime.combine(monday, datetime.time(14, 30)).isoformat(),
@@ -213,6 +218,7 @@ def upsert_talk_for_week(
                 title,
                 abstract,
                 status,
+                status_date.isoformat(),
                 "",
                 organizer,
             ),
@@ -221,10 +227,18 @@ def upsert_talk_for_week(
         connection.execute(
             """
             UPDATE talks
-            SET speaker = ?, title = ?, abstract = ?, status = ?, organizer = ?
+            SET speaker = ?, title = ?, abstract = ?, status = ?, status_date = ?, organizer = ?
             WHERE rowid = ?
-            """,
-            (speaker, title, abstract, status, organizer, existing[0]),
+            """,  # noqa: E501
+            (
+                speaker,
+                title,
+                abstract,
+                status,
+                status_date.isoformat(),
+                organizer,
+                existing[0],
+            ),
         )
 
     connection.commit()
@@ -257,6 +271,7 @@ def read_talks(connection: sqlite3.Connection) -> pd.DataFrame:
         connection,
     )
     dataframe["date"] = pd.to_datetime(dataframe["date"])
+    dataframe["status_date"] = pd.to_datetime(dataframe["status_date"])
     return dataframe
 
 
@@ -328,6 +343,7 @@ def _create_schema(connection: sqlite3.Connection) -> None:
             title TEXT,
             abstract TEXT,
             status TEXT,
+            status_date TEXT,
             comments TEXT,
             organizer TEXT,
             FOREIGN KEY (speaker) REFERENCES speakers(name) ON UPDATE CASCADE
