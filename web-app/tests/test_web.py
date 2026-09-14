@@ -33,7 +33,7 @@ def insert_test_speaker(connection, name: str) -> None:
     )
 
 
-def test_homepage_displays_next_confirmed_talk(tmp_path):
+def test_homepage_displays_next_accepted_or_later_talk(tmp_path):
     db_path = tmp_path / "seminars.db"
     connection = open_or_create_db(db_path)
     insert_test_speaker(connection, "Alice Example")
@@ -42,9 +42,9 @@ def test_homepage_displays_next_confirmed_talk(tmp_path):
         Talk(
             date=datetime.datetime(2099, 1, 15, 14, 30),
             speaker="Alice Example",
-            title="Future confirmed talk",
+            title="Future accepted talk",
             abstract="Future abstract",
-            status="Completed",
+            status="Accepted",
             comments="",
         ),
     )
@@ -59,7 +59,7 @@ def test_homepage_displays_next_confirmed_talk(tmp_path):
     assert "2099-01-15" in response.text
     assert "Alice Example" in response.text
     assert "Example University" in response.text
-    assert "Future confirmed talk" in response.text
+    assert "Future accepted talk" in response.text
     assert "Future abstract" in response.text
     assert "https://visio.numerique.gouv.fr/vuf-njri-opc" in response.text
 
@@ -106,7 +106,7 @@ def test_homepage_displays_two_following_confirmed_talks(tmp_path):
     assert "Carol Example title" not in response.text
 
 
-def test_homepage_ignores_planned_talks(tmp_path):
+def test_homepage_ignores_invited_talks(tmp_path):
     db_path = tmp_path / "seminars.db"
     connection = open_or_create_db(db_path)
     insert_test_speaker(connection, "Alice Example")
@@ -115,7 +115,7 @@ def test_homepage_ignores_planned_talks(tmp_path):
         Talk(
             date=datetime.datetime(2099, 1, 15, 14, 30),
             speaker="Alice Example",
-            title="Planned talk",
+            title="Invited talk",
             abstract="",
             status="Invited",
             comments="",
@@ -129,7 +129,7 @@ def test_homepage_ignores_planned_talks(tmp_path):
 
     assert response.status_code == 200
     assert "No upcoming confirmed talk." in response.text
-    assert "Planned talk" not in response.text
+    assert "Invited talk" not in response.text
 
 
 def test_homepage_links_under_root_path(tmp_path):
@@ -223,7 +223,7 @@ def test_next_upcoming_confirmed_talk_keeps_nearest_confirmed(tmp_path):
     assert next_talk["title"] == "Nearest talk"
 
 
-def test_next_upcoming_confirmed_talk_accepts_completed_status(tmp_path):
+def test_next_upcoming_confirmed_talk_accepts_accepted_status(tmp_path):
     db_path = tmp_path / "seminars.db"
     connection = open_or_create_db(db_path)
     insert_test_speaker(connection, "Alice Example")
@@ -232,9 +232,9 @@ def test_next_upcoming_confirmed_talk_accepts_completed_status(tmp_path):
         Talk(
             date=datetime.datetime(2099, 1, 15, 14, 30),
             speaker="Alice Example",
-            title="Completed talk",
+            title="Accepted talk",
             abstract="",
-            status="Completed",
+            status="Accepted",
             comments="",
         ),
     )
@@ -245,7 +245,7 @@ def test_next_upcoming_confirmed_talk_accepts_completed_status(tmp_path):
     connection.close()
 
     assert next_talk is not None
-    assert next_talk["title"] == "Completed talk"
+    assert next_talk["title"] == "Accepted talk"
 
 
 def test_speakers_page_displays_speakers_table(tmp_path):
