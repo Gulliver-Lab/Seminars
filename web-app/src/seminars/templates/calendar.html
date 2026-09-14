@@ -185,24 +185,6 @@
         line-height: 1.35;
       }
 
-      .title-abstract-field {
-        align-items: center;
-        color: #2f3a48;
-        display: flex;
-        font-size: 13px;
-        gap: 7px;
-        justify-content: center;
-      }
-
-      .title-abstract-cell {
-        text-align: center;
-        width: 120px;
-      }
-
-      .title-abstract-checkbox {
-        accent-color: #2f7d6d;
-      }
-
       .topic-dot {
         border-radius: 999px;
         display: inline-block;
@@ -398,13 +380,12 @@
               <th scope="col">Topic</th>
               <th scope="col">Contact person</th>
               <th scope="col">Organizer</th>
-              <th scope="col">Last email</th>
-              <th scope="col">Title/Abstract</th>
+              <th scope="col">Status</th>
             </tr>
           </thead>
           <tbody>
             {% for week in calendar_weeks %}
-              <tr class="calendar-row{% if week.color_class %} {{ week.color_class }}{% endif %}{% if week.is_current %} current-week{% endif %}" data-week-monday="{{ week.monday }}" data-week-has-talk="{% if week.talk %}true{% else %}false{% endif %}"{% if week.talk %} data-week-speaker="{{ week.talk.speaker }}" data-week-status="{{ week.talk.status }}" data-week-title="{{ week.talk.title }}" data-week-abstract="{{ week.talk.abstract }}" data-week-organizer="{{ week.talk.organizer }}"{% else %} data-week-speaker="" data-week-status="planned" data-week-title="" data-week-abstract="" data-week-organizer=""{% endif %}{% if week.is_current %} data-current-week{% endif %} role="button" tabindex="0">
+              <tr class="calendar-row{% if week.color_class %} {{ week.color_class }}{% endif %}{% if week.is_current %} current-week{% endif %}" data-week-monday="{{ week.monday }}" data-week-has-talk="{% if week.talk %}true{% else %}false{% endif %}"{% if week.talk %} data-week-speaker="{{ week.talk.speaker }}" data-week-status="{{ week.talk.status }}" data-week-status-date="{{ week.talk.status_date }}" data-week-title="{{ week.talk.title }}" data-week-abstract="{{ week.talk.abstract }}" data-week-organizer="{{ week.talk.organizer }}"{% else %} data-week-speaker="" data-week-status="Invited" data-week-status-date="" data-week-title="" data-week-abstract="" data-week-organizer=""{% endif %}{% if week.is_current %} data-current-week{% endif %} role="button" tabindex="0">
                 <td class="week-date">{{ week.monday }}</td>
                 {% if week.talk and week.talk.is_unavailable %}
                   <td><div class="talk-comments">{{ week.talk.comments }}</div></td>
@@ -412,7 +393,6 @@
                   <td></td>
                   <td></td>
                   <td></td>
-                  <td class="title-abstract-cell"></td>
                 {% elif week.talk %}
                   <td><div class="talk-speaker">{{ week.talk.speaker }}</div></td>
                   <td>
@@ -423,12 +403,10 @@
                   </td>
                   <td><div class="talk-contacts">{{ week.talk.contact_persons }}</div></td>
                   <td>{{ week.talk.organizer }}</td>
-                  <td>{{ week.talk.last_email }}</td>
-                  <td class="title-abstract-cell">
-                    {% if week.talk.status == "completed" %}
-                      <label class="title-abstract-field" aria-label="Title/Abstract">
-                        <input class="title-abstract-checkbox"{% if week.talk.has_title_abstract %} checked{% endif %} disabled type="checkbox">
-                      </label>
+                  <td>
+                    <div>{{ week.talk.status_label }}</div>
+                    {% if week.talk.status_age %}
+                      <div class="week-date">{{ week.talk.status_age }}</div>
                     {% endif %}
                   </td>
                 {% else %}
@@ -437,7 +415,6 @@
                   <td></td>
                   <td></td>
                   <td></td>
-                  <td class="title-abstract-cell"></td>
                 {% endif %}
               </tr>
             {% endfor %}
@@ -466,9 +443,15 @@
           <div class="week-form-field">
             <label for="week-status">Status</label>
             <select id="week-status" name="status" required>
-              <option value="planned">Planned</option>
-              <option value="completed">Already confirmed</option>
+              {% for status in talk_status_options %}
+                <option value="{{ status }}">{{ status }}</option>
+              {% endfor %}
             </select>
+          </div>
+
+          <div class="week-form-field">
+            <label for="week-status-date">Status date</label>
+            <input id="week-status-date" name="status_date" required type="date">
           </div>
 
           <div class="week-form-field">
@@ -510,6 +493,7 @@
       const weekSpeaker = document.querySelector("#week-speaker");
       const weekSpeakerResults = document.querySelector("#week-speaker-results");
       const weekStatus = document.querySelector("#week-status");
+      const weekStatusDate = document.querySelector("#week-status-date");
       const weekOrganizer = document.querySelector("#week-organizer");
       const weekTitle = document.querySelector("#week-title");
       const weekAbstract = document.querySelector("#week-abstract");
@@ -522,6 +506,10 @@
       ];
       const updateCalendarWeekPath = {{ url_path_for(request, 'update_calendar_week', monday='__monday__') | tojson }};
       const deleteCalendarWeekPath = {{ url_path_for(request, 'delete_calendar_week', monday='__monday__') | tojson }};
+
+      function todayDate() {
+        return new Date().toISOString().slice(0, 10);
+      }
 
       function selectSpeaker(speaker) {
         weekSpeaker.value = speaker;
@@ -570,7 +558,8 @@
         weekSpeaker.value = row.dataset.weekSpeaker || "";
         weekSpeakerFilter.value = row.dataset.weekSpeaker || "";
         renderSpeakerOptions(weekSpeaker.value);
-        weekStatus.value = row.dataset.weekStatus || "planned";
+        weekStatus.value = row.dataset.weekStatus || "Invited";
+        weekStatusDate.value = row.dataset.weekStatusDate || todayDate();
         weekOrganizer.value = row.dataset.weekOrganizer || "";
         weekTitle.value = row.dataset.weekTitle || "";
         weekAbstract.value = row.dataset.weekAbstract || "";
@@ -579,6 +568,9 @@
       }
 
       weekSpeakerFilter.addEventListener("input", () => renderSpeakerOptions(weekSpeaker.value));
+      weekStatus.addEventListener("change", () => {
+        weekStatusDate.value = todayDate();
+      });
 
       document.querySelectorAll(".calendar-row").forEach((row) => {
         row.addEventListener("click", () => openWeekDialog(row));

@@ -486,10 +486,12 @@ def test_upsert_talk_for_week_updates_existing_talk_and_preserves_details():
             title="Existing title",
             abstract="Existing abstract",
             status="planned",
+            status_date=datetime.datetime(2026, 7, 1, 9, 0),
             comments="Existing comments",
         ),
     )
 
+    before = datetime.datetime.now()
     upsert_talk_for_week(
         connection,
         datetime.date(2026, 7, 6),
@@ -499,24 +501,71 @@ def test_upsert_talk_for_week_updates_existing_talk_and_preserves_details():
         "Updated abstract",
         "Josh",
     )
+    after = datetime.datetime.now()
 
     rows = connection.execute(
         """
-        SELECT date, speaker, title, abstract, status, comments, organizer
+        SELECT date, speaker, title, abstract, status, status_date, comments, organizer
         FROM talks
         """
     ).fetchall()
-    assert rows == [
-        (
-            "2026-07-08T14:30:00",
-            "Bob Example",
-            "Updated title",
-            "Updated abstract",
-            "completed",
-            "Existing comments",
-            "Josh",
-        )
-    ]
+    assert len(rows) == 1
+    assert rows[0][:5] == (
+        "2026-07-08T14:30:00",
+        "Bob Example",
+        "Updated title",
+        "Updated abstract",
+        "completed",
+    )
+    assert before <= datetime.datetime.fromisoformat(rows[0][5]) <= after
+    assert rows[0][6:] == (
+        "Existing comments",
+        "Josh",
+    )
+
+
+def test_upsert_talk_for_week_updates_status_date_when_status_is_unchanged():
+    connection = sqlite3.connect(":memory:")
+    connection.execute("PRAGMA foreign_keys = ON")
+    _create_schema(connection)
+    insert_speaker(
+        connection,
+        Speaker(
+            name="Alice Example",
+            affiliation="Example University",
+            email="alice@example.edu",
+            topic="Active Matter",
+            contact_persons=[],
+            notes="",
+            want_to_invite=False,
+        ),
+    )
+    insert_talk(
+        connection,
+        Talk(
+            date=datetime.datetime(2026, 7, 8, 14, 30),
+            speaker="Alice Example",
+            title="Existing title",
+            abstract="Existing abstract",
+            status="accepted",
+            status_date=datetime.datetime(2026, 7, 1, 9, 0),
+            comments="Existing comments",
+        ),
+    )
+
+    upsert_talk_for_week(
+        connection,
+        datetime.date(2026, 7, 6),
+        "Alice Example",
+        "accepted",
+        datetime.datetime(2026, 7, 9, 10, 0),
+        "Updated title",
+        "Updated abstract",
+        "Josh",
+    )
+
+    row = connection.execute("SELECT status_date FROM talks").fetchone()
+    assert row == ("2026-07-09T10:00:00",)
 
 
 def test_delete_talk_for_week_removes_first_talk_in_week():
@@ -588,6 +637,7 @@ def test_reads_talks_as_dataframe():
             title="Active Matter",
             abstract="An abstract",
             status="confirmed",
+            status_date=datetime.datetime(2026, 1, 10, 9, 0),
             comments="Bring projector",
         ),
     )
@@ -600,6 +650,7 @@ def test_reads_talks_as_dataframe():
         "title",
         "abstract",
         "status",
+        "status_date",
         "comments",
         "organizer",
     ]
@@ -610,9 +661,72 @@ def test_reads_talks_as_dataframe():
             "title": "Active Matter",
             "abstract": "An abstract",
             "status": "confirmed",
+            "status_date": datetime.datetime(2026, 1, 10, 9, 0),
             "comments": "Bring projector",
             "organizer": "",
         }
+    ]
+
+
+def test_reads_talks_accepts_mixed_status_date_formats():
+    connection = sqlite3.connect(":memory:")
+    connection.execute("PRAGMA foreign_keys = ON")
+    _create_schema(connection)
+    insert_speaker(
+        connection,
+        Speaker(
+            name="Alice Example",
+            affiliation="Example University",
+            email="alice@example.edu",
+            topic="Active Matter",
+            contact_persons=[],
+            notes="",
+            want_to_invite=False,
+        ),
+    )
+    connection.executemany(
+        """
+        INSERT INTO talks (
+            date,
+            speaker,
+            title,
+            abstract,
+            status,
+            status_date,
+            comments,
+            organizer
+        )
+        VALUES (?, ?, ?, ?, ?, ?, ?, ?)
+        """,
+        [
+            (
+                "2026-01-15T14:30:00",
+                "Alice Example",
+                "Date only",
+                "",
+                "accepted",
+                "2026-09-14",
+                "",
+                "",
+            ),
+            (
+                "2026-01-22T14:30:00",
+                "Alice Example",
+                "Timestamp",
+                "",
+                "announced",
+                "2026-09-14T11:07:36.473347",
+                "",
+                "",
+            ),
+        ],
+    )
+
+    dataframe = read_talks(connection)
+
+    assert dataframe["status_date"].tolist() == [
+        datetime.datetime(2026, 9, 14),
+        datetime.datetime(2026, 9, 14, 11, 7, 36, 473347),
     ]
 
 

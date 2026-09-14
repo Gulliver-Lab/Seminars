@@ -583,13 +583,13 @@ def test_calendar_page_renders_week_rows(tmp_path):
     assert '<th scope="col">Topic</th>' in response.text
     assert '<th scope="col">Contact person</th>' in response.text
     assert '<th scope="col">Organizer</th>' in response.text
-    assert '<th scope="col">Title/Abstract</th>' in response.text
+    assert '<th scope="col">Status</th>' in response.text
     assert "2026-06-29" in response.text
     assert "Alice Example" in response.text
     assert "Active Matter" in response.text
 
 
-def test_calendar_page_displays_days_since_last_email_to_speaker(tmp_path):
+def test_calendar_page_displays_days_since_status_date(tmp_path):
     today = datetime.date.today()
     monday = today - datetime.timedelta(days=today.weekday())
     db_path = tmp_path / "seminars.db"
@@ -613,7 +613,10 @@ def test_calendar_page_displays_days_since_last_email_to_speaker(tmp_path):
             speaker="Alice Example",
             title="Weekly talk",
             abstract="",
-            status="planned",
+            status="invited",
+            status_date=datetime.datetime.combine(
+                today - datetime.timedelta(days=32), datetime.time()
+            ),
             comments="",
         ),
     )
@@ -658,7 +661,8 @@ def test_calendar_page_displays_days_since_last_email_to_speaker(tmp_path):
     response = client.get("/calendar")
 
     assert response.status_code == 200
-    assert '<th scope="col">Last email</th>' in response.text
+    assert '<th scope="col">Status</th>' in response.text
+    assert "Invited" in response.text
     assert "32 days ago" in response.text
 
 
@@ -813,6 +817,7 @@ def test_calendar_page_includes_week_color_classes(tmp_path):
             title="Planned talk",
             abstract="",
             status="planned",
+            status_date=datetime.datetime(2026, 7, 1, 9, 0),
             comments="",
             organizer="David",
         ),
@@ -829,7 +834,7 @@ def test_calendar_page_includes_week_color_classes(tmp_path):
     assert "future-empty-week" in response.text
 
 
-def test_calendar_page_shows_title_abstract_checkbox_for_completed_talks(tmp_path):
+def test_calendar_page_shows_status_for_talks(tmp_path):
     db_path = tmp_path / "seminars.db"
     connection = open_or_create_db(db_path)
     insert_speaker(
@@ -885,9 +890,9 @@ def test_calendar_page_shows_title_abstract_checkbox_for_completed_talks(tmp_pat
     response = client.get("/calendar")
 
     assert response.status_code == 200
-    assert '<th scope="col">Title/Abstract</th>' in response.text
-    assert 'class="title-abstract-checkbox" checked disabled' in response.text
-    assert 'class="title-abstract-checkbox" disabled' in response.text
+    assert '<th scope="col">Status</th>' in response.text
+    assert "Completed" in response.text
+    assert "title-abstract-checkbox" not in response.text
 
 
 def test_calendar_page_displays_contact_persons_for_planned_speaker(tmp_path):
@@ -913,6 +918,7 @@ def test_calendar_page_displays_contact_persons_for_planned_speaker(tmp_path):
             title="Future talk",
             abstract="",
             status="planned",
+            status_date=datetime.datetime(2026, 7, 1, 9, 0),
             comments="",
             organizer="David",
         ),
@@ -951,6 +957,7 @@ def test_calendar_page_includes_week_edit_dialog(tmp_path):
             title="Future talk",
             abstract="",
             status="planned",
+            status_date=datetime.datetime(2026, 7, 1, 9, 0),
             comments="",
             organizer="David",
         ),
@@ -966,6 +973,7 @@ def test_calendar_page_includes_week_edit_dialog(tmp_path):
     assert 'data-week-monday="2026-07-13"' in response.text
     assert 'data-week-speaker="Alice Example"' in response.text
     assert 'data-week-status="planned"' in response.text
+    assert 'data-week-status-date="2026-07-01"' in response.text
     assert 'data-week-title="Future talk"' in response.text
     assert 'data-week-abstract=""' in response.text
     assert 'data-week-organizer="David"' in response.text
@@ -978,8 +986,11 @@ def test_calendar_page_includes_week_edit_dialog(tmp_path):
     assert "renderSpeakerOptions" in response.text
     assert "selectSpeaker" in response.text
     assert "No matching speakers" in response.text
-    assert '<option value="planned">Planned</option>' in response.text
-    assert '<option value="completed">Already confirmed</option>' in response.text
+    assert '<option value="Invited">Invited</option>' in response.text
+    assert '<option value="Completed">Completed</option>' in response.text
+    assert 'id="week-status-date" name="status_date" required type="date"' in response.text
+    assert "weekStatusDate.value = row.dataset.weekStatusDate || todayDate()" in response.text
+    assert 'weekStatus.addEventListener("change"' in response.text
     assert 'id="week-organizer" name="organizer"' in response.text
     assert '<option value="David">David</option>' in response.text
     assert "weekOrganizer.value = row.dataset.weekOrganizer" in response.text
@@ -1018,6 +1029,7 @@ def test_post_calendar_week_inserts_talk(tmp_path):
         data={
             "speaker": "Alice Example",
             "status": "planned",
+            "status_date": "2026-07-01",
             "title": "Inserted title",
             "abstract": "Inserted abstract",
             "organizer": "David",
@@ -1033,6 +1045,7 @@ def test_post_calendar_week_inserts_talk(tmp_path):
     assert talks[0]["date"] == datetime.datetime(2026, 7, 13, 14, 30)
     assert talks[0]["speaker"] == "Alice Example"
     assert talks[0]["status"] == "planned"
+    assert talks[0]["status_date"] == datetime.datetime(2026, 7, 1)
     assert talks[0]["title"] == "Inserted title"
     assert talks[0]["abstract"] == "Inserted abstract"
     assert talks[0]["comments"] == ""
@@ -1063,6 +1076,7 @@ def test_post_calendar_week_redirects_under_root_path(tmp_path):
         data={
             "speaker": "Alice Example",
             "status": "planned",
+            "status_date": "2026-07-01",
             "title": "",
             "abstract": "",
             "organizer": "David",
@@ -1121,6 +1135,7 @@ def test_post_calendar_week_updates_existing_talk(tmp_path):
         data={
             "speaker": "Bob Example",
             "status": "completed",
+            "status_date": "2026-07-02",
             "title": "Updated title",
             "abstract": "Updated abstract",
             "organizer": "Josh",
@@ -1135,7 +1150,8 @@ def test_post_calendar_week_updates_existing_talk(tmp_path):
     assert len(talks) == 1
     assert talks[0]["date"] == datetime.datetime(2026, 7, 15, 14, 30)
     assert talks[0]["speaker"] == "Bob Example"
-    assert talks[0]["status"] == "completed"
+    assert talks[0]["status"] == "Completed"
+    assert talks[0]["status_date"] == datetime.datetime(2026, 7, 2)
     assert talks[0]["title"] == "Updated title"
     assert talks[0]["abstract"] == "Updated abstract"
     assert talks[0]["comments"] == "Existing comments"

@@ -87,7 +87,7 @@ if __name__ == "__main__":
         status = (
             seminars.TalkStatus.COMPLETED
             if row["confirmed"] == "x"
-            else seminars.TalkStatus.PLANNED
+            else seminars.TalkStatus.INVITED
         )
 
         talks.append(
@@ -97,6 +97,7 @@ if __name__ == "__main__":
                 title="",
                 abstract="",
                 status=status,
+                status_date=datetime.datetime.now(),
                 comments=row["comment"],
                 organizer=row["organizer"],
             )
@@ -122,6 +123,7 @@ if __name__ == "__main__":
                 title="",
                 abstract="",
                 status=seminars.TalkStatus.COMPLETED,
+                status_date=datetime.datetime.now(),
                 comments="Summer",
             )
             for x in summer_mondays

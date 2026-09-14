@@ -5,8 +5,11 @@ from typing import Literal
 
 
 class TalkStatus(StrEnum):
-    COMPLETED = "completed"
-    PLANNED = "planned"
+    INVITED = "Invited"
+    ACCEPTED = "Accepted"
+    TITLE_REQUESTED = "Title Requested"
+    ANNOUNCED = "Announced"
+    COMPLETED = "Completed"
 
 
 ResearchTopic = Literal["Active Matter", "Theory", "BioPhys", "Soft Matter", "Other"]
@@ -57,6 +60,9 @@ class Talk:
     status: TalkStatus
     comments: str
     organizer: PERSONS = ""
+    status_date: datetime.datetime = dataclasses.field(
+        default_factory=datetime.datetime.now
+    )
 
 
 @dataclasses.dataclass

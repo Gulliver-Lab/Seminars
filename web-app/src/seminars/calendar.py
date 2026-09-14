@@ -21,12 +21,13 @@ class CalendarTalk:
     topic: str
     topic_class: str
     contact_persons: str
-    last_email: str
     status: str
+    status_label: str
+    status_date: str
+    status_age: str
     title: str
     abstract: str
     organizer: str
-    has_title_abstract: bool
     comments: str
     is_unavailable: bool
 
@@ -55,7 +56,7 @@ def build_calendar_weeks(
             monday = monday_of_week(row["date"])
             if monday in talk_by_monday:
                 continue
-            talk_by_monday[monday] = _calendar_talk(row)
+            talk_by_monday[monday] = _calendar_talk(row, current_date)
 
     first_monday = min(talk_by_monday, default=current_monday)
     last_monday = max(
@@ -80,7 +81,7 @@ def build_calendar_weeks(
     return list(reversed(weeks))
 
 
-def _calendar_talk(row: Mapping[Any, Any]) -> CalendarTalk:
+def _calendar_talk(row: Mapping[Any, Any], current_date: datetime.date) -> CalendarTalk:
     speaker = str(row["speaker"]).strip()
     topic = row.get("topic")
     if topic not in TOPIC_COLORS:
@@ -91,12 +92,15 @@ def _calendar_talk(row: Mapping[Any, Any]) -> CalendarTalk:
         topic=str(topic),
         topic_class=TOPIC_COLORS[str(topic)],
         contact_persons=_format_contact_persons(row.get("contact_persons")),
-        last_email=str(row.get("last_email", "")),
         status=str(row.get("status", "")),
+        status_label=_format_status_label(row.get("status")),
+        status_date=_format_status_date(row.get("status_date")),
+        status_age=_format_status_age(
+            row.get("status"), row.get("status_date"), current_date
+        ),
         title=str(row.get("title", "")),
         abstract=str(row.get("abstract", "")),
         organizer=str(row.get("organizer", "")),
-        has_title_abstract=bool(str(row.get("title", "")).strip()),
         comments=str(row.get("comments", "")),
         is_unavailable=speaker == "",
     )
@@ -107,9 +111,9 @@ def _week_color_class(
 ) -> str:
     if talk is not None and talk.is_unavailable:
         return "unavailable-week"
-    if talk is not None and talk.status == "completed":
+    if talk is not None and talk.status.casefold() == "completed":
         return "completed-week"
-    if talk is not None and talk.status == "planned":
+    if talk is not None and talk.status.casefold() == "planned":
         return "planned-week"
     if talk is None and monday > current_monday:
         return "future-empty-week"
@@ -120,3 +124,46 @@ def _format_contact_persons(value: Any) -> str:
     if not isinstance(value, list):
         return ""
     return ", ".join(str(person) for person in value if str(person))
+
+
+def _format_status_label(value: Any) -> str:
+    label = str(value or "")
+    if not label:
+        return ""
+    return label[:1].upper() + label[1:]
+
+
+def _format_status_date(value: Any) -> str:
+    date_value = _parse_date(value)
+    if date_value is None:
+        return ""
+    return date_value.isoformat()
+
+
+def _format_status_age(
+    status: Any, value: Any, current_date: datetime.date
+) -> str:
+    if str(status).casefold() == "completed":
+        return ""
+    status_date = _parse_date(value)
+    if status_date is None:
+        return ""
+
+    days = (current_date - status_date).days
+    if days == 0:
+        return "today"
+    if days == 1:
+        return "1 day ago"
+    return f"{days} days ago"
+
+
+def _parse_date(value: Any) -> datetime.date | None:
+    if value is None or pd.isna(value):
+        return None
+    if isinstance(value, pd.Timestamp):
+        return value.date()
+    if isinstance(value, datetime.datetime):
+        return value.date()
+    if isinstance(value, datetime.date):
+        return value
+    return datetime.date.fromisoformat(str(value))
