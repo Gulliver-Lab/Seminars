@@ -187,7 +187,7 @@ def build_app(
                 monday_date,
                 speaker,
                 talk_status,
-                datetime.date.today(),
+                datetime.datetime.now(),
                 title,
                 abstract,
                 talk_organizer,

@@ -1017,6 +1017,7 @@ def test_post_calendar_week_inserts_talk(tmp_path):
 
     client = TestClient(build_app(db_path))
 
+    before = datetime.datetime.now()
     response = client.post(
         "/calendar/weeks/2026-07-13",
         data={
@@ -1028,6 +1029,7 @@ def test_post_calendar_week_inserts_talk(tmp_path):
         },
         follow_redirects=False,
     )
+    after = datetime.datetime.now()
 
     assert response.status_code == 303
     connection = open_or_create_db(db_path)
@@ -1037,6 +1039,7 @@ def test_post_calendar_week_inserts_talk(tmp_path):
     assert talks[0]["date"] == datetime.datetime(2026, 7, 13, 14, 30)
     assert talks[0]["speaker"] == "Alice Example"
     assert talks[0]["status"] == "planned"
+    assert before <= talks[0]["status_date"] <= after
     assert talks[0]["title"] == "Inserted title"
     assert talks[0]["abstract"] == "Inserted abstract"
     assert talks[0]["comments"] == ""

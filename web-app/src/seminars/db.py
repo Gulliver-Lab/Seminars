@@ -186,7 +186,7 @@ def upsert_talk_for_week(
 ) -> None:
     if not isinstance(status_date, datetime.date):
         status_date, title, abstract, organizer = (
-            datetime.date.today(),
+            datetime.datetime.now(),
             str(status_date),
             title,
             abstract,
@@ -196,7 +196,7 @@ def upsert_talk_for_week(
     end = start + datetime.timedelta(days=7)
     existing = connection.execute(
         """
-        SELECT rowid
+        SELECT rowid, status, status_date
         FROM talks
         WHERE date >= ? AND date < ?
         ORDER BY date
@@ -232,6 +232,9 @@ def upsert_talk_for_week(
             ),
         )
     else:
+        next_status_date = (
+            status_date.isoformat() if existing[1] != status else existing[2]
+        )
         connection.execute(
             """
             UPDATE talks
@@ -243,7 +246,7 @@ def upsert_talk_for_week(
                 title,
                 abstract,
                 status,
-                status_date.isoformat(),
+                next_status_date,
                 organizer,
                 existing[0],
             ),
@@ -279,7 +282,7 @@ def read_talks(connection: sqlite3.Connection) -> pd.DataFrame:
         connection,
     )
     dataframe["date"] = pd.to_datetime(dataframe["date"])
-    dataframe["status_date"] = pd.to_datetime(dataframe["status_date"])
+    dataframe["status_date"] = pd.to_datetime(dataframe["status_date"], format="mixed")
     return dataframe
 
 
