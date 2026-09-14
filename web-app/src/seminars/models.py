@@ -58,6 +58,7 @@ class Talk:
     title: str
     abstract: str
     status: TalkStatus
+    status_date: datetime.datetime
     comments: str
     organizer: PERSONS = ""
 

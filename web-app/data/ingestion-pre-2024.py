@@ -90,6 +90,7 @@ if __name__ == "__main__":
                 title="Unknown title",
                 abstract="",
                 status=seminars.TalkStatus.COMPLETED,
+                status_date=datetime.datetime.now(),
                 comments="",
             )
         )
