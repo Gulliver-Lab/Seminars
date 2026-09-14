@@ -87,7 +87,7 @@ if __name__ == "__main__":
         status = (
             seminars.TalkStatus.COMPLETED
             if row["confirmed"] == "x"
-            else seminars.TalkStatus.PLANNED
+            else seminars.TalkStatus.INVITED
         )
 
         talks.append(

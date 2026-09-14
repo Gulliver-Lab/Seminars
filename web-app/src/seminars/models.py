@@ -5,8 +5,11 @@ from typing import Literal
 
 
 class TalkStatus(StrEnum):
+    INVITED = "invited"
+    ACCEPTED = "accepted"
+    TITLE_REQUESTED = "title requested"
+    ANNOUNCED = "announced"
     COMPLETED = "completed"
-    PLANNED = "planned"
 
 
 ResearchTopic = Literal["Active Matter", "Theory", "BioPhys", "Soft Matter", "Other"]
