@@ -5,7 +5,7 @@ from pathlib import Path
 
 import pandas as pd
 
-from seminars.models import PERSONS, Email, Speaker, Talk
+from seminars.models import PERSONS, Email, Speaker, Talk, parse_talk_status
 
 EXPECTED_SPEAKERS_SCHEMA = [
     ("name", "TEXT"),
@@ -165,7 +165,7 @@ def insert_talk(connection: sqlite3.Connection, talk: Talk) -> None:
             talk.speaker,
             talk.title,
             talk.abstract,
-            talk.status,
+            parse_talk_status(talk.status).value,
             talk.status_date.isoformat(),
             talk.comments,
             talk.organizer,
@@ -184,6 +184,7 @@ def upsert_talk_for_week(
     abstract: str = "",
     organizer: str = "",
 ) -> None:
+    status = parse_talk_status(status).value
     if not isinstance(status_date, datetime.date):
         status_date, title, abstract, organizer = (
             datetime.datetime.now(),

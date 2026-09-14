@@ -12,6 +12,16 @@ class TalkStatus(StrEnum):
     COMPLETED = "Completed"
 
 
+def parse_talk_status(value: object) -> TalkStatus:
+    if isinstance(value, TalkStatus):
+        return value
+
+    try:
+        return TalkStatus(str(value).strip())
+    except ValueError as error:
+        raise ValueError("invalid talk status") from error
+
+
 ResearchTopic = Literal["Active Matter", "Theory", "BioPhys", "Soft Matter", "Other"]
 
 PERSONS = Literal[

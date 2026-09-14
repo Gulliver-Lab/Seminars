@@ -129,25 +129,9 @@
         filter: brightness(0.97);
       }
 
-      .calendar-row.completed-week td {
-        background: #e7f4ed;
-        border-color: #9bcbb4;
-      }
-
-      .calendar-row.planned-week td {
+      .calendar-row.alert-week td {
         background: #fff0db;
         border-color: #e0b56c;
-      }
-
-      .calendar-row.future-empty-week td {
-        background: #f9e3e2;
-        border-color: #dcaaa6;
-      }
-
-      .calendar-row.unavailable-week td {
-        background: #eef0f3;
-        border-color: #c6ccd5;
-        color: #65717f;
       }
 
       .week-date {
@@ -385,7 +369,7 @@
           </thead>
           <tbody>
             {% for week in calendar_weeks %}
-              <tr class="calendar-row{% if week.color_class %} {{ week.color_class }}{% endif %}{% if week.is_current %} current-week{% endif %}" data-week-monday="{{ week.monday }}" data-week-has-talk="{% if week.talk %}true{% else %}false{% endif %}"{% if week.talk %} data-week-speaker="{{ week.talk.speaker }}" data-week-status="{{ week.talk.status }}" data-week-status-date="{{ week.talk.status_date }}" data-week-title="{{ week.talk.title }}" data-week-abstract="{{ week.talk.abstract }}" data-week-organizer="{{ week.talk.organizer }}"{% else %} data-week-speaker="" data-week-status="Invited" data-week-status-date="" data-week-title="" data-week-abstract="" data-week-organizer=""{% endif %}{% if week.is_current %} data-current-week{% endif %} role="button" tabindex="0">
+              <tr class="calendar-row{% if week.color_class %} {{ week.color_class }}{% endif %}{% if week.is_current %} current-week{% endif %}" data-week-monday="{{ week.monday }}" data-week-has-talk="{% if week.talk %}true{% else %}false{% endif %}"{% if week.talk %} data-week-speaker="{{ week.talk.speaker }}" data-week-status="{{ week.talk.status.value }}" data-week-status-date="{{ week.talk.status_date }}" data-week-title="{{ week.talk.title }}" data-week-abstract="{{ week.talk.abstract }}" data-week-organizer="{{ week.talk.organizer }}"{% else %} data-week-speaker="" data-week-status="Invited" data-week-status-date="" data-week-title="" data-week-abstract="" data-week-organizer=""{% endif %}{% if week.is_current %} data-current-week{% endif %} role="button" tabindex="0">
                 <td class="week-date">{{ week.monday }}</td>
                 {% if week.talk and week.talk.is_unavailable %}
                   <td><div class="talk-comments">{{ week.talk.comments }}</div></td>
