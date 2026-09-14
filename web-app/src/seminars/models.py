@@ -58,9 +58,11 @@ class Talk:
     title: str
     abstract: str
     status: TalkStatus
-    status_date: datetime.datetime
     comments: str
     organizer: PERSONS = ""
+    status_date: datetime.datetime = dataclasses.field(
+        default_factory=datetime.datetime.now
+    )
 
 
 @dataclasses.dataclass

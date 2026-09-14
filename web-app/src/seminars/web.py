@@ -29,7 +29,7 @@ from seminars.db import (
     update_speaker,
     upsert_talk_for_week,
 )
-from seminars.models import PERSONS, ResearchTopic, Speaker
+from seminars.models import PERSONS, ResearchTopic, Speaker, TalkStatus
 
 TEMPLATES = Jinja2Templates(directory=Path(__file__).parent / "templates")
 
@@ -43,6 +43,7 @@ COLUMNS = [
 ]
 SORTABLE_COLUMNS = {key for key, _label in COLUMNS}
 RESEARCH_TOPICS = list(get_args(ResearchTopic))
+TALK_STATUSES = list(TalkStatus)
 CONTACT_PERSON_OPTIONS = [person for person in get_args(PERSONS) if person]
 CONFERENCE_ROOM_URL = "https://visio.numerique.gouv.fr/vuf-njri-opc"
 WORDPRESS_ORIGIN = "https://blog.espci.fr"
@@ -156,6 +157,7 @@ def build_app(
             {
                 "calendar_weeks": calendar_weeks,
                 "speaker_options": speaker_options,
+                "talk_status_options": TALK_STATUSES,
                 "organizer_options": CONTACT_PERSON_OPTIONS,
                 "url_path_for": url_path_for,
             },
@@ -185,6 +187,7 @@ def build_app(
                 monday_date,
                 speaker,
                 talk_status,
+                datetime.date.today(),
                 title,
                 abstract,
                 talk_organizer,
@@ -474,10 +477,10 @@ def _parse_contact_persons(value: Sequence[str]) -> list[PERSONS]:
 
 
 def _parse_calendar_talk_status(value: str) -> str:
-    if value == "planned":
-        return "planned"
-    if value in {"completed", "complete", "confirmed"}:
-        return "completed"
+    if value in TALK_STATUSES:
+        return value
+    if value in {"planned", "confirmed", "complete", "done"}:
+        return value
     raise ValueError("invalid talk status")
 
 

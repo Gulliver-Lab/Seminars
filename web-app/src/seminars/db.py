@@ -179,11 +179,19 @@ def upsert_talk_for_week(
     monday: datetime.date,
     speaker: str,
     status: str,
-    status_date: datetime.date,
+    status_date: datetime.date | str,
     title: str = "",
     abstract: str = "",
     organizer: str = "",
 ) -> None:
+    if not isinstance(status_date, datetime.date):
+        status_date, title, abstract, organizer = (
+            datetime.date.today(),
+            str(status_date),
+            title,
+            abstract,
+        )
+
     start = datetime.datetime.combine(monday, datetime.time())
     end = start + datetime.timedelta(days=7)
     existing = connection.execute(

@@ -185,24 +185,6 @@
         line-height: 1.35;
       }
 
-      .title-abstract-field {
-        align-items: center;
-        color: #2f3a48;
-        display: flex;
-        font-size: 13px;
-        gap: 7px;
-        justify-content: center;
-      }
-
-      .title-abstract-cell {
-        text-align: center;
-        width: 120px;
-      }
-
-      .title-abstract-checkbox {
-        accent-color: #2f7d6d;
-      }
-
       .topic-dot {
         border-radius: 999px;
         display: inline-block;
@@ -398,8 +380,7 @@
               <th scope="col">Topic</th>
               <th scope="col">Contact person</th>
               <th scope="col">Organizer</th>
-              <th scope="col">Last email</th>
-              <th scope="col">Title/Abstract</th>
+              <th scope="col">Status</th>
             </tr>
           </thead>
           <tbody>
@@ -412,7 +393,6 @@
                   <td></td>
                   <td></td>
                   <td></td>
-                  <td class="title-abstract-cell"></td>
                 {% elif week.talk %}
                   <td><div class="talk-speaker">{{ week.talk.speaker }}</div></td>
                   <td>
@@ -423,12 +403,10 @@
                   </td>
                   <td><div class="talk-contacts">{{ week.talk.contact_persons }}</div></td>
                   <td>{{ week.talk.organizer }}</td>
-                  <td>{{ week.talk.last_email }}</td>
-                  <td class="title-abstract-cell">
-                    {% if week.talk.status == "completed" %}
-                      <label class="title-abstract-field" aria-label="Title/Abstract">
-                        <input class="title-abstract-checkbox"{% if week.talk.has_title_abstract %} checked{% endif %} disabled type="checkbox">
-                      </label>
+                  <td>
+                    <div>{{ week.talk.status }}</div>
+                    {% if week.talk.status_age %}
+                      <div class="week-date">{{ week.talk.status_age }}</div>
                     {% endif %}
                   </td>
                 {% else %}
@@ -437,7 +415,6 @@
                   <td></td>
                   <td></td>
                   <td></td>
-                  <td class="title-abstract-cell"></td>
                 {% endif %}
               </tr>
             {% endfor %}
@@ -466,8 +443,9 @@
           <div class="week-form-field">
             <label for="week-status">Status</label>
             <select id="week-status" name="status" required>
-              <option value="planned">Planned</option>
-              <option value="completed">Already confirmed</option>
+              {% for status in talk_status_options %}
+                <option value="{{ status }}">{{ status }}</option>
+              {% endfor %}
             </select>
           </div>
 

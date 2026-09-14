@@ -588,6 +588,7 @@ def test_reads_talks_as_dataframe():
             title="Active Matter",
             abstract="An abstract",
             status="confirmed",
+            status_date=datetime.datetime(2026, 1, 10, 9, 0),
             comments="Bring projector",
         ),
     )
@@ -600,6 +601,7 @@ def test_reads_talks_as_dataframe():
         "title",
         "abstract",
         "status",
+        "status_date",
         "comments",
         "organizer",
     ]
@@ -610,6 +612,7 @@ def test_reads_talks_as_dataframe():
             "title": "Active Matter",
             "abstract": "An abstract",
             "status": "confirmed",
+            "status_date": datetime.datetime(2026, 1, 10, 9, 0),
             "comments": "Bring projector",
             "organizer": "",
         }

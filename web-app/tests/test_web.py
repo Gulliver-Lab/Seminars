@@ -583,13 +583,13 @@ def test_calendar_page_renders_week_rows(tmp_path):
     assert '<th scope="col">Topic</th>' in response.text
     assert '<th scope="col">Contact person</th>' in response.text
     assert '<th scope="col">Organizer</th>' in response.text
-    assert '<th scope="col">Title/Abstract</th>' in response.text
+    assert '<th scope="col">Status</th>' in response.text
     assert "2026-06-29" in response.text
     assert "Alice Example" in response.text
     assert "Active Matter" in response.text
 
 
-def test_calendar_page_displays_days_since_last_email_to_speaker(tmp_path):
+def test_calendar_page_displays_days_since_status_date(tmp_path):
     today = datetime.date.today()
     monday = today - datetime.timedelta(days=today.weekday())
     db_path = tmp_path / "seminars.db"
@@ -613,7 +613,10 @@ def test_calendar_page_displays_days_since_last_email_to_speaker(tmp_path):
             speaker="Alice Example",
             title="Weekly talk",
             abstract="",
-            status="planned",
+            status="invited",
+            status_date=datetime.datetime.combine(
+                today - datetime.timedelta(days=32), datetime.time()
+            ),
             comments="",
         ),
     )
@@ -658,7 +661,8 @@ def test_calendar_page_displays_days_since_last_email_to_speaker(tmp_path):
     response = client.get("/calendar")
 
     assert response.status_code == 200
-    assert '<th scope="col">Last email</th>' in response.text
+    assert '<th scope="col">Status</th>' in response.text
+    assert "invited" in response.text
     assert "32 days ago" in response.text
 
 
@@ -829,7 +833,7 @@ def test_calendar_page_includes_week_color_classes(tmp_path):
     assert "future-empty-week" in response.text
 
 
-def test_calendar_page_shows_title_abstract_checkbox_for_completed_talks(tmp_path):
+def test_calendar_page_shows_status_for_talks(tmp_path):
     db_path = tmp_path / "seminars.db"
     connection = open_or_create_db(db_path)
     insert_speaker(
@@ -885,9 +889,9 @@ def test_calendar_page_shows_title_abstract_checkbox_for_completed_talks(tmp_pat
     response = client.get("/calendar")
 
     assert response.status_code == 200
-    assert '<th scope="col">Title/Abstract</th>' in response.text
-    assert 'class="title-abstract-checkbox" checked disabled' in response.text
-    assert 'class="title-abstract-checkbox" disabled' in response.text
+    assert '<th scope="col">Status</th>' in response.text
+    assert "completed" in response.text
+    assert "title-abstract-checkbox" not in response.text
 
 
 def test_calendar_page_displays_contact_persons_for_planned_speaker(tmp_path):
@@ -978,8 +982,8 @@ def test_calendar_page_includes_week_edit_dialog(tmp_path):
     assert "renderSpeakerOptions" in response.text
     assert "selectSpeaker" in response.text
     assert "No matching speakers" in response.text
-    assert '<option value="planned">Planned</option>' in response.text
-    assert '<option value="completed">Already confirmed</option>' in response.text
+    assert '<option value="invited">invited</option>' in response.text
+    assert '<option value="completed">completed</option>' in response.text
     assert 'id="week-organizer" name="organizer"' in response.text
     assert '<option value="David">David</option>' in response.text
     assert "weekOrganizer.value = row.dataset.weekOrganizer" in response.text

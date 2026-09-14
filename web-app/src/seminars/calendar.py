@@ -21,12 +21,11 @@ class CalendarTalk:
     topic: str
     topic_class: str
     contact_persons: str
-    last_email: str
     status: str
+    status_age: str
     title: str
     abstract: str
     organizer: str
-    has_title_abstract: bool
     comments: str
     is_unavailable: bool
 
@@ -55,7 +54,7 @@ def build_calendar_weeks(
             monday = monday_of_week(row["date"])
             if monday in talk_by_monday:
                 continue
-            talk_by_monday[monday] = _calendar_talk(row)
+            talk_by_monday[monday] = _calendar_talk(row, current_date)
 
     first_monday = min(talk_by_monday, default=current_monday)
     last_monday = max(
@@ -80,7 +79,7 @@ def build_calendar_weeks(
     return list(reversed(weeks))
 
 
-def _calendar_talk(row: Mapping[Any, Any]) -> CalendarTalk:
+def _calendar_talk(row: Mapping[Any, Any], current_date: datetime.date) -> CalendarTalk:
     speaker = str(row["speaker"]).strip()
     topic = row.get("topic")
     if topic not in TOPIC_COLORS:
@@ -91,12 +90,11 @@ def _calendar_talk(row: Mapping[Any, Any]) -> CalendarTalk:
         topic=str(topic),
         topic_class=TOPIC_COLORS[str(topic)],
         contact_persons=_format_contact_persons(row.get("contact_persons")),
-        last_email=str(row.get("last_email", "")),
         status=str(row.get("status", "")),
+        status_age=_format_status_age(row.get("status_date"), current_date),
         title=str(row.get("title", "")),
         abstract=str(row.get("abstract", "")),
         organizer=str(row.get("organizer", "")),
-        has_title_abstract=bool(str(row.get("title", "")).strip()),
         comments=str(row.get("comments", "")),
         is_unavailable=speaker == "",
     )
@@ -120,3 +118,24 @@ def _format_contact_persons(value: Any) -> str:
     if not isinstance(value, list):
         return ""
     return ", ".join(str(person) for person in value if str(person))
+
+
+def _format_status_age(value: Any, current_date: datetime.date) -> str:
+    if value is None or pd.isna(value):
+        return ""
+
+    if isinstance(value, pd.Timestamp):
+        status_date = value.date()
+    elif isinstance(value, datetime.datetime):
+        status_date = value.date()
+    elif isinstance(value, datetime.date):
+        status_date = value
+    else:
+        status_date = datetime.date.fromisoformat(str(value))
+
+    days = (current_date - status_date).days
+    if days == 0:
+        return "today"
+    if days == 1:
+        return "1 day ago"
+    return f"{days} days ago"
