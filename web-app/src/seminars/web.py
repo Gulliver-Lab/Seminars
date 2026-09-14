@@ -168,12 +168,13 @@ def build_app(
     def update_calendar_week(
         request: Request,
         monday: str,
-        speaker: str = Form(),
+        speaker: str = Form(""),
         status: str = Form(),
         status_date: str = Form(),
         title: str = Form(""),
         abstract: str = Form(""),
         organizer: str = Form(""),
+        comments: str | None = Form(None),
     ) -> Response:
         try:
             monday_date = datetime.date.fromisoformat(monday)
@@ -185,6 +186,19 @@ def build_app(
 
         connection = open_or_create_db(database_path)
         try:
+            if speaker == "":
+                insert_speaker(
+                    connection,
+                    Speaker(
+                        name="",
+                        affiliation="",
+                        email="",
+                        topic="Other",
+                        contact_persons=[],
+                        notes="",
+                        want_to_invite=False,
+                    ),
+                )
             upsert_talk_for_week(
                 connection,
                 monday_date,
@@ -194,6 +208,7 @@ def build_app(
                 title,
                 abstract,
                 talk_organizer,
+                comments if speaker == "" else None,
             )
         except sqlite3.IntegrityError as error:
             return PlainTextResponse(str(error), status_code=400)

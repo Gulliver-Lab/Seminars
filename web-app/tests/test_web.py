@@ -1001,8 +1001,13 @@ def test_calendar_page_includes_week_edit_dialog(tmp_path):
     assert "weekOrganizer.value = row.dataset.weekOrganizer" in response.text
     assert 'id="week-title" name="title"' in response.text
     assert 'id="week-abstract" name="abstract"' in response.text
+    assert 'id="week-comments" name="comments" type="hidden"' in response.text
     assert "weekTitle.value = row.dataset.weekTitle" in response.text
     assert "weekAbstract.value = row.dataset.weekAbstract" in response.text
+    assert 'id="week-no-talk-button"' in response.text
+    assert 'window.prompt("Reason for no talk")' in response.text
+    assert 'weekStatus.value = "Completed"' in response.text
+    assert "weekComments.value = reason.trim()" in response.text
     assert 'id="week-delete-button"' in response.text
     assert 'id="week-delete-form"' in response.text
     assert "weekDeleteForm.action" in response.text
@@ -1161,6 +1166,41 @@ def test_post_calendar_week_updates_existing_talk(tmp_path):
     assert talks[0]["abstract"] == "Updated abstract"
     assert talks[0]["comments"] == "Existing comments"
     assert talks[0]["organizer"] == "Josh"
+
+
+def test_post_calendar_week_marks_week_as_no_talk(tmp_path):
+    db_path = tmp_path / "seminars.db"
+    connection = open_or_create_db(db_path)
+    connection.close()
+
+    client = TestClient(build_app(db_path))
+
+    response = client.post(
+        "/calendar/weeks/2026-07-13",
+        data={
+            "speaker": "",
+            "status": "Completed",
+            "status_date": "2026-07-03",
+            "title": "",
+            "abstract": "",
+            "organizer": "",
+            "comments": "Summer break",
+        },
+        follow_redirects=False,
+    )
+
+    assert response.status_code == 303
+    connection = open_or_create_db(db_path)
+    speakers = read_speakers(connection).to_dict("records")
+    talks = read_talks(connection).to_dict("records")
+    connection.close()
+    assert speakers[0]["name"] == ""
+    assert len(talks) == 1
+    assert talks[0]["date"] == datetime.datetime(2026, 7, 13, 14, 30)
+    assert talks[0]["speaker"] == ""
+    assert talks[0]["status"] == "Completed"
+    assert talks[0]["status_date"] == datetime.datetime(2026, 7, 3)
+    assert talks[0]["comments"] == "Summer break"
 
 
 def test_post_calendar_week_delete_removes_existing_talk(tmp_path):
