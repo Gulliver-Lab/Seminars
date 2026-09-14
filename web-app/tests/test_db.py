@@ -524,7 +524,7 @@ def test_upsert_talk_for_week_updates_existing_talk_and_preserves_details():
     )
 
 
-def test_upsert_talk_for_week_preserves_status_date_when_status_is_unchanged():
+def test_upsert_talk_for_week_updates_status_date_when_status_is_unchanged():
     connection = sqlite3.connect(":memory:")
     connection.execute("PRAGMA foreign_keys = ON")
     _create_schema(connection)
@@ -565,7 +565,7 @@ def test_upsert_talk_for_week_preserves_status_date_when_status_is_unchanged():
     )
 
     row = connection.execute("SELECT status_date FROM talks").fetchone()
-    assert row == ("2026-07-01T09:00:00",)
+    assert row == ("2026-07-09T10:00:00",)
 
 
 def test_delete_talk_for_week_removes_first_talk_in_week():

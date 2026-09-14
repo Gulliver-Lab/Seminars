@@ -23,6 +23,7 @@ class CalendarTalk:
     contact_persons: str
     status: str
     status_label: str
+    status_date: str
     status_age: str
     title: str
     abstract: str
@@ -93,6 +94,7 @@ def _calendar_talk(row: Mapping[Any, Any], current_date: datetime.date) -> Calen
         contact_persons=_format_contact_persons(row.get("contact_persons")),
         status=str(row.get("status", "")),
         status_label=_format_status_label(row.get("status")),
+        status_date=_format_status_date(row.get("status_date")),
         status_age=_format_status_age(
             row.get("status"), row.get("status_date"), current_date
         ),
@@ -109,9 +111,9 @@ def _week_color_class(
 ) -> str:
     if talk is not None and talk.is_unavailable:
         return "unavailable-week"
-    if talk is not None and talk.status == "completed":
+    if talk is not None and talk.status.casefold() == "completed":
         return "completed-week"
-    if talk is not None and talk.status == "planned":
+    if talk is not None and talk.status.casefold() == "planned":
         return "planned-week"
     if talk is None and monday > current_monday:
         return "future-empty-week"
@@ -125,25 +127,27 @@ def _format_contact_persons(value: Any) -> str:
 
 
 def _format_status_label(value: Any) -> str:
-    return str(value or "").capitalize()
+    label = str(value or "")
+    if not label:
+        return ""
+    return label[:1].upper() + label[1:]
+
+
+def _format_status_date(value: Any) -> str:
+    date_value = _parse_date(value)
+    if date_value is None:
+        return ""
+    return date_value.isoformat()
 
 
 def _format_status_age(
     status: Any, value: Any, current_date: datetime.date
 ) -> str:
-    if str(status) == "completed":
+    if str(status).casefold() == "completed":
         return ""
-    if value is None or pd.isna(value):
+    status_date = _parse_date(value)
+    if status_date is None:
         return ""
-
-    if isinstance(value, pd.Timestamp):
-        status_date = value.date()
-    elif isinstance(value, datetime.datetime):
-        status_date = value.date()
-    elif isinstance(value, datetime.date):
-        status_date = value
-    else:
-        status_date = datetime.date.fromisoformat(str(value))
 
     days = (current_date - status_date).days
     if days == 0:
@@ -151,3 +155,15 @@ def _format_status_age(
     if days == 1:
         return "1 day ago"
     return f"{days} days ago"
+
+
+def _parse_date(value: Any) -> datetime.date | None:
+    if value is None or pd.isna(value):
+        return None
+    if isinstance(value, pd.Timestamp):
+        return value.date()
+    if isinstance(value, datetime.datetime):
+        return value.date()
+    if isinstance(value, datetime.date):
+        return value
+    return datetime.date.fromisoformat(str(value))

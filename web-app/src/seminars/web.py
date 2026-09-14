@@ -169,6 +169,7 @@ def build_app(
         monday: str,
         speaker: str = Form(),
         status: str = Form(),
+        status_date: str = Form(),
         title: str = Form(""),
         abstract: str = Form(""),
         organizer: str = Form(""),
@@ -176,6 +177,7 @@ def build_app(
         try:
             monday_date = datetime.date.fromisoformat(monday)
             talk_status = _parse_calendar_talk_status(status)
+            talk_status_date = datetime.date.fromisoformat(status_date)
             talk_organizer = _parse_organizer(organizer)
         except ValueError as error:
             return PlainTextResponse(str(error), status_code=400)
@@ -187,7 +189,7 @@ def build_app(
                 monday_date,
                 speaker,
                 talk_status,
-                datetime.datetime.now(),
+                talk_status_date,
                 title,
                 abstract,
                 talk_organizer,
@@ -477,10 +479,12 @@ def _parse_contact_persons(value: Sequence[str]) -> list[PERSONS]:
 
 
 def _parse_calendar_talk_status(value: str) -> str:
-    if value in TALK_STATUSES:
-        return value
-    if value in {"planned", "confirmed", "complete", "done"}:
-        return value
+    normalized = value.strip().casefold()
+    status_by_normalized = {str(status).casefold(): str(status) for status in TALK_STATUSES}
+    if normalized in status_by_normalized:
+        return status_by_normalized[normalized]
+    if normalized in {"planned", "confirmed", "complete", "done"}:
+        return normalized
     raise ValueError("invalid talk status")
 
 

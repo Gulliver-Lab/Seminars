@@ -232,9 +232,6 @@ def upsert_talk_for_week(
             ),
         )
     else:
-        next_status_date = (
-            status_date.isoformat() if existing[1] != status else existing[2]
-        )
         connection.execute(
             """
             UPDATE talks
@@ -246,7 +243,7 @@ def upsert_talk_for_week(
                 title,
                 abstract,
                 status,
-                next_status_date,
+                status_date.isoformat(),
                 organizer,
                 existing[0],
             ),
