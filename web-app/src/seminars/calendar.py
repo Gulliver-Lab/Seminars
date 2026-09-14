@@ -22,6 +22,7 @@ class CalendarTalk:
     topic_class: str
     contact_persons: str
     status: str
+    status_label: str
     status_age: str
     title: str
     abstract: str
@@ -91,7 +92,10 @@ def _calendar_talk(row: Mapping[Any, Any], current_date: datetime.date) -> Calen
         topic_class=TOPIC_COLORS[str(topic)],
         contact_persons=_format_contact_persons(row.get("contact_persons")),
         status=str(row.get("status", "")),
-        status_age=_format_status_age(row.get("status_date"), current_date),
+        status_label=_format_status_label(row.get("status")),
+        status_age=_format_status_age(
+            row.get("status"), row.get("status_date"), current_date
+        ),
         title=str(row.get("title", "")),
         abstract=str(row.get("abstract", "")),
         organizer=str(row.get("organizer", "")),
@@ -120,7 +124,15 @@ def _format_contact_persons(value: Any) -> str:
     return ", ".join(str(person) for person in value if str(person))
 
 
-def _format_status_age(value: Any, current_date: datetime.date) -> str:
+def _format_status_label(value: Any) -> str:
+    return str(value or "").capitalize()
+
+
+def _format_status_age(
+    status: Any, value: Any, current_date: datetime.date
+) -> str:
+    if str(status) == "completed":
+        return ""
     if value is None or pd.isna(value):
         return ""
 

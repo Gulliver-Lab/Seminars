@@ -662,7 +662,7 @@ def test_calendar_page_displays_days_since_status_date(tmp_path):
 
     assert response.status_code == 200
     assert '<th scope="col">Status</th>' in response.text
-    assert "invited" in response.text
+    assert "Invited" in response.text
     assert "32 days ago" in response.text
 
 
@@ -890,7 +890,7 @@ def test_calendar_page_shows_status_for_talks(tmp_path):
 
     assert response.status_code == 200
     assert '<th scope="col">Status</th>' in response.text
-    assert "completed" in response.text
+    assert "Completed" in response.text
     assert "title-abstract-checkbox" not in response.text
 
 

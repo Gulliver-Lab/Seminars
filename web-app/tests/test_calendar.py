@@ -141,9 +141,34 @@ def test_build_calendar_weeks_formats_status_age():
     weeks_by_monday = {week.monday: week for week in weeks}
 
     assert weeks_by_monday["2026-07-06"].talk is not None
+    assert weeks_by_monday["2026-07-06"].talk.status_label == "Accepted"
     assert weeks_by_monday["2026-07-06"].talk.status_age == "1 day ago"
     assert weeks_by_monday["2026-07-13"].talk is not None
+    assert weeks_by_monday["2026-07-13"].talk.status_label == "Title requested"
     assert weeks_by_monday["2026-07-13"].talk.status_age == "6 days ago"
+
+
+def test_build_calendar_weeks_hides_status_age_for_completed_talks():
+    talks = pd.DataFrame(
+        [
+            {
+                "date": datetime.datetime(2026, 7, 6, 14, 30),
+                "speaker": "Completed Status",
+                "topic": "Other",
+                "status": "completed",
+                "status_date": datetime.datetime(2026, 7, 1, 9, 0),
+                "comments": "",
+                "contact_persons": [],
+            },
+        ]
+    )
+
+    weeks = build_calendar_weeks(talks, current_date=datetime.date(2026, 7, 7))
+    week = next(week for week in weeks if week.monday == "2026-07-06")
+
+    assert week.talk is not None
+    assert week.talk.status_label == "Completed"
+    assert week.talk.status_age == ""
 
 
 def test_build_calendar_weeks_formats_contact_persons_for_planned_speaker():
