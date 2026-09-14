@@ -768,10 +768,12 @@ def test_calendar_page_displays_comments_for_blank_speaker_talk(tmp_path):
 
     assert response.status_code == 200
     assert "Reserved for internal meeting" in response.text
-    assert "unavailable-week" in response.text
+    assert "unavailable-week" not in response.text
 
 
-def test_calendar_page_includes_week_color_classes(tmp_path):
+def test_calendar_page_includes_alert_week_color_class(tmp_path):
+    today = datetime.date.today()
+    talk_date = today + datetime.timedelta(days=7)
     db_path = tmp_path / "seminars.db"
     connection = open_or_create_db(db_path)
     insert_speaker(
@@ -801,23 +803,25 @@ def test_calendar_page_includes_week_color_classes(tmp_path):
     insert_talk(
         connection,
         Talk(
-            date=datetime.datetime(2026, 6, 29, 14, 30),
+            date=datetime.datetime.combine(today, datetime.time(14, 30)),
             speaker="Alice Example",
             title="Completed talk",
             abstract="",
-            status="completed",
+            status="Completed",
             comments="",
         ),
     )
     insert_talk(
         connection,
         Talk(
-            date=datetime.datetime(2026, 7, 13, 14, 30),
+            date=datetime.datetime.combine(talk_date, datetime.time(14, 30)),
             speaker="Bob Example",
-            title="Planned talk",
+            title="Late talk",
             abstract="",
-            status="planned",
-            status_date=datetime.datetime(2026, 7, 1, 9, 0),
+            status="Accepted",
+            status_date=datetime.datetime.combine(
+                today - datetime.timedelta(days=1), datetime.time(9, 0)
+            ),
             comments="",
             organizer="David",
         ),
@@ -829,9 +833,10 @@ def test_calendar_page_includes_week_color_classes(tmp_path):
     response = client.get("/calendar")
 
     assert response.status_code == 200
-    assert "completed-week" in response.text
-    assert "planned-week" in response.text
-    assert "future-empty-week" in response.text
+    assert "alert-week" in response.text
+    assert "completed-week" not in response.text
+    assert "planned-week" not in response.text
+    assert "future-empty-week" not in response.text
 
 
 def test_calendar_page_shows_status_for_talks(tmp_path):

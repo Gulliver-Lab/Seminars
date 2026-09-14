@@ -71,25 +71,26 @@ def test_build_calendar_weeks_marks_blank_speaker_talk_as_unavailable():
     assert week.talk is not None
     assert week.talk.is_unavailable
     assert week.talk.comments == "Reserved for internal meeting"
-    assert week.color_class == "unavailable-week"
+    assert week.color_class == ""
 
 
-def test_build_calendar_weeks_colors_completed_and_planned_talks():
+def test_build_calendar_weeks_alerts_when_status_is_late_for_talk_date():
     talks = pd.DataFrame(
         [
             {
                 "date": datetime.datetime(2026, 7, 6, 14, 30),
                 "speaker": "Completed Speaker",
                 "topic": "Other",
-                "status": "completed",
+                "status": "Completed",
                 "comments": "",
                 "contact_persons": [],
             },
             {
                 "date": datetime.datetime(2026, 7, 13, 14, 30),
-                "speaker": "Planned Speaker",
+                "speaker": "Late Speaker",
                 "topic": "Other",
-                "status": "planned",
+                "status": "Accepted",
+                "status_date": datetime.datetime(2026, 7, 1, 9, 0),
                 "comments": "",
                 "contact_persons": [],
             },
@@ -99,15 +100,16 @@ def test_build_calendar_weeks_colors_completed_and_planned_talks():
     weeks = build_calendar_weeks(talks, current_date=datetime.date(2026, 7, 7))
     weeks_by_monday = {week.monday: week for week in weeks}
 
-    assert weeks_by_monday["2026-07-06"].color_class == "completed-week"
-    assert weeks_by_monday["2026-07-13"].color_class == "planned-week"
+    assert weeks_by_monday["2026-07-06"].color_class == ""
+    assert weeks_by_monday["2026-07-13"].color_class == "alert-week"
 
 
-def test_build_calendar_weeks_colors_empty_future_weeks():
+def test_build_calendar_weeks_alerts_empty_future_weeks_inside_six_weeks():
     weeks = build_calendar_weeks(pd.DataFrame(), current_date=datetime.date(2026, 7, 7))
     weeks_by_monday = {week.monday: week for week in weeks}
 
-    assert weeks_by_monday["2026-07-13"].color_class == "future-empty-week"
+    assert weeks_by_monday["2026-07-13"].color_class == "alert-week"
+    assert weeks_by_monday["2026-08-24"].color_class == ""
     assert weeks_by_monday["2026-07-06"].color_class == ""
 
 

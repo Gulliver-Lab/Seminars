@@ -5,6 +5,8 @@ from typing import Any
 
 import pandas as pd
 
+from seminars.alerts import should_alert
+
 TOPIC_COLORS = {
     "Active Matter": "topic-active-matter",
     "Theory": "topic-theory",
@@ -109,14 +111,8 @@ def _calendar_talk(row: Mapping[Any, Any], current_date: datetime.date) -> Calen
 def _week_color_class(
     monday: datetime.date, talk: CalendarTalk | None, current_monday: datetime.date
 ) -> str:
-    if talk is not None and talk.is_unavailable:
-        return "unavailable-week"
-    if talk is not None and talk.status.casefold() == "completed":
-        return "completed-week"
-    if talk is not None and talk.status.casefold() == "planned":
-        return "planned-week"
-    if talk is None and monday > current_monday:
-        return "future-empty-week"
+    if should_alert(talk, monday, current_monday):
+        return "alert-week"
     return ""
 
 
