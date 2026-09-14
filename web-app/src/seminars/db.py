@@ -183,6 +183,7 @@ def upsert_talk_for_week(
     title: str = "",
     abstract: str = "",
     organizer: str = "",
+    comments: str | None = None,
 ) -> None:
     status = parse_talk_status(status).value
     if not isinstance(status_date, datetime.date):
@@ -228,7 +229,7 @@ def upsert_talk_for_week(
                 abstract,
                 status,
                 status_date.isoformat(),
-                "",
+                comments or "",
                 organizer,
             ),
         )
@@ -236,9 +237,16 @@ def upsert_talk_for_week(
         connection.execute(
             """
             UPDATE talks
-            SET speaker = ?, title = ?, abstract = ?, status = ?, status_date = ?, organizer = ?
+            SET
+                speaker = ?,
+                title = ?,
+                abstract = ?,
+                status = ?,
+                status_date = ?,
+                organizer = ?,
+                comments = COALESCE(?, comments)
             WHERE rowid = ?
-            """,  # noqa: E501
+            """,
             (
                 speaker,
                 title,
@@ -246,6 +254,7 @@ def upsert_talk_for_week(
                 status,
                 status_date.isoformat(),
                 organizer,
+                comments,
                 existing[0],
             ),
         )

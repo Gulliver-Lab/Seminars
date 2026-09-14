@@ -458,8 +458,13 @@
             <textarea id="week-abstract" name="abstract"></textarea>
           </div>
 
+          <input id="week-comments" name="comments" type="hidden">
+
           <div class="week-form-actions">
-            <button class="button delete-button" form="week-delete-form" id="week-delete-button" type="submit">Remove talk</button>
+            <div class="week-form-save-actions">
+              <button class="button delete-button" form="week-delete-form" id="week-delete-button" type="submit">Remove talk</button>
+              <button class="button" id="week-no-talk-button" type="button">No talk</button>
+            </div>
             <div class="week-form-save-actions">
               <button class="button" formmethod="dialog" type="submit">Cancel</button>
               <button class="button" type="submit">Save</button>
@@ -481,8 +486,10 @@
       const weekOrganizer = document.querySelector("#week-organizer");
       const weekTitle = document.querySelector("#week-title");
       const weekAbstract = document.querySelector("#week-abstract");
+      const weekComments = document.querySelector("#week-comments");
       const weekDeleteForm = document.querySelector("#week-delete-form");
       const weekDeleteButton = document.querySelector("#week-delete-button");
+      const weekNoTalkButton = document.querySelector("#week-no-talk-button");
       const speakerOptions = [
         {% for speaker in speaker_options %}
           {{ speaker | tojson }},
@@ -547,6 +554,7 @@
         weekOrganizer.value = row.dataset.weekOrganizer || "";
         weekTitle.value = row.dataset.weekTitle || "";
         weekAbstract.value = row.dataset.weekAbstract || "";
+        weekComments.value = "";
         weekDeleteButton.disabled = row.dataset.weekHasTalk !== "true";
         weekDialog.showModal();
       }
@@ -554,6 +562,21 @@
       weekSpeakerFilter.addEventListener("input", () => renderSpeakerOptions(weekSpeaker.value));
       weekStatus.addEventListener("change", () => {
         weekStatusDate.value = todayDate();
+      });
+      weekNoTalkButton.addEventListener("click", () => {
+        const reason = window.prompt("Reason for no talk");
+        if (reason === null) {
+          return;
+        }
+        weekSpeaker.value = "";
+        weekSpeakerFilter.value = "";
+        weekStatus.value = "Completed";
+        weekStatusDate.value = todayDate();
+        weekOrganizer.value = "";
+        weekTitle.value = "";
+        weekAbstract.value = "";
+        weekComments.value = reason.trim();
+        weekForm.requestSubmit();
       });
 
       document.querySelectorAll(".calendar-row").forEach((row) => {
