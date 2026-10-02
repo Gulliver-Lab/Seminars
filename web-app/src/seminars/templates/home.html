@@ -77,7 +77,11 @@
       .content {
         display: grid;
         gap: 20px;
-        max-width: 760px;
+        width: 100%;
+      }
+
+      .section-title {
+        margin: 0;
       }
 
       .panel {
@@ -203,6 +207,7 @@
       </div>
 
       <div class="content">
+        <h2 class="section-title">Next talks</h2>
         <section class="panel" aria-label="Upcoming confirmed talks">
           {% if next_talk %}
             <div class="talk-details">
