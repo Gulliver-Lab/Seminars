@@ -134,12 +134,6 @@
         margin-bottom: 0;
       }
 
-      .how-to-use-grid {
-        display: grid;
-        gap: 12px;
-        grid-template-columns: repeat(2, minmax(0, 1fr));
-      }
-
       .how-to-use-item {
         border-top: 2px solid #d9dee7;
         padding-top: 10px;
@@ -189,9 +183,6 @@
           flex-wrap: wrap;
         }
 
-        .how-to-use-grid {
-          grid-template-columns: 1fr;
-        }
       }
     </style>
   </head>
@@ -245,15 +236,9 @@
 
         <section class="panel how-to-use" aria-labelledby="how-to-use-title">
           <h2 id="how-to-use-title">How to use</h2>
-          <div class="how-to-use-grid">
-            <div class="how-to-use-item">
-              <h3>Speakers</h3>
-              <p>Search or sort the list of people we want to present, or presented in the past. Click a row to edit it, or choose <strong>New Speaker</strong> to add someone. Please add as much information (email, affiliation, group website) as possible.</p>
-            </div>
-            <div class="how-to-use-item">
-              <h3>Calendar</h3>
-              <p>Click a week to add or update its talk. Choose a speaker, status, status date, organizer, title, and abstract, then save. Use <strong>No talk</strong> to record a reason, or <strong>Remove talk</strong> to delete the entry.</p>
-            </div>
+          <div class="how-to-use-item">
+            <p>In <strong>Speakers</strong>, you can see the list of people we want to invite, or people who presented in the past (when you unclick the want-to-invite box). Click a row to edit it, or choose <strong>New Speaker</strong> to add someone. Please add as much information (email, affiliation, group website) as possible.
+              <br>The <strong>Calendar</strong> tab is used for managing upcoming talks. You can see upcoming seminars, but please do not update any field (for seminar organizers only).
           </div>
         </section>
       </div>
