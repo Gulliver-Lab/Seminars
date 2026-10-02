@@ -77,7 +77,11 @@
       .content {
         display: grid;
         gap: 20px;
-        max-width: 760px;
+        width: 100%;
+      }
+
+      .section-title {
+        margin: 0;
       }
 
       .panel {
@@ -121,6 +125,38 @@
         color: #586576;
       }
 
+      .how-to-use {
+        display: grid;
+        gap: 16px;
+      }
+
+      .how-to-use h2 {
+        margin-bottom: 0;
+      }
+
+      .how-to-use-grid {
+        display: grid;
+        gap: 12px;
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+      }
+
+      .how-to-use-item {
+        border-top: 2px solid #d9dee7;
+        padding-top: 10px;
+      }
+
+      .how-to-use-item h3 {
+        font-size: 15px;
+        line-height: 1.3;
+        margin: 0 0 6px;
+      }
+
+      .how-to-use-item p {
+        color: #465365;
+        line-height: 1.45;
+        margin: 0;
+      }
+
       .following-talks {
         border-top: 1px solid #e2e7ef;
         display: grid;
@@ -152,6 +188,10 @@
         .nav {
           flex-wrap: wrap;
         }
+
+        .how-to-use-grid {
+          grid-template-columns: 1fr;
+        }
       }
     </style>
   </head>
@@ -167,6 +207,7 @@
       </div>
 
       <div class="content">
+        <h2 class="section-title">Next talks</h2>
         <section class="panel" aria-label="Upcoming confirmed talks">
           {% if next_talk %}
             <div class="talk-details">
@@ -200,6 +241,20 @@
         <section class="panel" aria-labelledby="conference-room-title">
           <h2 id="conference-room-title">Visio link:</h2>
           <a href="{{ conference_room_url }}">{{ conference_room_url }}</a>
+        </section>
+
+        <section class="panel how-to-use" aria-labelledby="how-to-use-title">
+          <h2 id="how-to-use-title">How to use</h2>
+          <div class="how-to-use-grid">
+            <div class="how-to-use-item">
+              <h3>Speakers</h3>
+              <p>Search or sort the list of people we want to present, or presented in the past. Click a row to edit it, or choose <strong>New Speaker</strong> to add someone. Please add as much information (email, affiliation, group website) as possible.</p>
+            </div>
+            <div class="how-to-use-item">
+              <h3>Calendar</h3>
+              <p>Click a week to add or update its talk. Choose a speaker, status, status date, organizer, title, and abstract, then save. Use <strong>No talk</strong> to record a reason, or <strong>Remove talk</strong> to delete the entry.</p>
+            </div>
+          </div>
         </section>
       </div>
     </main>
