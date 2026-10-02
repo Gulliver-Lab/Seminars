@@ -185,7 +185,6 @@ def build_app(
                 "speaker_options": speaker_options,
                 "talk_status_options": TALK_STATUSES,
                 "organizer_options": CONTACT_PERSON_OPTIONS,
-                "calendar_feed_url": url_path_for(request, "calendar_feed"),
                 "url_path_for": url_path_for,
             },
         )
