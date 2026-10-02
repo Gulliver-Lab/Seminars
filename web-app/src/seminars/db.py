@@ -259,6 +259,16 @@ def upsert_talk_for_week(
             ),
         )
 
+    if speaker:
+        connection.execute(
+            """
+            UPDATE speakers
+            SET want_to_invite = FALSE
+            WHERE name = ? AND want_to_invite = TRUE
+            """,
+            (speaker,),
+        )
+
     connection.commit()
 
 

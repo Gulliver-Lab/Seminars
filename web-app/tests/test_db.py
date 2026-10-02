@@ -524,6 +524,38 @@ def test_upsert_talk_for_week_updates_existing_talk_and_preserves_details():
     )
 
 
+def test_upsert_talk_for_week_marks_speaker_as_no_longer_to_invite():
+    connection = sqlite3.connect(":memory:")
+    connection.execute("PRAGMA foreign_keys = ON")
+    _create_schema(connection)
+    insert_speaker(
+        connection,
+        Speaker(
+            name="Alice Example",
+            affiliation="Example University",
+            email="alice@example.edu",
+            topic="Active Matter",
+            contact_persons=[],
+            notes="",
+            want_to_invite=True,
+        ),
+    )
+
+    upsert_talk_for_week(
+        connection,
+        datetime.date(2026, 7, 6),
+        "Alice Example",
+        "Invited",
+        datetime.date(2026, 7, 1),
+    )
+
+    want_to_invite = connection.execute(
+        "SELECT want_to_invite FROM speakers WHERE name = ?",
+        ("Alice Example",),
+    ).fetchone()
+    assert want_to_invite == (0,)
+
+
 def test_upsert_talk_for_week_updates_status_date_when_status_is_unchanged():
     connection = sqlite3.connect(":memory:")
     connection.execute("PRAGMA foreign_keys = ON")
