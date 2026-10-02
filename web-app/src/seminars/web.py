@@ -29,7 +29,13 @@ from seminars.db import (
     update_speaker,
     upsert_talk_for_week,
 )
-from seminars.models import PERSONS, ResearchTopic, Speaker, TalkStatus, parse_talk_status
+from seminars.models import (
+    PERSONS,
+    ResearchTopic,
+    Speaker,
+    TalkStatus,
+    parse_talk_status,
+)
 
 TEMPLATES = Jinja2Templates(directory=Path(__file__).parent / "templates")
 
@@ -47,6 +53,7 @@ TALK_STATUSES = list(TalkStatus)
 TALK_STATUS_ORDER = {status: index for index, status in enumerate(TALK_STATUSES)}
 CONTACT_PERSON_OPTIONS = [person for person in get_args(PERSONS) if person]
 CONFERENCE_ROOM_URL = "https://visio.numerique.gouv.fr/vuf-njri-opc"
+CALENDAR_TIMEZONE = "Europe/Paris"
 WORDPRESS_ORIGIN = "https://blog.espci.fr"
 
 
@@ -136,6 +143,23 @@ def build_app(
             },
         )
 
+    @app.get("/calendar.ics", name="calendar_feed")
+    def calendar_feed() -> Response:
+        connection = open_or_create_db(database_path)
+        try:
+            rows = connection.execute(
+                """
+                SELECT rowid, date, speaker, title, abstract, organizer
+                FROM talks
+                ORDER BY date
+                """
+            ).fetchall()
+        finally:
+            connection.close()
+
+        feed = build_calendar_feed(rows)
+        return Response(feed, media_type="text/calendar")
+
     @app.get("/calendar", response_class=HTMLResponse)
     def calendar_index(request: Request) -> Any:
         connection = open_or_create_db(database_path)
@@ -160,6 +184,7 @@ def build_app(
                 "speaker_options": speaker_options,
                 "talk_status_options": TALK_STATUSES,
                 "organizer_options": CONTACT_PERSON_OPTIONS,
+                "calendar_feed_url": url_path_for(request, "calendar_feed"),
                 "url_path_for": url_path_for,
             },
         )
@@ -301,6 +326,65 @@ def build_app(
         )
 
     return app
+
+
+def build_calendar_feed(
+    rows: Sequence[tuple[int, str, str, str, str, str]],
+    now: datetime.datetime | None = None,
+) -> str:
+    current_time = now or datetime.datetime.now()
+    events: list[str] = []
+    generated_at = datetime.datetime.now(datetime.UTC).strftime("%Y%m%dT%H%M%SZ")
+
+    for rowid, date_value, speaker, title, abstract, organizer in rows:
+        start = datetime.datetime.fromisoformat(date_value)
+        if not speaker or start < current_time:
+            continue
+
+        end = start + datetime.timedelta(hours=1)
+        summary = f"{speaker}: {title}" if title else speaker
+        description_parts = [part for part in (abstract, organizer) if part]
+        description = "\n\n".join(description_parts)
+        event_lines = [
+            "BEGIN:VEVENT",
+            f"UID:seminar-talk-{rowid}@seminars",
+            f"DTSTAMP:{generated_at}",
+            f"DTSTART;TZID={CALENDAR_TIMEZONE}:{start.strftime('%Y%m%dT%H%M%S')}",
+            f"DTEND;TZID={CALENDAR_TIMEZONE}:{end.strftime('%Y%m%dT%H%M%S')}",
+            f"SUMMARY:{summary}",
+            f"LOCATION:{CONFERENCE_ROOM_URL}",
+        ]
+        if description:
+            event_lines.append(f"DESCRIPTION:{description}")
+        event_lines.append("END:VEVENT")
+        events.extend(event_lines)
+
+    lines = [
+        "BEGIN:VCALENDAR",
+        "VERSION:2.0",
+        "PRODID:-//Gulliver Seminars//EN",
+        "CALSCALE:GREGORIAN",
+        "X-WR-CALNAME:Gulliver Seminars",
+        *events,
+        "END:VCALENDAR",
+    ]
+    return "\r\n".join(_escape_calendar_line(line) for line in lines) + "\r\n"
+
+
+def _escape_calendar_line(line: str) -> str:
+    if ":" not in line:
+        return line
+
+    property_name, value = line.split(":", 1)
+    escaped_value = (
+        value.replace("\\", "\\\\")
+        .replace(";", "\\;")
+        .replace(",", "\\,")
+        .replace("\r\n", "\\n")
+        .replace("\n", "\\n")
+        .replace("\r", "\\n")
+    )
+    return f"{property_name}:{escaped_value}"
 
 
 def upcoming_confirmed_talks(

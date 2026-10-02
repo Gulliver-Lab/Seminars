@@ -79,6 +79,10 @@
         max-width: 100%;
       }
 
+      .calendar-feed {
+        margin: 0 0 12px;
+      }
+
       .calendar-table {
         border-collapse: separate;
         border-spacing: 0 6px;
@@ -363,6 +367,9 @@
       </div>
 
       <div class="calendar-page">
+        <p class="calendar-feed">
+          <a href="{{ calendar_feed_url }}">Subscribe to this calendar</a>
+        </p>
         <table class="calendar-table" aria-label="Seminar weeks">
           <thead>
             <tr>

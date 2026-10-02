@@ -13,6 +13,7 @@ from seminars.db import (
 from seminars.models import Email, Speaker, Talk
 from seminars.web import (
     build_app,
+    build_calendar_feed,
     next_upcoming_confirmed_talk,
     speakers_with_last_talk,
 )
@@ -685,6 +686,31 @@ def test_calendar_page_links_under_root_path(tmp_path):
         'const deleteCalendarWeekPath = "/seminars/calendar/weeks/__monday__/delete";'
         in response.text
     )
+
+
+def test_calendar_feed_contains_future_talks_and_escapes_text():
+    feed = build_calendar_feed(
+        [
+            (
+                12,
+                "2099-01-15T14:30:00",
+                "Alice, Example",
+                "Talk; title",
+                "An abstract\nwith details",
+                "Bob Example",
+            ),
+            (13, "2020-01-15T14:30:00", "Past Example", "Past", "", ""),
+            (14, "2099-01-22T14:30:00", "", "No talk", "", ""),
+        ],
+        now=datetime.datetime(2098, 1, 1),
+    )
+
+    assert "UID:seminar-talk-12@seminars" in feed
+    assert "DTSTART;TZID=Europe/Paris:20990115T143000" in feed
+    assert "SUMMARY:Alice\\, Example: Talk\\; title" in feed
+    assert "DESCRIPTION:An abstract\\nwith details\\n\\nBob Example" in feed
+    assert "Past Example" not in feed
+    assert "No talk" not in feed
 
 
 def test_calendar_page_uses_table_without_legend(tmp_path):
