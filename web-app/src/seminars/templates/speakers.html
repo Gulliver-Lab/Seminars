@@ -30,7 +30,7 @@
         display: flex;
         gap: 16px;
         justify-content: space-between;
-        margin-bottom: 16px;
+        margin-bottom: 24px;
       }
 
       h1 {
@@ -63,6 +63,24 @@
       .nav {
         display: flex;
         gap: 8px;
+      }
+
+      .nav .button {
+        background: #ffffff;
+        border: 1px solid #cbd3df;
+        color: #1c2430;
+        text-decoration: none;
+      }
+
+      .nav .button:hover {
+        background: #eef2f7;
+        border-color: #aeb9c8;
+      }
+
+      .nav .button.active {
+        background: #254565;
+        border-color: #254565;
+        color: #ffffff;
       }
 
       .search-input {
@@ -465,7 +483,11 @@
     <main>
       <div class="page-header">
         <h1>Speakers</h1>
-        <div class="count"><span id="visible-count">{{ visible_count }}</span> rows</div>
+        <nav class="nav" aria-label="Primary">
+          <a class="button" href="{{ url_path_for(request, 'home_index') }}">Home</a>
+          <a class="button active" href="{{ url_path_for(request, 'speakers_index') }}">Speakers</a>
+          <a class="button" href="{{ url_path_for(request, 'calendar_index') }}">Calendar</a>
+        </nav>
       </div>
 
       <div class="toolbar">
@@ -478,14 +500,11 @@
           autocomplete="off"
         >
         <div class="toolbar-actions">
+          <div class="count"><span id="visible-count">{{ visible_count }}</span> rows</div>
           <label class="checkbox-field">
             <input id="want-to-invite-filter" type="checkbox" checked>
             Want to invite
           </label>
-          <nav class="nav" aria-label="Primary">
-            <a class="button secondary-button" href="{{ url_path_for(request, 'home_index') }}">Home</a>
-            <a class="button secondary-button" href="{{ url_path_for(request, 'calendar_index') }}">Calendar</a>
-          </nav>
           <button type="button" id="new-speaker-button">New Speaker</button>
         </div>
       </div>
