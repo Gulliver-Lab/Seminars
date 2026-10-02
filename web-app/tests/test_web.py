@@ -708,7 +708,7 @@ def test_calendar_feed_contains_future_talks_and_escapes_text():
     assert "UID:seminar-talk-12@seminars" in feed
     assert "DTSTART;TZID=Europe/Paris:20990111T113000" in feed
     assert "SUMMARY:Alice\\, Example: Talk\\; title" in feed
-    assert "DESCRIPTION:An abstract\\nwith details\\n\\nBob Example" in feed
+    assert "DESCRIPTION:Talk\\; title\\n\\nAn abstract\\nwith details" in feed
     assert "Past Example" not in feed
     assert "No talk" not in feed
 

@@ -346,7 +346,7 @@ def build_calendar_feed(
 
         end = start + datetime.timedelta(hours=1)
         summary = f"{speaker}: {title}" if title else speaker
-        description_parts = [part for part in (abstract, organizer) if part]
+        description_parts = [part for part in (title, abstract) if part]
         description = "\n\n".join(description_parts)
         event_lines = [
             "BEGIN:VEVENT",
