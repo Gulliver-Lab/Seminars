@@ -54,6 +54,7 @@ TALK_STATUS_ORDER = {status: index for index, status in enumerate(TALK_STATUSES)
 CONTACT_PERSON_OPTIONS = [person for person in get_args(PERSONS) if person]
 CONFERENCE_ROOM_URL = "https://visio.numerique.gouv.fr/vuf-njri-opc"
 CALENDAR_TIMEZONE = "Europe/Paris"
+SEMINAR_START_TIME = datetime.time(11, 30)
 WORDPRESS_ORIGIN = "https://blog.espci.fr"
 
 
@@ -337,7 +338,9 @@ def build_calendar_feed(
     generated_at = datetime.datetime.now(datetime.UTC).strftime("%Y%m%dT%H%M%SZ")
 
     for rowid, date_value, speaker, title, abstract, organizer in rows:
-        start = datetime.datetime.fromisoformat(date_value)
+        talk_date = datetime.datetime.fromisoformat(date_value)
+        monday = talk_date.date() - datetime.timedelta(days=talk_date.weekday())
+        start = datetime.datetime.combine(monday, SEMINAR_START_TIME)
         if not speaker or start < current_time:
             continue
 

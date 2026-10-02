@@ -223,7 +223,7 @@ def upsert_talk_for_week(
             VALUES (?, ?, ?, ?, ?, ?, ?, ?)
             """,
             (
-                datetime.datetime.combine(monday, datetime.time(14, 30)).isoformat(),
+                datetime.datetime.combine(monday, datetime.time(11, 30)).isoformat(),
                 speaker,
                 title,
                 abstract,

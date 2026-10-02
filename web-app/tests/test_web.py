@@ -706,7 +706,7 @@ def test_calendar_feed_contains_future_talks_and_escapes_text():
     )
 
     assert "UID:seminar-talk-12@seminars" in feed
-    assert "DTSTART;TZID=Europe/Paris:20990115T143000" in feed
+    assert "DTSTART;TZID=Europe/Paris:20990111T113000" in feed
     assert "SUMMARY:Alice\\, Example: Talk\\; title" in feed
     assert "DESCRIPTION:An abstract\\nwith details\\n\\nBob Example" in feed
     assert "Past Example" not in feed
@@ -1078,7 +1078,7 @@ def test_post_calendar_week_inserts_talk(tmp_path):
     talks = read_talks(connection).to_dict("records")
     connection.close()
     assert len(talks) == 1
-    assert talks[0]["date"] == datetime.datetime(2026, 7, 13, 14, 30)
+    assert talks[0]["date"] == datetime.datetime(2026, 7, 13, 11, 30)
     assert talks[0]["speaker"] == "Alice Example"
     assert talks[0]["status"] == "Invited"
     assert talks[0]["status_date"] == datetime.datetime(2026, 7, 1)
@@ -1222,7 +1222,7 @@ def test_post_calendar_week_marks_week_as_no_talk(tmp_path):
     connection.close()
     assert speakers[0]["name"] == ""
     assert len(talks) == 1
-    assert talks[0]["date"] == datetime.datetime(2026, 7, 13, 14, 30)
+    assert talks[0]["date"] == datetime.datetime(2026, 7, 13, 11, 30)
     assert talks[0]["speaker"] == ""
     assert talks[0]["status"] == "Completed"
     assert talks[0]["status_date"] == datetime.datetime(2026, 7, 3)
