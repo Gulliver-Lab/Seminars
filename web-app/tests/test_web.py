@@ -13,6 +13,7 @@ from seminars.db import (
 from seminars.models import Email, Speaker, Talk
 from seminars.web import (
     build_app,
+    build_calendar_feed,
     next_upcoming_confirmed_talk,
     speakers_with_last_talk,
 )
@@ -687,6 +688,31 @@ def test_calendar_page_links_under_root_path(tmp_path):
     )
 
 
+def test_calendar_feed_contains_future_talks_and_escapes_text():
+    feed = build_calendar_feed(
+        [
+            (
+                12,
+                "2099-01-15T14:30:00",
+                "Alice, Example",
+                "Talk; title",
+                "An abstract\nwith details",
+                "Bob Example",
+            ),
+            (13, "2020-01-15T14:30:00", "Past Example", "Past", "", ""),
+            (14, "2099-01-22T14:30:00", "", "No talk", "", ""),
+        ],
+        now=datetime.datetime(2098, 1, 1),
+    )
+
+    assert "UID:seminar-talk-12@seminars" in feed
+    assert "DTSTART;TZID=Europe/Paris:20990111T113000" in feed
+    assert "SUMMARY:Alice\\, Example: Talk\\; title" in feed
+    assert "DESCRIPTION:Talk\\; title\\n\\nAn abstract\\nwith details" in feed
+    assert "Past Example" not in feed
+    assert "No talk" not in feed
+
+
 def test_calendar_page_uses_table_without_legend(tmp_path):
     db_path = tmp_path / "seminars.db"
     connection = open_or_create_db(db_path)
@@ -1052,7 +1078,7 @@ def test_post_calendar_week_inserts_talk(tmp_path):
     talks = read_talks(connection).to_dict("records")
     connection.close()
     assert len(talks) == 1
-    assert talks[0]["date"] == datetime.datetime(2026, 7, 13, 14, 30)
+    assert talks[0]["date"] == datetime.datetime(2026, 7, 13, 11, 30)
     assert talks[0]["speaker"] == "Alice Example"
     assert talks[0]["status"] == "Invited"
     assert talks[0]["status_date"] == datetime.datetime(2026, 7, 1)
@@ -1196,7 +1222,7 @@ def test_post_calendar_week_marks_week_as_no_talk(tmp_path):
     connection.close()
     assert speakers[0]["name"] == ""
     assert len(talks) == 1
-    assert talks[0]["date"] == datetime.datetime(2026, 7, 13, 14, 30)
+    assert talks[0]["date"] == datetime.datetime(2026, 7, 13, 11, 30)
     assert talks[0]["speaker"] == ""
     assert talks[0]["status"] == "Completed"
     assert talks[0]["status_date"] == datetime.datetime(2026, 7, 3)
