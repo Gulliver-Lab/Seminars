@@ -15,7 +15,7 @@ TOPIC_COLORS = {
     "Soft Matter": "topic-soft-matter",
     "Other": "topic-other",
 }
-FUTURE_WEEKS = 26
+FUTURE_WEEKS = 38
 
 
 @dataclasses.dataclass
