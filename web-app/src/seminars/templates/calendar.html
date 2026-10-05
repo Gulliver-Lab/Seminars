@@ -606,11 +606,11 @@
         weekDialog.showModal();
       }
 
-      function displayDate(value) {
+      function displayDate(value, includeWeekday = true) {
         const [year, month, day] = value.split("-").map(Number);
-        return new Date(year, month - 1, day).toLocaleDateString(undefined, {
-          weekday: "long", year: "numeric", month: "long", day: "numeric",
-        });
+        const options = { month: "long", day: "numeric" };
+        if (includeWeekday) options.weekday = "long";
+        return new Date(year, month - 1, day).toLocaleDateString(undefined, options);
       }
 
       function openAnnouncementDialog() {
@@ -619,7 +619,7 @@
         const affiliation = announcement.affiliation ? ` (${announcement.affiliation})` : "";
         const nextTalks = announcement.next_talks.length
           ? "\n\nUpcoming confirmed talks:\n" + announcement.next_talks
-              .map((talk) => `- ${displayDate(talk.date)}: ${talk.speaker}`)
+              .map((talk) => `- ${displayDate(talk.date, false)}: ${talk.speaker}`)
               .join("\n")
           : "";
         announcementDraft.value = `Subject: Seminar by ${announcement.speaker}\n\nDear all,\n\nOur next seminar will be given by ${announcement.speaker}${affiliation} on ${displayDate(announcement.date)} at 11:30am.\n\nTitle: ${announcement.title}\n\nAbstract:\n${announcement.abstract}${nextTalks}\n`;
