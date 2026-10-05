@@ -243,6 +243,12 @@
         gap: 6px;
       }
 
+      .week-form-fields-inline {
+        display: grid;
+        gap: 12px;
+        grid-template-columns: 1fr 1fr;
+      }
+
       .week-form-field label {
         color: #465365;
         font-size: 13px;
@@ -431,18 +437,20 @@
             <div class="week-form-help">Regex filter, then click a speaker below.</div>
           </div>
 
-          <div class="week-form-field">
-            <label for="week-status">Status</label>
-            <select id="week-status" name="status" required>
-              {% for status in talk_status_options %}
-                <option value="{{ status }}">{{ status }}</option>
-              {% endfor %}
-            </select>
-          </div>
+          <div class="week-form-fields-inline">
+            <div class="week-form-field">
+              <label for="week-status">Status</label>
+              <select id="week-status" name="status" required>
+                {% for status in talk_status_options %}
+                  <option value="{{ status }}">{{ status }}</option>
+                {% endfor %}
+              </select>
+            </div>
 
-          <div class="week-form-field">
-            <label for="week-status-date">Status date</label>
-            <input id="week-status-date" name="status_date" required type="date">
+            <div class="week-form-field">
+              <label for="week-status-date">Status date</label>
+              <input id="week-status-date" name="status_date" required type="date">
+            </div>
           </div>
 
           <div class="week-form-field">
