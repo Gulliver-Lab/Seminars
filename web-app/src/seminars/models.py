@@ -49,6 +49,12 @@ PERSONS = Literal[
     "",
 ]
 
+ORGANIZERS = Literal[
+    "Olivier R",
+    "Paddy",
+    "",
+]
+
 
 @dataclasses.dataclass
 class Speaker:

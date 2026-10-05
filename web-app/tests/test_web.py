@@ -1019,8 +1019,13 @@ def test_calendar_page_includes_week_edit_dialog(tmp_path):
     assert "No matching speakers" in response.text
     assert '<option value="Invited">Invited</option>' in response.text
     assert '<option value="Completed">Completed</option>' in response.text
-    assert 'id="week-status-date" name="status_date" required type="date"' in response.text
-    assert "weekStatusDate.value = row.dataset.weekStatusDate || todayDate()" in response.text
+    assert (
+        'id="week-status-date" name="status_date" required type="date"' in response.text
+    )
+    assert (
+        "weekStatusDate.value = row.dataset.weekStatusDate || todayDate()"
+        in response.text
+    )
     assert 'weekStatus.addEventListener("change"' in response.text
     assert 'id="week-organizer" name="organizer"' in response.text
     assert '<option value="David">David</option>' in response.text
