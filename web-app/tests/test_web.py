@@ -1,5 +1,6 @@
 import datetime
 
+import pandas as pd
 from fastapi.testclient import TestClient
 
 from seminars.db import (
@@ -14,6 +15,7 @@ from seminars.models import Email, Speaker, Talk
 from seminars.web import (
     build_app,
     build_calendar_feed,
+    build_calendar_announcements,
     next_upcoming_confirmed_talk,
     speakers_with_last_talk,
 )
@@ -32,6 +34,65 @@ def insert_test_speaker(connection, name: str) -> None:
             want_to_invite=False,
         ),
     )
+
+
+def test_build_calendar_announcements_includes_affiliation_and_next_three_talks():
+    talks = pd.DataFrame(
+        [
+            {
+                "date": datetime.datetime(2026, 7, 13, 11, 30),
+                "speaker": "Alice Example",
+                "title": "Main title",
+                "abstract": "Main abstract",
+                "status": "Accepted",
+            },
+            {
+                "date": datetime.datetime(2026, 7, 20, 11, 30),
+                "speaker": "Bob Example",
+                "title": "",
+                "abstract": "",
+                "status": "Announced",
+            },
+            {
+                "date": datetime.datetime(2026, 7, 27, 11, 30),
+                "speaker": "Carol Example",
+                "title": "",
+                "abstract": "",
+                "status": "Announced",
+            },
+            {
+                "date": datetime.datetime(2026, 8, 3, 11, 30),
+                "speaker": "Diane Example",
+                "title": "",
+                "abstract": "",
+                "status": "Announced",
+            },
+            {
+                "date": datetime.datetime(2026, 8, 10, 11, 30),
+                "speaker": "Eve Example",
+                "title": "",
+                "abstract": "",
+                "status": "Announced",
+            },
+        ]
+    )
+    speakers = pd.DataFrame(
+        [
+            {"name": "Alice Example", "affiliation": "Example University"},
+        ]
+    )
+
+    announcement = build_calendar_announcements(talks, speakers)["2026-07-13"]
+
+    assert announcement["affiliation"] == "Example University"
+    assert announcement["date"] == "2026-07-13"
+    assert announcement["title"] == "Main title"
+    assert announcement["abstract"] == "Main abstract"
+    assert announcement["next_talks"] == [
+        {"date": "2026-07-20", "speaker": "Bob Example"},
+        {"date": "2026-07-27", "speaker": "Carol Example"},
+        {"date": "2026-08-03", "speaker": "Diane Example"},
+    ]
 
 
 def test_homepage_displays_next_accepted_or_later_talk(tmp_path):

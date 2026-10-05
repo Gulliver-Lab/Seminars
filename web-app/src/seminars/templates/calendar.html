@@ -208,11 +208,23 @@
         box-shadow: 0 24px 70px rgb(28 36 48 / 24%);
         color: #1c2430;
         padding: 0;
-        width: min(420px, calc(100vw - 28px));
+        width: min(840px, calc(100vw - 28px));
       }
 
       .week-dialog::backdrop {
         background: rgb(28 36 48 / 36%);
+      }
+
+      .announcement-dialog {
+        min-height: min(80vh, 800px);
+      }
+
+      .announcement-dialog .week-form {
+        min-height: min(75vh, 760px);
+      }
+
+      .announcement-dialog textarea {
+        min-height: 50vh;
       }
 
       .week-form {
@@ -241,6 +253,12 @@
       .week-form-field {
         display: grid;
         gap: 6px;
+      }
+
+      .week-form-fields-inline {
+        display: grid;
+        gap: 12px;
+        grid-template-columns: 1fr 1fr;
       }
 
       .week-form-field label {
@@ -431,18 +449,20 @@
             <div class="week-form-help">Regex filter, then click a speaker below.</div>
           </div>
 
-          <div class="week-form-field">
-            <label for="week-status">Status</label>
-            <select id="week-status" name="status" required>
-              {% for status in talk_status_options %}
-                <option value="{{ status }}">{{ status }}</option>
-              {% endfor %}
-            </select>
-          </div>
+          <div class="week-form-fields-inline">
+            <div class="week-form-field">
+              <label for="week-status">Status</label>
+              <select id="week-status" name="status" required>
+                {% for status in talk_status_options %}
+                  <option value="{{ status }}">{{ status }}</option>
+                {% endfor %}
+              </select>
+            </div>
 
-          <div class="week-form-field">
-            <label for="week-status-date">Status date</label>
-            <input id="week-status-date" name="status_date" required type="date">
+            <div class="week-form-field">
+              <label for="week-status-date">Status date</label>
+              <input id="week-status-date" name="status_date" required type="date">
+            </div>
           </div>
 
           <div class="week-form-field">
@@ -471,6 +491,7 @@
             <div class="week-form-save-actions">
               <button class="button delete-button" form="week-delete-form" id="week-delete-button" type="submit">Remove talk</button>
               <button class="button" id="week-no-talk-button" type="button">No talk</button>
+              <button class="button" id="announcement-button" type="button">Announcement email</button>
             </div>
             <div class="week-form-save-actions">
               <button class="button" formmethod="dialog" type="submit">Cancel</button>
@@ -479,6 +500,20 @@
           </div>
         </form>
         <form id="week-delete-form" method="post"></form>
+      </dialog>
+
+      <dialog class="week-dialog announcement-dialog" id="announcement-dialog">
+        <form class="week-form" method="dialog">
+          <div class="week-form-header">
+            <div class="week-form-title">Announcement email draft</div>
+            <button class="dialog-close" type="submit">Close</button>
+          </div>
+          <textarea id="announcement-draft" readonly></textarea>
+          <div class="week-form-actions">
+            <span></span>
+            <button class="button" type="submit">Close</button>
+          </div>
+        </form>
       </dialog>
     </main>
     <script>
@@ -497,6 +532,10 @@
       const weekDeleteForm = document.querySelector("#week-delete-form");
       const weekDeleteButton = document.querySelector("#week-delete-button");
       const weekNoTalkButton = document.querySelector("#week-no-talk-button");
+      const announcementButton = document.querySelector("#announcement-button");
+      const announcementDialog = document.querySelector("#announcement-dialog");
+      const announcementDraft = document.querySelector("#announcement-draft");
+      const calendarAnnouncements = {{ calendar_announcements | tojson }};
       const speakerOptions = [
         {% for speaker in speaker_options %}
           {{ speaker | tojson }},
@@ -563,7 +602,28 @@
         weekAbstract.value = row.dataset.weekAbstract || "";
         weekComments.value = "";
         weekDeleteButton.disabled = row.dataset.weekHasTalk !== "true";
+        announcementButton.disabled = !calendarAnnouncements[monday];
         weekDialog.showModal();
+      }
+
+      function displayDate(value, includeWeekday = true) {
+        const [year, month, day] = value.split("-").map(Number);
+        const options = { month: "long", day: "numeric" };
+        if (includeWeekday) options.weekday = "long";
+        return new Date(year, month - 1, day).toLocaleDateString(undefined, options);
+      }
+
+      function openAnnouncementDialog() {
+        const announcement = calendarAnnouncements[weekFormDate.textContent];
+        if (!announcement) return;
+        const affiliation = announcement.affiliation ? ` (${announcement.affiliation})` : "";
+        const nextTalks = announcement.next_talks.length
+          ? "\n\nUpcoming seminars:\n" + announcement.next_talks
+              .map((talk) => `- ${displayDate(talk.date, false)}: ${talk.speaker}`)
+              .join("\n")
+          : "";
+      announcementDraft.value = `Subject: Gulliver seminar: Next ${displayDate(announcement.date)}, ${announcement.speaker}\n\nDear all,\n\nOur next seminar will be given by ${announcement.speaker}${affiliation} on ${displayDate(announcement.date)}. The title of the talk is ${announcement.title} and the abstract is provided below.\n\nThe seminar will take place in the Gulliver seminar room C1.62 at 11:30 and will be transmitted online at this link: https://visio.numerique.gouv.fr/vuf-njri-opc \n\nWe look forward to seeing you there.\n\nBest wishes,\n\nOlivier & Paddy \n\n${nextTalks}\n\n ---\n ${announcement.abstract}$`;
+        announcementDialog.showModal();
       }
 
       weekSpeakerFilter.addEventListener("input", () => renderSpeakerOptions(weekSpeaker.value));
@@ -585,6 +645,7 @@
         weekComments.value = reason.trim();
         weekForm.requestSubmit();
       });
+      announcementButton.addEventListener("click", openAnnouncementDialog);
 
       document.querySelectorAll(".calendar-row").forEach((row) => {
         row.addEventListener("click", () => openWeekDialog(row));
