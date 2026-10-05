@@ -255,6 +255,15 @@
         gap: 6px;
       }
 
+      .speaker-selection-row {
+        display: flex;
+        gap: 8px;
+      }
+
+      .speaker-selection-row input {
+        flex: 1;
+      }
+
       .week-form-fields-inline {
         display: grid;
         gap: 12px;
@@ -443,7 +452,10 @@
 
           <div class="week-form-field">
             <label for="week-speaker-filter">Speaker</label>
-            <input autocomplete="off" id="week-speaker-filter" placeholder="Type a regex to filter speakers" type="text">
+            <div class="speaker-selection-row">
+              <input autocomplete="off" id="week-speaker-filter" placeholder="Type a regex to filter speakers" type="text">
+              <button class="button" id="edit-week-speaker-button" type="button">Edit speaker</button>
+            </div>
             <input id="week-speaker" name="speaker" required type="hidden">
             <div class="speaker-result-list" id="week-speaker-results"></div>
             <div class="week-form-help">Regex filter, then click a speaker below.</div>
@@ -502,6 +514,53 @@
         <form id="week-delete-form" method="post"></form>
       </dialog>
 
+      <dialog class="week-dialog" id="edit-week-speaker-dialog">
+        <form class="week-form" id="edit-week-speaker-form" method="post">
+          <div class="week-form-header">
+            <div class="week-form-title">Edit Speaker</div>
+            <button class="dialog-close" formmethod="dialog" type="submit">Close</button>
+          </div>
+          <div class="week-form-fields-inline">
+            <div class="week-form-field">
+              <label for="calendar-edit-speaker-name">Name</label>
+              <input id="calendar-edit-speaker-name" name="name" required>
+            </div>
+            <div class="week-form-field">
+              <label for="calendar-edit-speaker-affiliation">Affiliation</label>
+              <input id="calendar-edit-speaker-affiliation" name="affiliation">
+            </div>
+            <div class="week-form-field">
+              <label for="calendar-edit-speaker-email">Email</label>
+              <input id="calendar-edit-speaker-email" name="email" type="email">
+            </div>
+            <div class="week-form-field">
+              <label for="calendar-edit-speaker-topic">Topic</label>
+              <input id="calendar-edit-speaker-topic" name="topic">
+            </div>
+          </div>
+          <div class="week-form-field">
+            <label for="calendar-edit-speaker-contact-persons">Contact persons</label>
+            <input id="calendar-edit-speaker-contact-persons" placeholder="Separate names with commas" type="text">
+            <div id="calendar-edit-speaker-contact-hidden"></div>
+          </div>
+          <div class="week-form-field">
+            <label for="calendar-edit-speaker-notes">Notes</label>
+            <textarea id="calendar-edit-speaker-notes" name="notes"></textarea>
+          </div>
+          <label>
+            <input id="calendar-edit-speaker-want-to-invite" name="want_to_invite" type="checkbox">
+            Want to invite
+          </label>
+          <div class="week-form-actions">
+            <span></span>
+            <div class="week-form-save-actions">
+              <button class="button" formmethod="dialog" type="submit">Cancel</button>
+              <button class="button" type="submit">Save Speaker</button>
+            </div>
+          </div>
+        </form>
+      </dialog>
+
       <dialog class="week-dialog announcement-dialog" id="announcement-dialog">
         <form class="week-form" method="dialog">
           <div class="week-form-header">
@@ -532,6 +591,13 @@
       const weekDeleteForm = document.querySelector("#week-delete-form");
       const weekDeleteButton = document.querySelector("#week-delete-button");
       const weekNoTalkButton = document.querySelector("#week-no-talk-button");
+      const editWeekSpeakerButton = document.querySelector("#edit-week-speaker-button");
+      const editWeekSpeakerDialog = document.querySelector("#edit-week-speaker-dialog");
+      const editWeekSpeakerForm = document.querySelector("#edit-week-speaker-form");
+      const editWeekSpeakerContactPersons = document.querySelector("#calendar-edit-speaker-contact-persons");
+      const editWeekSpeakerContactHidden = document.querySelector("#calendar-edit-speaker-contact-hidden");
+      const speakerRecords = {{ speaker_records | tojson }};
+      const editSpeakerPath = {{ url_path_for(request, 'edit_speaker', original_name='__name__') | tojson }};
       const announcementButton = document.querySelector("#announcement-button");
       const announcementDialog = document.querySelector("#announcement-dialog");
       const announcementDraft = document.querySelector("#announcement-draft");
@@ -551,6 +617,7 @@
       function selectSpeaker(speaker) {
         weekSpeaker.value = speaker;
         weekSpeakerFilter.value = speaker;
+        editWeekSpeakerButton.disabled = !speakerRecords.some((record) => record.name === speaker);
         renderSpeakerOptions(speaker);
       }
 
@@ -594,6 +661,7 @@
         weekFormDate.textContent = monday;
         weekSpeaker.value = row.dataset.weekSpeaker || "";
         weekSpeakerFilter.value = row.dataset.weekSpeaker || "";
+        editWeekSpeakerButton.disabled = !speakerRecords.some((record) => record.name === weekSpeaker.value);
         renderSpeakerOptions(weekSpeaker.value);
         weekStatus.value = row.dataset.weekStatus || "Invited";
         weekStatusDate.value = row.dataset.weekStatusDate || todayDate();
@@ -605,6 +673,37 @@
         announcementButton.disabled = !calendarAnnouncements[monday];
         weekDialog.showModal();
       }
+
+      function openEditWeekSpeakerDialog() {
+        const speaker = speakerRecords.find((record) => record.name === weekSpeaker.value);
+        if (!speaker) return;
+        editWeekSpeakerForm.action = editSpeakerPath.replace("__name__", encodeURIComponent(speaker.name));
+        document.querySelector("#calendar-edit-speaker-name").value = speaker.name;
+        document.querySelector("#calendar-edit-speaker-affiliation").value = speaker.affiliation || "";
+        document.querySelector("#calendar-edit-speaker-email").value = speaker.email || "";
+        document.querySelector("#calendar-edit-speaker-topic").value = speaker.topic || "";
+        editWeekSpeakerContactPersons.value = speaker.contact_persons || "";
+        document.querySelector("#calendar-edit-speaker-notes").value = speaker.notes || "";
+        document.querySelector("#calendar-edit-speaker-want-to-invite").checked = Boolean(speaker.want_to_invite);
+        editWeekSpeakerDialog.showModal();
+      }
+
+      editWeekSpeakerForm.addEventListener("submit", (event) => {
+        if (event.submitter?.formMethod === "dialog") return;
+        editWeekSpeakerContactHidden.replaceChildren();
+        editWeekSpeakerContactPersons.value
+          .split(",")
+          .map((person) => person.trim())
+          .filter(Boolean)
+          .forEach((person) => {
+            const input = document.createElement("input");
+            input.name = "contact_persons";
+            input.type = "hidden";
+            input.value = person;
+            editWeekSpeakerContactHidden.append(input);
+          });
+      });
+      editWeekSpeakerButton.addEventListener("click", openEditWeekSpeakerDialog);
 
       function displayDate(value, includeWeekday = true) {
         const [year, month, day] = value.split("-").map(Number);
