@@ -215,6 +215,18 @@
         background: rgb(28 36 48 / 36%);
       }
 
+      .announcement-dialog {
+        min-height: min(80vh, 800px);
+      }
+
+      .announcement-dialog .week-form {
+        min-height: min(75vh, 760px);
+      }
+
+      .announcement-dialog textarea {
+        min-height: 50vh;
+      }
+
       .week-form {
         display: grid;
         gap: 16px;
@@ -490,7 +502,7 @@
         <form id="week-delete-form" method="post"></form>
       </dialog>
 
-      <dialog class="week-dialog" id="announcement-dialog">
+      <dialog class="week-dialog announcement-dialog" id="announcement-dialog">
         <form class="week-form" method="dialog">
           <div class="week-form-header">
             <div class="week-form-title">Announcement email draft</div>
