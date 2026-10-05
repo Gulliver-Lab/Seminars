@@ -173,6 +173,7 @@ def build_app(
             calendar_weeks = build_calendar_weeks(
                 _talks_with_topics_and_last_email(talks, speakers, emails)
             )
+            calendar_announcements = build_calendar_announcements(talks, speakers)
             speaker_options = speakers["name"].sort_values().tolist()
         except ValueError as error:
             return PlainTextResponse(str(error), status_code=400)
@@ -184,6 +185,7 @@ def build_app(
             "calendar.html",
             {
                 "calendar_weeks": calendar_weeks,
+                "calendar_announcements": calendar_announcements,
                 "speaker_options": speaker_options,
                 "talk_status_options": TALK_STATUSES,
                 "organizer_options": ORGANIZERS_OPTIONS,
@@ -418,6 +420,49 @@ def upcoming_confirmed_talks(
     upcoming["date"] = upcoming["date"].dt.strftime("%Y-%m-%d")
     upcoming["affiliation"] = upcoming["affiliation"].fillna("")
     return cast(list[dict[str, Any]], upcoming.to_dict("records"))
+
+
+def build_calendar_announcements(
+    talks: pd.DataFrame, speakers: pd.DataFrame
+) -> dict[str, dict[str, Any]]:
+    """Build announcement details keyed by the calendar week's Monday."""
+    if talks.empty:
+        return {}
+
+    speaker_affiliations = speakers.set_index("name")["affiliation"].to_dict()
+    all_talks = talks[talks["speaker"].fillna("").ne("")].sort_values(
+        "date", kind="mergesort"
+    )
+    confirmed = talks[
+        talks["status"]
+        .map(parse_talk_status)
+        .map(TALK_STATUS_ORDER.__getitem__)
+        .ge(TALK_STATUS_ORDER[TalkStatus.ACCEPTED])
+    ].sort_values("date", kind="mergesort")
+    announcements: dict[str, dict[str, Any]] = {}
+
+    for row in all_talks.to_dict("records"):
+        talk_date = row["date"].date()
+        monday = talk_date - datetime.timedelta(days=talk_date.weekday())
+        monday_key = monday.isoformat()
+        if monday_key in announcements:
+            continue
+        later_talks = confirmed[confirmed["date"].dt.date > talk_date].head(3)
+        announcements[monday_key] = {
+            "date": talk_date.strftime("%Y-%m-%d"),
+            "speaker": row["speaker"],
+            "affiliation": speaker_affiliations.get(row["speaker"], "") or "",
+            "title": row["title"] or "",
+            "abstract": row["abstract"] or "",
+            "next_talks": [
+                {
+                    "date": later["date"].date().strftime("%Y-%m-%d"),
+                    "speaker": later["speaker"],
+                }
+                for later in later_talks.to_dict("records")
+            ],
+        }
+    return announcements
 
 
 def next_upcoming_confirmed_talk(

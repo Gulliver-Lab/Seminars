@@ -471,6 +471,7 @@
             <div class="week-form-save-actions">
               <button class="button delete-button" form="week-delete-form" id="week-delete-button" type="submit">Remove talk</button>
               <button class="button" id="week-no-talk-button" type="button">No talk</button>
+              <button class="button" id="announcement-button" type="button">Generate announcement email</button>
             </div>
             <div class="week-form-save-actions">
               <button class="button" formmethod="dialog" type="submit">Cancel</button>
@@ -479,6 +480,20 @@
           </div>
         </form>
         <form id="week-delete-form" method="post"></form>
+      </dialog>
+
+      <dialog class="week-dialog" id="announcement-dialog">
+        <form class="week-form" method="dialog">
+          <div class="week-form-header">
+            <div class="week-form-title">Announcement email draft</div>
+            <button class="dialog-close" type="submit">Close</button>
+          </div>
+          <textarea id="announcement-draft" readonly></textarea>
+          <div class="week-form-actions">
+            <span></span>
+            <button class="button" type="submit">Close</button>
+          </div>
+        </form>
       </dialog>
     </main>
     <script>
@@ -497,6 +512,10 @@
       const weekDeleteForm = document.querySelector("#week-delete-form");
       const weekDeleteButton = document.querySelector("#week-delete-button");
       const weekNoTalkButton = document.querySelector("#week-no-talk-button");
+      const announcementButton = document.querySelector("#announcement-button");
+      const announcementDialog = document.querySelector("#announcement-dialog");
+      const announcementDraft = document.querySelector("#announcement-draft");
+      const calendarAnnouncements = {{ calendar_announcements | tojson }};
       const speakerOptions = [
         {% for speaker in speaker_options %}
           {{ speaker | tojson }},
@@ -563,7 +582,28 @@
         weekAbstract.value = row.dataset.weekAbstract || "";
         weekComments.value = "";
         weekDeleteButton.disabled = row.dataset.weekHasTalk !== "true";
+        announcementButton.disabled = !calendarAnnouncements[monday];
         weekDialog.showModal();
+      }
+
+      function displayDate(value) {
+        const [year, month, day] = value.split("-").map(Number);
+        return new Date(year, month - 1, day).toLocaleDateString(undefined, {
+          weekday: "long", year: "numeric", month: "long", day: "numeric",
+        });
+      }
+
+      function openAnnouncementDialog() {
+        const announcement = calendarAnnouncements[weekFormDate.textContent];
+        if (!announcement) return;
+        const affiliation = announcement.affiliation ? ` (${announcement.affiliation})` : "";
+        const nextTalks = announcement.next_talks.length
+          ? "\n\nUpcoming confirmed talks:\n" + announcement.next_talks
+              .map((talk) => `- ${displayDate(talk.date)}: ${talk.speaker}`)
+              .join("\n")
+          : "";
+        announcementDraft.value = `Subject: Seminar by ${announcement.speaker}\n\nDear all,\n\nOur next seminar will be given by ${announcement.speaker}${affiliation} on ${displayDate(announcement.date)} at 11:30am.\n\nTitle: ${announcement.title}\n\nAbstract:\n${announcement.abstract}${nextTalks}\n`;
+        announcementDialog.showModal();
       }
 
       weekSpeakerFilter.addEventListener("input", () => renderSpeakerOptions(weekSpeaker.value));
@@ -585,6 +625,7 @@
         weekComments.value = reason.trim();
         weekForm.requestSubmit();
       });
+      announcementButton.addEventListener("click", openAnnouncementDialog);
 
       document.querySelectorAll(".calendar-row").forEach((row) => {
         row.addEventListener("click", () => openWeekDialog(row));
