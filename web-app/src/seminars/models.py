@@ -6,8 +6,10 @@ from typing import Literal
 
 class TalkStatus(StrEnum):
     INVITED = "Invited"
+    INVITED_2 = "Invited 2nd time"
     ACCEPTED = "Accepted"
     TITLE_REQUESTED = "Title Requested"
+    TITLE_RECEIVED = "Title Received"
     ANNOUNCED = "Announced"
     COMPLETED = "Completed"
 

@@ -8,10 +8,12 @@ from seminars.models import TalkStatus, parse_talk_status
 
 STATUS_ORDER = {
     TalkStatus.INVITED: 1,
-    TalkStatus.ACCEPTED: 2,
-    TalkStatus.TITLE_REQUESTED: 3,
-    TalkStatus.ANNOUNCED: 4,
-    TalkStatus.COMPLETED: 5,
+    TalkStatus.INVITED_2: 2,
+    TalkStatus.ACCEPTED: 3,
+    TalkStatus.TITLE_REQUESTED: 4,
+    TalkStatus.TITLE_RECEIVED: 5,
+    TalkStatus.ANNOUNCED: 6,
+    TalkStatus.COMPLETED: 7,
 }
 
 
@@ -36,12 +38,10 @@ def should_alert(
         return True
     if days_until_talk <= 14 and status_rank < STATUS_ORDER[TalkStatus.TITLE_REQUESTED]:
         return True
-    if days_until_talk < 42 and status_rank < STATUS_ORDER[TalkStatus.INVITED]:
-        return True
 
     status_date = _parse_date(_get_value(talk, "status_date"))
     if (
-        status in {TalkStatus.INVITED, TalkStatus.TITLE_REQUESTED}
+        status in {TalkStatus.INVITED, TalkStatus.INVITED_2, TalkStatus.TITLE_REQUESTED}
         and status_date is not None
     ):
         return (current_date - status_date).days > 6
