@@ -175,6 +175,7 @@ def build_app(
             )
             calendar_announcements = build_calendar_announcements(talks, speakers)
             speaker_options = speakers["name"].sort_values().tolist()
+            speaker_records = speakers_with_talks(speakers, talks).to_dict("records")
         except ValueError as error:
             return PlainTextResponse(str(error), status_code=400)
         finally:
@@ -186,6 +187,9 @@ def build_app(
             {
                 "calendar_weeks": calendar_weeks,
                 "calendar_announcements": calendar_announcements,
+                "speaker_records": speaker_records,
+                "research_topics": RESEARCH_TOPICS,
+                "contact_person_options": CONTACT_PERSON_OPTIONS,
                 "speaker_options": speaker_options,
                 "talk_status_options": TALK_STATUSES,
                 "organizer_options": ORGANIZERS_OPTIONS,
