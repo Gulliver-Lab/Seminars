@@ -21,7 +21,9 @@ def should_alert(
     current_date: datetime.date | None = None,
 ) -> bool:
     current_date = current_date or datetime.date.today()
-    talk_day = talk_date.date() if isinstance(talk_date, datetime.datetime) else talk_date
+    talk_day = (
+        talk_date.date() if isinstance(talk_date, datetime.datetime) else talk_date
+    )
     days_until_talk = (talk_day - current_date).days
 
     if talk is None or not _get_value(talk, "speaker"):
@@ -38,7 +40,10 @@ def should_alert(
         return True
 
     status_date = _parse_date(_get_value(talk, "status_date"))
-    if status in {TalkStatus.INVITED, TalkStatus.TITLE_REQUESTED} and status_date is not None:
+    if (
+        status in {TalkStatus.INVITED, TalkStatus.TITLE_REQUESTED}
+        and status_date is not None
+    ):
         return (current_date - status_date).days > 6
 
     return False

@@ -30,6 +30,7 @@ from seminars.db import (
     upsert_talk_for_week,
 )
 from seminars.models import (
+    ORGANIZERS,
     PERSONS,
     ResearchTopic,
     Speaker,
@@ -52,6 +53,7 @@ RESEARCH_TOPICS = list(get_args(ResearchTopic))
 TALK_STATUSES = list(TalkStatus)
 TALK_STATUS_ORDER = {status: index for index, status in enumerate(TALK_STATUSES)}
 CONTACT_PERSON_OPTIONS = [person for person in get_args(PERSONS) if person]
+ORGANIZERS_OPTIONS = [person for person in get_args(ORGANIZERS) if person]
 CONFERENCE_ROOM_URL = "https://visio.numerique.gouv.fr/vuf-njri-opc"
 CALENDAR_TIMEZONE = "Europe/Paris"
 SEMINAR_START_TIME = datetime.time(11, 30)
@@ -184,7 +186,7 @@ def build_app(
                 "calendar_weeks": calendar_weeks,
                 "speaker_options": speaker_options,
                 "talk_status_options": TALK_STATUSES,
-                "organizer_options": CONTACT_PERSON_OPTIONS,
+                "organizer_options": ORGANIZERS_OPTIONS,
                 "url_path_for": url_path_for,
             },
         )
@@ -587,10 +589,10 @@ def _parse_calendar_talk_status(value: str) -> str:
     return parse_talk_status(value).value
 
 
-def _parse_organizer(value: str) -> PERSONS:
+def _parse_organizer(value: str) -> ORGANIZERS:
     organizer = value.strip()
-    if organizer in get_args(PERSONS):
-        return cast(PERSONS, organizer)
+    if organizer in get_args(ORGANIZERS):
+        return cast(ORGANIZERS, organizer)
     raise ValueError("invalid organizer")
 
 
