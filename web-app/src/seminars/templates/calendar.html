@@ -709,7 +709,7 @@
         const [year, month, day] = value.split("-").map(Number);
         const options = { month: "long", day: "numeric" };
         if (includeWeekday) options.weekday = "long";
-        return new Date(year, month - 1, day).toLocaleDateString(undefined, options);
+        return new Date(year, month - 1, day).toLocaleDateString("en-US", options);
       }
 
       function openAnnouncementDialog() {
