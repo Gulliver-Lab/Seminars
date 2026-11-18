@@ -54,6 +54,7 @@ PERSONS = Literal[
 ORGANIZERS = Literal[
     "Olivier R",
     "Paddy",
+    "Amélie",
     "",
 ]
 
